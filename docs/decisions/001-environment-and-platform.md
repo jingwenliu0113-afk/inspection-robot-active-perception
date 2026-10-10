@@ -57,3 +57,18 @@ SPEC 固定平台為 ROS 2 Jazzy + Gazebo Harmonic（Ubuntu 24.04）。手邊沒
 - 正式平台：ROS 2 Jazzy + Gazebo Harmonic，容器化，image digest 釘死。
 - 渲染：headless 軟體渲染（除非之後另開 decision log 改變）。
 - GPU 只用於 detector training / heavy batch inference（Advanced），且須遵守 `/tmp/ai-portfolio-gpu.lock`。
+
+## 附錄 A（2026-10-10）：容器內容與套件來源
+
+查 apt index 後確認：
+
+- Jazzy 的 `ros-jazzy-gz-*-vendor` 套件**自帶** Harmonic 二進位（只依賴系統函式庫與其他 vendor 套件，不依賴 OSRF 的 `libgz-sim8`）。所以 `ros-jazzy-ros-gz` 單獨就能帶入 Harmonic，但其 `gz` 工具與 Python bindings 位於 `/opt/ros/jazzy/opt/*` 的非標準路徑。
+- OSRF repo 的 `gz-harmonic` metapackage（arm64 / amd64 皆有）提供標準路徑的 `gz` CLI、`python3-gz-transport13`、`python3-gz-msgs10`、`python3-gz-sim8`。
+
+`docker/Dockerfile` 採：`ros:jazzy-ros-base`（提供 ROS 2 Jazzy 平台）+ OSRF `gz-harmonic` + Python bindings + Mesa / EGL / Xvfb。
+Core 的 teleport harness 直接用 gz-transport（`/world/inspection/set_pose` 服務與 `/inspector/*` 影像 topic），不經 `ros_gz_bridge`，減少非決定性來源。
+`ros-jazzy-ros-gz` 留到 Advanced B（Nav2）需要 ROS 端橋接時再加入，屆時另記錄版本。
+
+預估下載：base 約 0.3 GB（compressed）+ `gz-harmonic` 及依賴約 1 GB 以上；需使用者核准。
+
+Smoke test 腳本（`docker/smoke.sh`、`docker/grab_frames.py`）與 SDF 產生器（`activeperception/sim/sdf.py`）已寫好；SDF 產生器有單元測試，容器腳本在 image 建好前未經執行。

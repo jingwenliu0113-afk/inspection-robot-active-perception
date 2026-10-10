@@ -31,3 +31,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# XML templates: long literal lines are clearer than wrapped f-strings
+"activeperception/sim/sdf.py" = ["E501"]
