@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+*.egg-info/
+build/
+dist/
+
+# 執行期輸出（正式結果另外整理成小檔放 results/ 再 commit）
+runs/
+# 大型 episode 快照 / 影像 / 影片（frozen set 的 hash 與 generator version 另外記錄）
+data/raw/
+data/images/
+data/cache/
+*.mp4
+*.gif
+*.png
+!docs/**/*.png
+!docs/**/*.gif
+
+# 模型權重與 detector artifacts 不進 repo
+models/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+*.engine
+*.safetensors
+*.bin
+*.gguf
+wandb/
+hf_cache/
+*.zip
+*.tar.gz
+
+# ROS 2 / colcon workspace 產物
+ros_ws/build/
+ros_ws/install/
+ros_ws/log/
+log/
+
+# Gazebo 執行期
+.gz/
+.gazebo/
+
+# 遠端 WSL bootstrap
+.uv-bootstrap/
+
+# macOS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# synthetic episode sets are regenerable in seconds; only Gazebo frozen sets get committed
+data/episodes/synthetic-*.json
