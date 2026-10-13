@@ -43,6 +43,9 @@ class GazeboReplayWorld:
         self.depth_kind = depth_kind
         self._zone_cache: dict[tuple[str, int], float] = {}
         self._obstacle_cache: dict[tuple[str, int], tuple] = {}
+        # observations are immutable functions of (episode, viewpoint) -> memoise them, so a
+        # parameter sweep does not re-read frames (the frame store LRU is small)
+        self._obs_cache: dict[tuple[str, int], Observation] = {}
         self._checked: set[str] = set()
 
     def _frames(self, spec: EpisodeSpec):
@@ -78,8 +81,11 @@ class GazeboReplayWorld:
     def observe(self, spec: EpisodeSpec, viewpoint: Viewpoint) -> Observation:
         if self.detections is None:
             raise RuntimeError("replay world has no detection cache; observe() needs one")
+        key = (spec.episode_id, viewpoint.id)
+        if key in self._obs_cache:  # built only after the spec digest check passed
+            return self._obs_cache[key]
         frames = self._frames(spec)
-        return Observation(
+        self._obs_cache[key] = Observation(
             viewpoint_id=viewpoint.id,
             viewpoint=viewpoint,
             detections=self.detections.get(spec.episode_id, viewpoint.id),
@@ -89,6 +95,7 @@ class GazeboReplayWorld:
             obstacle_cells=self.obstacle_cells(spec, viewpoint),
             meta={"world": self.name, "detector": self.detections.detector},
         )
+        return self._obs_cache[key]
 
     def object_visibility(self, spec: EpisodeSpec, viewpoint: Viewpoint):
         """Offline only: label-based GT visibility of the object from one viewpoint."""
