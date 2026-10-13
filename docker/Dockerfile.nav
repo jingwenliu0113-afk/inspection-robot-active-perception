@@ -1,0 +1,14 @@
+# syntax=docker/dockerfile:1
+# Advanced B (Nav2) image (decision 015): the render image plus Nav2 and the TurtleBot 4
+# Gazebo Harmonic simulation packages. The Core render image (inspection-ap-sim) is not
+# modified; formal Core renders keep using it. apt resolves to "0 upgraded": every package
+# of the render image keeps its exact version (xacro / robot_state_publisher come in as
+# dependencies; listing them explicitly would upgrade the installed robot_state_publisher).
+ARG SIM_IMAGE=inspection-ap-sim:jazzy-harmonic
+FROM ${SIM_IMAGE}
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ros-jazzy-navigation2 ros-jazzy-nav2-bringup \
+      ros-jazzy-nav2-minimal-tb4-sim ros-jazzy-nav2-minimal-tb4-description \
+ && rm -rf /var/lib/apt/lists/*

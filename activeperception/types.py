@@ -36,6 +36,7 @@ class Split(StrEnum):
     PILOT = "pilot"
     DETSEL = "detsel"  # detector-selection data (decision 005), never train / val / test
     HOLDOUT = "holdout"  # v1 vs v2 comparison data (decision 011), never used for development
+    NAV_DEV = "nav-dev"  # Advanced B feasibility / integration data (decision 015), never formal
 
 
 @dataclass(frozen=True)
