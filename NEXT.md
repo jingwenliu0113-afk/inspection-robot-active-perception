@@ -2,7 +2,9 @@
 
 ## 目前位置（2026-10-13）
 
-**Core。M2 完成、M3 大部分完成（render → replay 管線、detector 選型凍結 `detector-v1`），正在進 M4 pilot。** 尚無正式結果。
+**Core。M2–M4 完成（pilot 六項 + ROS 2 線上一致性全過）；M5 調參工具與 rule-NBV v1 特徵已實作，等 core render / detection 後跑 train 調參。** 尚無正式結果。
+
+GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private，2026-10-13 依使用者要求建立）。每個 milestone commit 後 push。
 
 | Milestone | 內容 | 狀態 |
 |---|---|---|
@@ -11,19 +13,18 @@
 | M2 | Jazzy + Harmonic 容器（ROS vendor 套件、base digest 釘死）、headless render、teleport、determinism | **完成**（`docs/platform/m2-smoke.md`、decision 001 附錄 B/C） |
 | M3a | world gen-v2（消防栓、decision 006）、render-then-replay（decision 007）、depth / label sensing、frame store、replay world | **完成** |
 | M3b/c | detector 候選、選型（decision 005）→ `detector-v1` = torchvision FRCNN-MobileNetV3 | **完成**（`results/detector-selection/`） |
-| M3d | ROS 2 線上整合（ros_gz_bridge + inspection node，與 replay 一致性） | 待做 |
-| M4 | pilot（SPEC §9）：三狀態可分、teleport deterministic、timestamp / transform、四方法同候選集、grader 不吃 inconclusive | 進行中 |
+| M3d | ROS 2 線上整合（ros_gz_bridge + inspector node） | **完成**（pilot 192/192 與 replay 相同） |
+| M4 | pilot（SPEC §9）六項 + ROS 2 一致性 | **完成**（`results/pilot/`） |
 | M5 | train / val 調參 → decision log 凍結 budget / 參數 → 正式 test → metrics + CI → README | 待 M4；**budget 最終值需使用者決定** |
 | Gate | Rule 穩定勝過 Random / Single、非 leakage、仍有可重現殘餘失敗 | 待 M5 |
 
 ## 下一步（依序）
 
-1. pilot detection 快取：`frcnn-mnv3` 在 gpu-server（GPU lock）跑 `renders/pilot`。
-2. pilot 自動檢查（`activeperception/pilot.py`）：三狀態分佈與可分性、teleport determinism（重 render 比對）、
-   stamp 晚於 teleport、depth vs ray-cast（已驗證 planar、中位誤差 0.25 mm）、四方法候選集相同、grader 真值表。
-3. M3d：ROS 2 inspection node（同一套 decision rule / policy，經 ros_gz_bridge），pilot episodes 上與 replay 決策一致。
-4. 正式 `core` namespace：決定 scene group 數（統計功效）→ make-specs → render → GT → detection 快取（GPU）。
-5. train / val 上調 decision rule（τ_present / τ_absent / coverage）與 rule-NBV 權重，寫 decision log 凍結；budget 組合請使用者確認。
+1. core render 完成 → `build-episodes --world gazebo` → `data/episodes/gazebo-core.json` commit。
+2. core frames 傳到 gpu-server，`detector-v1` 在 GPU lock 下產生 `runs/core/detector-v1.jsonl`（同時存一份到 `results/` 以保留出處）。
+3. decision 008 階段 1（`python -m activeperception.tune decision ...`）→ 階段 2（`tune rule`）→ 階段 3（`tune val`）。
+4. 寫 decision 009：`decision-v1`、`rule-nbv-v1` 參數；**budget 組合請使用者確認**（附 val success-vs-budget 曲線），之後才跑 test。
+5. test 一次：四方法、凍結 budgets、cluster bootstrap CI、分層結果 → README 結果區 → Gate 判斷。
 
 ## 已驗證的事實（不要重做）
 
