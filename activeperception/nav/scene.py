@@ -96,6 +96,5 @@ def map_files(spec: EpisodeSpec, image_name: str) -> tuple[bytes, str]:
 
 
 def specs_by_id() -> dict[str, EpisodeSpec]:
-    return {
-        s.episode_id: s for ns in (NAMESPACE, CONFIRM_NAMESPACE) for s in b0_specs(namespace=ns)
-    }
+    namespaces = (NAMESPACE, CONFIRM_NAMESPACE, RECONFIRM_NAMESPACE)
+    return {s.episode_id: s for ns in namespaces for s in b0_specs(namespace=ns)}

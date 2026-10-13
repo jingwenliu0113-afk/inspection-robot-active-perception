@@ -234,4 +234,7 @@ def test_confirmation_namespace_is_new_data():
     confirm = scene.b0_specs(namespace=scene.CONFIRM_NAMESPACE)
     assert {s.split for s in confirm} == {Split.NAV_DEV}
     assert {s.seed for s in confirm}.isdisjoint({s.seed for s in SPECS})
-    assert set(scene.specs_by_id()) == {s.episode_id for s in (*SPECS, *confirm)}
+    reconfirm = scene.b0_specs(namespace=scene.RECONFIRM_NAMESPACE)
+    seeds = [{s.seed for s in x} for x in (SPECS, confirm, reconfirm)]
+    assert seeds[2].isdisjoint(seeds[0] | seeds[1])
+    assert set(scene.specs_by_id()) == {s.episode_id for s in (*SPECS, *confirm, *reconfirm)}

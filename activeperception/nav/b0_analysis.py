@@ -180,7 +180,7 @@ def analyze(runs: Path, cache) -> dict:
     fresh = total = 0
     pairs = {"n": 0, "wrong_definitive": [], "geometric_risk": [], "by_gt": {}}
     pairs16 = {"n": 0, "wrong_definitive": [], "geometric_risk": [], "by_gt": {}}
-    refine_rows, per_episode16 = [], []
+    refine_rows, per_episode16, reloc_rows = [], [], []
     per_episode, roll_max, detection_rows = [], 0.0, []
     for eid in eps:
         spec = specs[eid]
@@ -250,6 +250,14 @@ def analyze(runs: Path, cache) -> dict:
                 "loc_xy_m": e_xy,
                 "loc_yaw": e_yaw,
             }
+            rl = nav.get("relocalize")
+            if rl is not None:
+                reloc_rows.append(
+                    {
+                        "corrections": rl["corrections"],
+                        "refine_failed": not all(st["refine_ok"] for st in rl["steps"]),
+                    }
+                )
             item["success"] = (
                 nav["result"] == "SUCCEEDED" and arr_xy <= ARRIVAL_XY_M and arr_yaw <= ARRIVAL_YAW
             )
@@ -372,6 +380,11 @@ def analyze(runs: Path, cache) -> dict:
                 default=None,
             ),
             "zone_entries": len(zone_entries),
+            "relocalized_goals": len(reloc_rows),
+            "relocalize_corrections": {
+                str(k): sum(r["corrections"] == k for r in reloc_rows) for k in range(4)
+            },
+            "relocalize_refine_failed": sum(r["refine_failed"] for r in reloc_rows),
             "cancelled_stops": len(cancels),
             "cancel_loc_xy_p95_m": _q([g["loc_xy_m"] for g in cancels], 0.95),
             "cancel_loc_yaw_p95": _q([g["loc_yaw"] for g in cancels], 0.95),
