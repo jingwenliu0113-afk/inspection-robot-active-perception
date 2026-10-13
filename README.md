@@ -7,8 +7,9 @@
 >   holdout 也顯示 v1 在原 test 上「接近 Oracle」的結論**沒有重現**，而 v2 在 budget 2 與 Oracle 仍差 4.3 點（見下方 v2 段落）。
 > - **Core 已結案**（[decision 014](docs/decisions/014-core-closure.md)）：v2 的改善主要來自 absent 判定規則，**不是**選視角策略；
 >   Gate 未通過的項目、失敗分析與資料封存見下方「Core 結案」。Advanced C（RL）暫不進行；Advanced B（Nav2）已完成評估，待決定。
-> - **Advanced B（Nav2）**：B0 可行性驗證發現 AMCL 定位誤差會讓 v2 的「看穿」判定失去安全邊界；以 depth 對設施地圖位姿精修 + 位姿餘裕 +
->   停點視角重定位修正後，在新資料上全部通過（[decision 015](docs/decisions/015-advanced-b-start-and-b0-protocol.md)、[016](docs/decisions/016-b0-pose-refinement-and-margin.md)）；目前進行 B1 閉迴路整合。
+> - **Advanced B（Nav2）完成**（[decision 015–019](docs/decisions/019-b2-result-and-advanced-b-closure.md)）：TurtleBot 4 用 Nav2 實際導航到視角，
+>   在新的 160 集正式評估中，所有方法 false absent = 0、準確率與 teleport 相同（差 ≤ 0.006）、Rule 仍勝過 Single / Random 且走得更少。
+>   前提是加上 B0 發現必要的「位姿精修 + 看穿餘裕 + 停點重定位」。全部在模擬中。
 > - 正式數字只來自 ROS 2 Jazzy + Gazebo Harmonic；synthetic world 只用於 correctness tests。
 
 ## 一句話問題
@@ -149,7 +150,29 @@ rule-nbv-v2 相對 rule-nbv-v1 沒有顯著改善；v2 相對 v1 有 7 件（bud
 - 程式強制：調參拒絕 test / holdout；正式 runner 對封存資料只允許 `--reproduce`（輸出不得寫進 `results/`，只比對是否逐位元相同）；
   [`SEALED.sha256`](SEALED.sha256) 釘住所有已 commit 的結果、凍結的 episode sets 與 `frozen.py` / `frozen_v2.py`，`tests/test_seal.py` 檢查。
 
-## Advanced B（Nav2）：B0 可行性驗證
+## Advanced B（Nav2）：真正導航下的 active perception（B2 正式評估）
+
+把 teleport 換成 **Nav2 實際導航**：TurtleBot 4 加 1.1 m 桅桿相機（內參同 Core），用 AMCL 定位、Nav2 規劃與控制，到點後以機載 depth 對設施地圖精修位姿、
+回饋 AMCL 重定位，判定時對剩餘位姿誤差取保守值；判定規則、視角策略、detector 都用 Core 凍結的 v2。真實位姿與標籤只用於評分。
+新的 `nav-b2`（160 集，absent 80、unobservable 38、visible 42）在 decision 018 預先登錄後只跑一次，同一批 episodes 另做 teleport 對照。
+
+![teleport vs Nav2](docs/figures/nav_teleport_vs_nav2.png)
+
+| `nav-b2`（160 集、960 次閉迴路） | budget 2 | budget 3 |
+|---|---|---|
+| Rule-NBV v2：teleport / Nav2 | 0.988 / **0.981** | 1.000 / **1.000** |
+| Random（3 seeds）：teleport / Nav2 | 0.908 / 0.902 | 0.981 / 0.983 |
+| Single / Oracle（Nav2） | 0.525 / 1.000 | 0.525 / 1.000 |
+| Nav2 − teleport（Rule） | −0.006 [−0.019, 0.000] 不劣於 | 0.000 |
+| Rule − Random（Nav2） | **+0.079 [0.044, 0.119]** | **+0.017 [0.004, 0.033]** |
+
+- **安全**：Nav2 下所有方法、所有 budget 的 false absent、false present、「物件存在卻算成全空」都是 0。
+- **導航**：440 次導航全部準確到點（reachable viewpoint 100%），碰撞 0、逾時 0；每次導航（含重定位）模擬時間 p50 22 s。
+- **成本**：Rule 每集比 Random 少走 0.46 m [0.14, 0.80]、少 2.6 s（模擬時間）。
+- 限制：全部在 Gazebo；里程計接近理想、起始位姿與設施地圖已知；場景（圍牆、固定視角環）與 Core 不同，數字不能和 Core 直接比。
+  細節：[`results/nav-b2/`](results/nav-b2/README.md)、[decision 019](docs/decisions/019-b2-result-and-advanced-b-closure.md)。
+
+## Advanced B 的過程：B0 可行性驗證與修正
 
 TurtleBot 4（加 1.1 m 桅桿相機，內參同 Core）在 Gazebo Harmonic 裡用 Nav2 實際導航到候選視角，判定只用 AMCL 估計位姿、機載影像與 detector
 （真實位姿與標籤只用於評分）。`nav-b0` 是可行性資料，不是正式評估。細節：[`results/nav-b0/`](results/nav-b0/README.md)。
@@ -183,7 +206,7 @@ TurtleBot 4（加 1.1 m 桅桿相機，內參同 Core）在 Gazebo Harmonic 裡�
 | 錯誤答案、geometric risk、所有停點聯集 | 0、0、0 / 6 |
 | 代價 | 餘裕讓 7 / 84 個 absent 組合變成 `inconclusive`（安全方向） |
 
-**B0 全部通過 → 進 B1。** 細節：[`results/nav-b0c/`](results/nav-b0c/README.md)、[`results/nav-b0d/`](results/nav-b0d/README.md)。
+**B0 全部通過 → B1 閉迴路整合（`nav-b1` 開發資料，[`results/nav-b1/`](results/nav-b1/README.md)）→ B2 正式評估（上一節）。** 細節：[`results/nav-b0c/`](results/nav-b0c/README.md)、[`results/nav-b0d/`](results/nav-b0d/README.md)。
 可行性評估原文：[docs/advanced-b-nav2-evaluation.md](docs/advanced-b-nav2-evaluation.md)。
 
 ## 方法（v1；v2 的差異見上一段）
@@ -236,6 +259,11 @@ uv run python -m activeperception.experiment_v2 holdout --episodes data/episodes
 uv run python -m activeperception.failure_analysis --out results/failure-analysis \
     --dev-episodes data/episodes/gazebo-core.json --dev-detections results/core/detector-v1.jsonl --dev-renders renders/core
 uv run python -m activeperception.seal verify             # 封存的結果與凍結設定是否未被改動
+# Advanced B（decision 015–019；Nav2 映像：./docker/build_nav.sh && ./docker/build_navdet.sh）
+uv run python -m activeperception.nav.scene --namespace nav-b2 --groups 40 --out data/episodes/specs-nav-b2.json
+./docker/render.sh data/episodes/specs-nav-b2.json renders/nav-b2 4     # teleport 對照
+./docker/nav_b1.sh 4 nav-b2                                          # Nav2 閉迴路（可續跑）
+uv run python -m activeperception.nav.b1_analysis --ns nav-b2 --out results/nav-b2
 ```
 
 原 test 與 holdout 已封存：上面兩個正式指令現在會拒絕執行；要檢查可重現性，加上 `--reproduce` 並把 `--out` 指到 `results/` 以外，
@@ -254,10 +282,10 @@ docker/                  Jazzy + Harmonic 映像、render / smoke / ROS 線上�
 gazebo/models/           vendored Fuel 模型（fire_hydrant，CC0）
 data/episodes/           frozen spec / episode sets（含 GT）：core、pilot、detsel、holdout
 results/                 detector 選型、pilot（v1 / v2）、調參（v1 / v2）、v1 正式 test、holdout v1 vs v2、failure analysis
-docs/decisions/          decision logs 001–016
+docs/decisions/          decision logs 001–019
 docs/failure-analysis.md 跨 v1 / v2 的失敗分析（Core 結案）
 docs/advanced-b-nav2-evaluation.md   Advanced B（Nav2）可行性評估
-activeperception/nav/    Advanced B：gen-nav-b0 場景 / 地圖、TurtleBot 4 桅桿相機、B0 driver 與分析
+activeperception/nav/    Advanced B：gen-nav 場景 / 地圖、TurtleBot 4 桅桿相機、位姿精修與餘裕、B0 / B1 driver 與分析
 SEALED.sha256            封存檔案的 sha256（tests/test_seal.py 檢查）
 ```
 
@@ -266,7 +294,7 @@ SEALED.sha256            封存檔案的 sha256（tests/test_seal.py 檢查）
 - 場景刻意簡化（方柱遮擋、固定光照、單一目標類別）；detector 在此 world 幾乎不誤報，perception 偏容易。
 - `decision-v1` 的 absent 規則較寬；test 上 Random 出現一例 false absent，Rule / Oracle 沒有。
 - 多視角方法的 definitive decision confidence 校準不佳（ECE 0.21–0.38；Single 0.016）：absent 的 confidence = coverage × (1 − c_max)，公式在 v1 凍結未改。
-- Core 只用 teleport；Advanced B 已通過 B0（模擬中、Gazebo 的差速里程計接近理想、起始位姿已知），B1 / B2 進行中。
+- Core 只用 teleport；Advanced B 的 Nav2 結果只在 Gazebo 模擬中（里程計接近理想、起始位姿與設施地圖已知），未在實機驗證。
 - v2 是看過 v1 test 後提出的改進；它的所有宣稱只來自 holdout，原 test 不用於 v2。
 - rule-nbv-v2 在初始視角被擋時常常分數平手、按候選編號選（failure analysis §4）；v2 的改善不應被理解為選視角策略的進步。
 - holdout 與原 test 都已用過；任何新版本都需要新的、未參與開發的資料。

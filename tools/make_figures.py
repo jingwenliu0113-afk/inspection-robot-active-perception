@@ -7,6 +7,7 @@
 3. docs/figures/failure_case.png       - a residual Rule-NBV failure from the test report
 4. docs/figures/holdout_v1_v2.png      - v1 vs v2 accuracy on the holdout (decision 013)
 5. docs/figures/failure_attribution.png - Rule failures: structural vs viewpoint choice (dec. 014)
+6. docs/figures/nav_teleport_vs_nav2.png - nav-b2: teleport vs Nav2 accuracy (decision 019)
 """
 
 from __future__ import annotations
@@ -275,6 +276,79 @@ def holdout_v1_v2(report: dict) -> None:
     plt.close(fig)
 
 
+def nav_teleport_vs_nav2(report: dict) -> None:
+    """Small multiples, shared y: the same nav-b2 episodes with teleport vs Nav2 + TurtleBot 4."""
+    budgets = [1, 2, 3, 4, 5]
+    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.6), dpi=200, sharey=True)
+    fig.patch.set_facecolor(SURFACE)
+    z = {"oracle": 2, "single": 3, "random": 4, "rule": 5}
+    for ax, key_s, title in (
+        (axes[0], "teleport", "teleport (Core harness, exact poses)"),
+        (axes[1], "nav2", "Nav2 + TurtleBot 4 (AMCL, relocalised, margin)"),
+    ):
+        ax.set_facecolor(SURFACE)
+        s = report[key_s]
+        for key, (label, colour) in SERIES.items():
+            label = label.replace("(5 seeds)", "(3 seeds)")
+            y = [s[f"{key}@{b}"]["accuracy"] for b in budgets]
+            ax.plot(
+                budgets,
+                y,
+                color=colour,
+                lw=1.5,
+                marker="o",
+                ms=5.0,
+                mfc=colour,
+                mec=SURFACE,
+                mew=1.2,
+                label=label,
+                zorder=z[key],
+                solid_joinstyle="round",
+            )
+        r2, rr2 = s["rule@2"]["accuracy"], s["random@2"]["accuracy"]
+        ax.annotate(
+            f"budget 2: Rule {r2:.3f}\n              Random {rr2:.3f}",
+            xy=(2, r2),
+            xytext=(2.6, 0.70),
+            color=INK2,
+            fontsize=7.5,
+            va="center",
+        )
+        ax.annotate(
+            f"Single {s['single@1']['accuracy']:.3f}",
+            xy=(4, s["single@4"]["accuracy"]),
+            xytext=(3.7, s["single@4"]["accuracy"] + 0.06),
+            color=INK2,
+            fontsize=7.5,
+        )
+        for b in (1, 2, 3, 5):
+            ax.axvline(b, color=GRID, lw=0.7, zorder=0)
+        ax.set_xticks(budgets)
+        ax.set_xticklabels([f"{b}*" if b in (2, 3) else str(b) for b in budgets])
+        ax.set_ylim(0, 1.06)
+        ax.set_title(title, fontsize=9, color=INK, loc="left")
+        ax.tick_params(colors=MUTED, labelsize=8, length=0)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+        for side in ("left", "bottom"):
+            ax.spines[side].set_color(BASE)
+        ax.yaxis.grid(True, color=GRID, lw=0.7)
+        ax.set_axisbelow(True)
+        ax.set_xlabel("viewpoint budget (* = formal)", color=MUTED)
+    axes[0].set_ylabel("3-class accuracy (nav-b2)", color=MUTED)
+    axes[1].legend(loc="lower right", frameon=False, fontsize=7.5, labelcolor=INK2)
+    fig.suptitle(
+        f"Same {report['episodes']} nav-b2 episodes: teleport vs real navigation (Nav2)",
+        x=0.01,
+        ha="left",
+        fontsize=10,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.07, right=0.99, bottom=0.15, top=0.82, wspace=0.06)
+    fig.savefig(OUT / "nav_teleport_vs_nav2.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 def failure_attribution(summary: dict) -> None:
     """Rule failures split by whether the oracle (same decision rule) answers the episode.
 
@@ -360,4 +434,7 @@ if __name__ == "__main__":
     fa = ROOT / "results/failure-analysis/summary.json"
     if fa.exists():
         failure_attribution(json.loads(fa.read_text()))
+    b2 = ROOT / "results/nav-b2/b1_report.json"
+    if b2.exists():
+        nav_teleport_vs_nav2(json.loads(b2.read_text()))
     print("wrote", sorted(p.name for p in OUT.glob("*.png")))

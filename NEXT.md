@@ -1,30 +1,25 @@
 # NEXT
 
-## 目前位置（2026-10-13）
+## 目前位置（2026-10-14）
 
-**Core 結案（decision 014）。Advanced B 已由使用者核准（方案 1，decision 015），目前在 B0 可行性驗證。Advanced C 暫不進行。**
+**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）。Advanced C 暫不進行。目前沒有進行中的工作；下一步需要使用者決定。**
 
-GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private，不加 LICENSE——使用者 2026-10-13 決定）。每個 milestone commit 後 push。
+GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private，不加 LICENSE）。每個 milestone commit 後 push。
 
 | 階段 | 內容 | 狀態 |
 |---|---|---|
-| M0–M5 | Core v1（平台、world、detector、pilot、調參、凍結、正式 test、Gate） | 完成（decision 001–010） |
-| v2 | decision-v2、rule-nbv-v2、oracle-v2；train 調參、val 檢查；holdout 一次性比較 | 完成（decision 011–013） |
-| Core 結案 | Gate 總表、改善歸因、failure analysis、資料封存 | 完成（decision 014） |
-| B0 | Nav2 映像、官方 TB4 smoke、桅桿相機 TB4、`gen-nav-b0`、driver、分析；12 集 | 完成：C1–C5 通過、C6 未通過（decision 015 附錄 B） |
-| decision 016 | 位姿精修 + 看穿餘裕；`nav-b0c` 確認：安全通過、C3 86.1% 未過 → 使用者「再試一次」→ 停點視角重定位 → `nav-b0d` 確認 | **B0 全部通過**（decision 016 附錄 D、`results/nav-b0d/`） |
-| B1 | 閉迴路整合：`inspection-ap-navdet`、四方法 + Nav2、teleport 對照、`nav-b1` 開發資料 | 完成（decision 017 附錄 A、`results/nav-b1/`） |
-| B2 | 正式評估：`nav-b2`（40 groups × 4，split `nav-eval`），Q1–Q4 預先登錄 | **進行中**（decision 018） |
+| Core v1 / v2 / 結案 | decision 001–014 | 完成 |
+| B0 | Nav2 + TB4 可行性；C6 未過 → decision 016（位姿精修 + 餘裕 + 停點重定位）→ `nav-b0d` 全部通過 | 完成 |
+| B1 | 閉迴路整合（`nav-b1` 開發資料） | 完成（decision 017） |
+| B2 | 正式評估 `nav-b2`（160 集、960 次閉迴路），Q1–Q4 全部成立 | **完成（decision 019、`results/nav-b2/`）** |
 
-### B2 執行步驟（可續跑）
+### Advanced B 結論（decision 019）
 
-1. `uv run python -m activeperception.nav.scene --namespace nav-b2 --groups 40 --out data/episodes/specs-nav-b2.json`
-2. `./docker/render.sh data/episodes/specs-nav-b2.json renders/nav-b2 4`（teleport 對照）
-3. `uv run python -m activeperception build-episodes --world gazebo --specs data/episodes/specs-nav-b2.json --renders renders/nav-b2 --out data/episodes/gazebo-nav-b2.json`
-4. `uv run --extra detectors python -m activeperception.detector.run --frames renders/nav-b2 --detector frcnn-mnv3 --device cpu --out runs/nav-b2/teleport-detector-v1.jsonl`
-5. `./docker/nav_b1.sh 4 nav-b2`（960 個工作，約 4 小時；中斷後重跑同一指令即可續跑）
-6. `uv run python -m activeperception.nav.b1_analysis --ns nav-b2 --out results/nav-b2` → decision 019、README、`seal manifest`
-- `nav-b2` 只跑一次；不依結果調整任何參數。
+- 安全：Nav2 下所有方法 false absent / false present / geometric risk 皆 0。
+- Nav2 − teleport：四個方法皆不劣於 teleport（差 ≤ 0.006）。Rule budget 2：teleport 0.988 / Nav2 0.981。
+- 主動視角仍有效：Rule − Random +0.079 [0.044, 0.119]（b2）、+0.017 [0.004, 0.033]（b3）；Rule 每集少走 0.46 m。
+- 導航 440 次全部準確到點、碰撞 0、逾時 0。啟動看門狗重試 20 次（全部恢復）。
+- 限制：只在模擬中（理想里程計、已知起點與設施地圖、固定場景幾何）；與 Core 數字不可直接比較。
 
 ## 主要結果
 
@@ -38,10 +33,9 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 
 ## 待使用者決定
 
-1. **Advanced C（RL）**：使用者決定暫不進行。
-2. 任何新版本都需要新的 namespace 與未參與開發的資料；`core` test 與 `holdout` 已封存。
-3. 實體機器人（SPEC Optional）：需採購與 sim-to-real 感知驗證，另外決定。
-4. Advanced B 進行中，沒有待決項目；若 B1 / B2 需要研究設計變更會先詢問。
+1. **下一步方向**：Advanced B 已完成。往實體機器人巡檢（SPEC Optional：硬體採購、真實影像的 detector 驗證 / Advanced A）、
+   或 Advanced C（RL，先前決定暫不進行）、或在此收尾整理作品集。
+2. 任何新版本都需要新的 namespace 與未參與開發的資料；`core` test、`holdout`、`nav-b2` 都已使用過。
 
 ## 已驗證的事實（不要重做）
 
