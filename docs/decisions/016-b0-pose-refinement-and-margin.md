@@ -96,3 +96,9 @@ tests 檢查：精修函式的輸入不含 GT；地圖輪廓不含目標物件�
 判定路徑（decision 016 的精修 + 餘裕、凍結的 `decision-v2`）不變。開發只在 `nav-b0` 上做功能檢查（1–2 集）；
 確認資料為新 namespace **`nav-b0d`**（本附錄 commit 之後產生），6 scene groups × 2 variants，**只跑一次**。
 全部成立 → 寫 decision 017 進 B1；任何一項未成立 → 停下來報告。
+
+## 附錄 D（2026-10-14）：`nav-b0d` 第二次確認結果
+
+完整結果：[`results/nav-b0d/README.md`](../../results/nav-b0d/README.md)。C1–C6、R1、R2 **全部通過**：準確到點 100%（144 / 144）、
+重定位後定位誤差 p95 0.42 cm / 0.0021 rad、錯誤答案 0、geometric risk 0、所有停點聯集 0 / 6。
+代價：餘裕讓 7 / 84 個 absent 組合變成 `inconclusive`。**判定：B0 通過，進 B1（decision 017）。**

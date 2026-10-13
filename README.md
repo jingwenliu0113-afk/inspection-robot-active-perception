@@ -7,9 +7,8 @@
 >   holdout 也顯示 v1 在原 test 上「接近 Oracle」的結論**沒有重現**，而 v2 在 budget 2 與 Oracle 仍差 4.3 點（見下方 v2 段落）。
 > - **Core 已結案**（[decision 014](docs/decisions/014-core-closure.md)）：v2 的改善主要來自 absent 判定規則，**不是**選視角策略；
 >   Gate 未通過的項目、失敗分析與資料封存見下方「Core 結案」。Advanced C（RL）暫不進行；Advanced B（Nav2）已完成評估，待決定。
-> - **Advanced B（Nav2）**：B0 可行性驗證發現 AMCL 定位誤差會讓 v2 的「看穿」判定失去安全邊界（[decision 015](docs/decisions/015-advanced-b-start-and-b0-protocol.md)）；
->   以 depth 對設施地圖位姿精修 + 位姿餘裕修正後，在新資料上確認安全（[decision 016](docs/decisions/016-b0-pose-refinement-and-margin.md)），
->   但準確到點率 86.1% 未達預先登錄的 90%，**B1 暫停，待使用者決定**。
+> - **Advanced B（Nav2）**：B0 可行性驗證發現 AMCL 定位誤差會讓 v2 的「看穿」判定失去安全邊界；以 depth 對設施地圖位姿精修 + 位姿餘裕 +
+>   停點視角重定位修正後，在新資料上全部通過（[decision 015](docs/decisions/015-advanced-b-start-and-b0-protocol.md)、[016](docs/decisions/016-b0-pose-refinement-and-margin.md)）；目前進行 B1 閉迴路整合。
 > - 正式數字只來自 ROS 2 Jazzy + Gazebo Harmonic；synthetic world 只用於 correctness tests。
 
 ## 一句話問題
@@ -174,8 +173,17 @@ TurtleBot 4（加 1.1 m 桅桿相機，內參同 Core）在 Gazebo Harmonic 裡�
 | 錯誤答案、geometric risk（168 組） | 0、0 | 0、0 |
 | absent → absent（組合） | 61 / 84 | 61 / 84（沒有準確率代價） |
 
-但同一批資料的準確到點率是 86.1%（預先登錄門檻 90%；多數是到點朝向誤差 0.10–0.12 rad，不影響判定安全）→ **B1 暫停，待使用者決定**。
-細節：[`results/nav-b0c/`](results/nav-b0c/README.md)。
+但同一批資料的準確到點率只有 86.1%（預先登錄門檻 90%）：Nav2 依 AMCL 估計判定到點，到點當下約 0.05 rad 的朝向誤差加上容忍值，真實朝向差到 0.10–0.12 rad。
+使用者指示再試一次 → 加上**停點視角重定位**（精修位姿回饋 AMCL，必要時小幅修正移動），在另一批新資料 `nav-b0d` 上確認一次：
+
+| `nav-b0d`（只跑一次） | 結果 |
+|---|---|
+| 準確到點 | **144 / 144 = 100%**，碰撞 0 |
+| 重定位後定位誤差 p95 | **0.42 cm / 0.0021 rad** |
+| 錯誤答案、geometric risk、所有停點聯集 | 0、0、0 / 6 |
+| 代價 | 餘裕讓 7 / 84 個 absent 組合變成 `inconclusive`（安全方向） |
+
+**B0 全部通過 → 進 B1。** 細節：[`results/nav-b0c/`](results/nav-b0c/README.md)、[`results/nav-b0d/`](results/nav-b0d/README.md)。
 可行性評估原文：[docs/advanced-b-nav2-evaluation.md](docs/advanced-b-nav2-evaluation.md)。
 
 ## 方法（v1；v2 的差異見上一段）
@@ -258,7 +266,7 @@ SEALED.sha256            封存檔案的 sha256（tests/test_seal.py 檢查）
 - 場景刻意簡化（方柱遮擋、固定光照、單一目標類別）；detector 在此 world 幾乎不誤報，perception 偏容易。
 - `decision-v1` 的 absent 規則較寬；test 上 Random 出現一例 false absent，Rule / Oracle 沒有。
 - 多視角方法的 definitive decision confidence 校準不佳（ECE 0.21–0.38；Single 0.016）：absent 的 confidence = coverage × (1 − c_max)，公式在 v1 凍結未改。
-- Core 只用 teleport；Nav2（Advanced B）只到 B0 + decision 016 確認：安全問題已修正，準確到點率未達標，B1 待決定。
+- Core 只用 teleport；Advanced B 已通過 B0（模擬中、Gazebo 的差速里程計接近理想、起始位姿已知），B1 / B2 進行中。
 - v2 是看過 v1 test 後提出的改進；它的所有宣稱只來自 holdout，原 test 不用於 v2。
 - rule-nbv-v2 在初始視角被擋時常常分數平手、按候選編號選（failure analysis §4）；v2 的改善不應被理解為選視角策略的進步。
 - holdout 與原 test 都已用過；任何新版本都需要新的、未參與開發的資料。

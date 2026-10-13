@@ -12,15 +12,14 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 | v2 | decision-v2、rule-nbv-v2、oracle-v2；train 調參、val 檢查；holdout 一次性比較 | 完成（decision 011–013） |
 | Core 結案 | Gate 總表、改善歸因、failure analysis、資料封存 | 完成（decision 014） |
 | B0 | Nav2 映像、官方 TB4 smoke、桅桿相機 TB4、`gen-nav-b0`、driver、分析；12 集 | 完成：C1–C5 通過、C6 未通過（decision 015 附錄 B） |
-| decision 016 | depth 對設施地圖位姿精修 + 看穿判定位姿餘裕；`nav-b0` 開發、`nav-b0c` 新資料確認一次 | **R1、R2（安全）通過；R3 未通過（C3 86.1% < 90%）→ B1 暫停，待使用者決定**（`results/nav-b0c/`） |
+| decision 016 | 位姿精修 + 看穿餘裕；`nav-b0c` 確認：安全通過、C3 86.1% 未過 → 使用者「再試一次」→ 停點視角重定位 → `nav-b0d` 確認 | **B0 全部通過**（decision 016 附錄 D、`results/nav-b0d/`） |
+| B1 | 閉迴路整合：`inspection-ap-navdet`、四方法 + Nav2、teleport 對照、新指標、`nav-b1` 開發資料 | **進行中**（decision 017） |
 
-### 目前狀態（decision 016 附錄 B）
+### 目前狀態
 
-- 安全問題已解決並在新資料確認：精修位姿誤差 p95 0.32 cm；錯誤答案 0、geometric risk 0、所有停點聯集 0 / 6（AMCL 原路徑 3 / 6 不安全）；沒有準確率代價。
-- 新的阻擋項是 C3（準確到點）86.1%：18 / 20 次是到點朝向誤差 0.100–0.116 rad（Nav2 容忍 0.05 + 到點當下 AMCL 朝向誤差），與判定安全無關。
-- 依預先登錄規則需詢問使用者。建議：在每個停點用精修位姿回饋 AMCL 並做小幅修正移動（視角重定位），再以另一批新資料確認一次。
-- B1 準備（未啟動、未執行）：`docker/Dockerfile.navdet`（Nav2 + CPU detector，尚未建置）、`sim/render.py` 支援 gen-nav 場景的 teleport 對照渲染。
-- 容器關閉時 exit 139 為無害的關閉階段 segfault；Docker Desktop 13:48 UTC 曾更新重啟（已重跑）。
+- B0 通過：`nav-b0d` 準確到點 100%、重定位後定位 p95 0.42 cm / 0.0021 rad、錯誤答案 0、geometric risk 0、聯集 0 / 6；代價 7 / 84 absent 組合變 inconclusive。
+- B1 依 decision 017 進行；B2 正式評估前要先寫 decision 018。
+- 容器關閉時 exit 139 為無害的關閉階段 segfault。
 
 ## 主要結果
 
@@ -34,11 +33,10 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 
 ## 待使用者決定
 
-1. **decision 016 R3（C3 準確到點 86.1% < 90%）**：建議加「停點視角重定位」（精修位姿回饋 AMCL + 小幅修正移動）後，再用新資料確認一次；
-   或接受為已報告的限制直接進 B1（屬於看結果後放寬預先登錄標準，需使用者決定）；或停在 B0。
-2. **Advanced C（RL）**：使用者決定暫不進行。
-3. 任何新版本都需要新的 namespace 與未參與開發的資料；`core` test 與 `holdout` 已封存。
-4. 實體機器人（SPEC Optional）：需採購與 sim-to-real 感知驗證，另外決定。
+1. **Advanced C（RL）**：使用者決定暫不進行。
+2. 任何新版本都需要新的 namespace 與未參與開發的資料；`core` test 與 `holdout` 已封存。
+3. 實體機器人（SPEC Optional）：需採購與 sim-to-real 感知驗證，另外決定。
+4. Advanced B 進行中，沒有待決項目；若 B1 / B2 需要研究設計變更會先詢問。
 
 ## 已驗證的事實（不要重做）
 
