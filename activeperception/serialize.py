@@ -104,6 +104,7 @@ def observation_from_dict(d: dict) -> Observation:
         zone_visible_fraction=d["zone_visible_fraction"],
         timestamp=d["timestamp"],
         image_ref=d.get("image_ref"),
+        location_visibility=tuple(d.get("location_visibility", ())),
         meta=d.get("meta", {}),
     )
 

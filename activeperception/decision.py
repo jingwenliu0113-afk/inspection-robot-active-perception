@@ -50,6 +50,10 @@ class DecisionRule:
     def coverage(self, history: Sequence[Observation]) -> float:
         return len(self.effective_sectors(history)) / self.params.n_sectors
 
+    def absent_geometry(self, history: Sequence[Observation]) -> bool:
+        """The coverage part of the absent condition (reporting only; decide() unchanged)."""
+        return self.coverage(history) >= self.params.min_coverage
+
     def decide(self, episode: DeployableEpisode, history: Sequence[Observation]) -> DecisionOutput:
         if not history:
             raise ValueError("decision requires at least one observation")
@@ -69,4 +73,56 @@ class DecisionRule:
         if cov >= p.min_coverage and c_max < p.tau_absent:
             conf = cov * (1.0 - c_max)
             return DecisionOutput(Decision.ABSENT, confidence=conf, features=features)
+        return DecisionOutput(Decision.INCONCLUSIVE, confidence=0.0, features=features)
+
+
+# ---- decision-v2 (decision 011): absent needs free-space evidence for every location ---
+DECISION_RULE_V2_VERSION = "decision-v2"
+
+
+@dataclass(frozen=True)
+class DecisionRuleV2Params:
+    tau_present: float = 0.7  # max confidence needed to declare present
+    tau_absent: float = 0.05  # every detection must stay below this to declare absent
+    tau_clear: float = 1.0  # fraction of candidate locations that must be seen through
+    col_min: float = 1.0  # fraction of a location's axis points seen in one view to clear it
+
+
+class DecisionRuleV2:
+    """Same interface as ``DecisionRule``; the absent condition is free-space evidence.
+
+    ``absent`` requires that (the union over views of) the candidate object locations seen
+    through covers at least ``tau_clear`` of them. A location where the object stands can
+    never be seen through, so an unseen object keeps the answer ``inconclusive``.
+    """
+
+    def __init__(self, params: DecisionRuleV2Params | None = None, version: str | None = None):
+        self.params = params or DecisionRuleV2Params()
+        self.version = version or DECISION_RULE_V2_VERSION
+
+    def cleared_fraction(self, history: Sequence[Observation]) -> float:
+        from .sensing import cleared_locations
+
+        return float(cleared_locations(history, self.params.col_min).mean())
+
+    def absent_geometry(self, history: Sequence[Observation]) -> bool:
+        return self.cleared_fraction(history) >= self.params.tau_clear - 1e-9
+
+    def decide(self, episode: DeployableEpisode, history: Sequence[Observation]) -> DecisionOutput:
+        if not history:
+            raise ValueError("decision requires at least one observation")
+        p = self.params
+        c_max = max(o.max_confidence for o in history)
+        cleared = self.cleared_fraction(history)
+        features = {
+            "max_confidence": c_max,
+            "cleared_fraction": cleared,
+            "n_views": float(len(history)),
+        }
+        if c_max >= p.tau_present:
+            return DecisionOutput(Decision.PRESENT, confidence=c_max, features=features)
+        if cleared >= p.tau_clear - 1e-9 and c_max < p.tau_absent:
+            return DecisionOutput(
+                Decision.ABSENT, confidence=cleared * (1.0 - c_max), features=features
+            )
         return DecisionOutput(Decision.INCONCLUSIVE, confidence=0.0, features=features)

@@ -226,3 +226,66 @@ def predicted_zone_visibility(
     outside_zone = np.hypot(ray[..., 0] - zone.cx, ray[..., 1] - zone.cy) > zone.radius
     blocked = ((ray[..., 2] < heights) & outside_zone).any(axis=0)
     return float((in_fov & ~blocked).mean())
+
+
+# ---- candidate object locations and free-space evidence (decision 011, decision-v2) --
+# 64 locations (~6.6 cm apart) and a 3 cm see-through tolerance: the 24 / 5 cm design of
+# decision 011 let a present hydrant be "seen through" everywhere in 20 / 228 train
+# episodes; 48+ locations give 0 at any tolerance (decision 011 appendix A, train only)
+LOCATION_SAMPLES = 64
+LOCATION_TOLERANCE_M = 0.03
+OBJECT_RADIUS_PRIOR_M = 0.2  # target-class footprint prior (fire hydrant), deployable
+
+
+def location_grid(
+    zone: InspectionZone, n: int = LOCATION_SAMPLES, r_obj: float = OBJECT_RADIUS_PRIOR_M
+) -> np.ndarray:
+    """(n, 2) xy of the places the object could stand: sunflower disc, radius zone - r_obj."""
+    r = max(zone.radius - r_obj, 0.0)
+    disc = disc_samples(n)
+    return np.column_stack([zone.cx + r * disc[:, 0], zone.cy + r * disc[:, 1]])
+
+
+def location_axis_points(zone: InspectionZone, grid: np.ndarray, levels=ZONE_LEVELS) -> np.ndarray:
+    """(n * len(levels), 3) axis points of a hypothetical object at every location."""
+    return np.array([[x, y, lv * zone.height] for x, y in grid for lv in levels])
+
+
+def location_visibility_from_depth(
+    depth: np.ndarray,
+    camera: CameraModel,
+    pose: Pose,
+    zone: InspectionZone,
+    depth_kind: str = "planar",
+    tolerance: float = LOCATION_TOLERANCE_M,
+) -> tuple[float, ...]:
+    """Per candidate location: fraction of its axis points the camera sees *through*.
+
+    A point counts when it is in the field of view and the measured depth along its pixel
+    is not shorter than the point's own depth (minus a tolerance): the line of sight passes
+    the location unobstructed. If the object stands there, the depth hits its surface
+    first, so its own location can never be seen through.
+    """
+    if depth_kind != "planar":
+        raise ValueError("location visibility is defined on planar depth")
+    if depth.shape != (camera.height, camera.width):
+        raise ValueError(f"depth shape {depth.shape} != camera {(camera.height, camera.width)}")
+    grid = location_grid(zone)
+    pts = location_axis_points(zone, grid)
+    uv, planar, in_fov = project_points(camera, pose, pts)
+    seen = np.zeros(len(pts), dtype=bool)
+    idx = np.flatnonzero(in_fov)
+    measured = depth[np.floor(uv[idx, 1]).astype(int), np.floor(uv[idx, 0]).astype(int)]
+    measured = np.where(np.isnan(measured), -np.inf, measured.astype(float))
+    seen[idx] = measured >= planar[idx] - tolerance
+    per_loc = seen.reshape(len(grid), len(ZONE_LEVELS)).mean(axis=1)
+    return tuple(float(v) for v in per_loc)
+
+
+def cleared_locations(history, col_min: float) -> np.ndarray:
+    """Union over views of locations seen through (>= col_min of the axis points)."""
+    out = np.zeros(LOCATION_SAMPLES, dtype=bool)
+    for o in history:
+        if o.location_visibility:
+            out |= np.asarray(o.location_visibility) >= col_min - 1e-9
+    return out

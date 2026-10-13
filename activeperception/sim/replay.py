@@ -15,6 +15,7 @@ from ..framestore import FrameStore
 from ..labeling import LabelingParams, label_episode
 from ..sensing import (
     gt_visibility_from_labels,
+    location_visibility_from_depth,
     obstacle_cells_from_depth,
     zone_visible_fraction_from_depth,
 )
@@ -93,6 +94,9 @@ class GazeboReplayWorld:
             timestamp=frames.stamp_s(viewpoint.id),
             image_ref=f"{spec.episode_id}#{viewpoint.id}",
             obstacle_cells=self.obstacle_cells(spec, viewpoint),
+            location_visibility=location_visibility_from_depth(
+                frames.depth(viewpoint.id), spec.camera, viewpoint.pose, spec.zone
+            ),
             meta={"world": self.name, "detector": self.detections.detector},
         )
         return self._obs_cache[key]
@@ -129,3 +133,19 @@ class GazeboReplayWorld:
             zone,
             self.labeling,
         )
+
+
+def make_peek(world, specs):
+    """``peek(episode_id, viewpoint_id) -> Observation`` for the oracle-v2 upper bound."""
+    by_id = {s.episode_id: s for s in specs}
+
+    def peek(episode_id: str, viewpoint_id: int):
+        spec = by_id[episode_id]
+        vp = (
+            spec.initial_viewpoint
+            if viewpoint_id == spec.initial_viewpoint.id
+            else spec.deployable().candidate(viewpoint_id)
+        )
+        return world.observe(spec, vp)
+
+    return peek

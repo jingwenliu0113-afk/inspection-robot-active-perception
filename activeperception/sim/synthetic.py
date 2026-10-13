@@ -154,6 +154,31 @@ class SyntheticWorld:
                     cells[(ix, iy)] = max(h, cells.get((ix, iy), 0))
         return tuple(sorted((a, c, h) for (a, c), h in cells.items()))
 
+    def location_visibility(self, spec: EpisodeSpec, viewpoint: Viewpoint) -> tuple:
+        """Analytic counterpart of ``sensing.location_visibility_from_depth``."""
+        from ..geometry import ray_cylinder_entry
+        from ..sensing import ZONE_LEVELS, location_axis_points, location_grid
+
+        grid = location_grid(spec.zone)
+        pts = location_axis_points(spec.zone, grid)
+        cam_pos = np.array(viewpoint.pose.position())
+        _, _, in_fov = project_points(spec.camera, viewpoint.pose, pts)
+        blocked = segments_blocked(cam_pos, pts, spec.layout.occluders)
+        lay = spec.layout
+        if lay.object_present and lay.object_pose is not None:
+            s = ray_cylinder_entry(
+                cam_pos,
+                pts - cam_pos,
+                lay.object_pose.x,
+                lay.object_pose.y,
+                self.params.proxy_radius,
+                0.0,
+                lay.object_height,
+            )
+            blocked |= s < 1.0 - 1e-9
+        seen = (in_fov & ~blocked).reshape(len(grid), len(ZONE_LEVELS)).mean(axis=1)
+        return tuple(float(v) for v in seen)
+
     # ---- oracle pass ------------------------------------------------------
     def ground_truth(self, spec: EpisodeSpec) -> EpisodeGroundTruth:
         vis_init = self.object_view(spec, spec.initial_viewpoint)["visibility"]
@@ -212,5 +237,6 @@ class SyntheticWorld:
             timestamp=0.0,
             image_ref=None,
             obstacle_cells=self.obstacle_cells(spec, viewpoint),
+            location_visibility=self.location_visibility(spec, viewpoint),
             meta={"world": self.name},
         )

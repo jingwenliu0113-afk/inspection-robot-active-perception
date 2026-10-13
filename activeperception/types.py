@@ -198,6 +198,9 @@ class Observation:
     # depth-derived obstacle height map of this view (decision 008): (ix, iy, height_cm)
     # cells of 5 cm outside the zone cylinder; deployable sensor data, not GT
     obstacle_cells: tuple[tuple[int, int, int], ...] = ()
+    # per candidate object location (sensing.location_grid): fraction of its axis points seen
+    # through in this view's depth (decision 011). Deployable; v1 code never reads it.
+    location_visibility: tuple[float, ...] = ()
     meta: dict[str, Any] = field(default_factory=dict)
 
     @property

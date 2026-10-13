@@ -44,6 +44,7 @@ from activeperception.policies import (
     SingleViewPolicy,
 )
 from activeperception.sensing import (
+    location_visibility_from_depth,
     obstacle_cells_from_depth,
     zone_visible_fraction_from_depth,
 )
@@ -175,6 +176,9 @@ class InspectorNode(Node):
             timestamp=stamp_ns(msgs["rgb"]) / 1e9,
             image_ref=f"live:{spec.episode_id}#{vp.id}",
             obstacle_cells=obstacle_cells_from_depth(depth, spec.camera, vp.pose, spec.zone),
+            location_visibility=location_visibility_from_depth(
+                depth, spec.camera, vp.pose, spec.zone
+            ),
             meta={"world": "gazebo-live", "detector": FROZEN_DETECTOR, "t_ref_ns": t_ref},
         )
 

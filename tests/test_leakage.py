@@ -11,6 +11,8 @@ from activeperception.policies import (
     RandomNBVPolicy,
     RuleNBVParams,
     RuleNBVPolicy,
+    RuleNBVv2Params,
+    RuleNBVv2Policy,
     SingleViewPolicy,
 )
 from activeperception.sim import SyntheticWorld
@@ -64,6 +66,7 @@ class TripwireWorld(SyntheticWorld):
         RandomNBVPolicy(),
         RuleNBVPolicy(),
         RuleNBVPolicy(RuleNBVParams(w_coverage=1.0, w_visibility=1.0)),
+        RuleNBVv2Policy(RuleNBVv2Params(w_gain=1.0, w_attraction=0.5, w_visibility=0.5)),
     ],
 )
 def test_deployable_policies_never_touch_ground_truth(policy):
