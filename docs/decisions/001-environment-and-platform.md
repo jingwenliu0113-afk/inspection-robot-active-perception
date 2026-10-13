@@ -96,3 +96,10 @@ Smoke test 腳本（`docker/smoke.sh`、`docker/grab_frames.py`）與 SDF 產生
 `inspection-ap-sim:jazzy-harmonic`（image id `sha256:49d6e69b240a…`，套件清單見 `docs/platform/versions.md`）在 Mac arm64 Docker 上：
 headless ogre2 渲染 RGB / depth / segmentation 正常、`set_pose` teleport 生效、同 pose 重 render 逐像素相同、每 viewpoint 約 0.3 s。
 細節見 `docs/platform/m2-smoke.md`。方案 B（gpu-server amd64）不需要。
+
+## 附錄 D（2026-10-13）：ROS 2 線上整合映像與驗證
+
+- `docker/Dockerfile.ros` 在 render 映像之上加 CPU 版 torch / torchvision（inspector node 在迴圈中跑 detector-v1）；正式 render 映像不變。
+- ROS 2 graph：`gz sim`（headless）+ `ros_gz_bridge parameter_bridge`（`/inspector/rgb`、`/inspector/depth` → `sensor_msgs/Image`；
+  `/world/inspection/set_pose/blocking` ↔ `ros_gz_interfaces/srv/SetEntityPose`）+ `inspection_ap_ros/inspector`（`ros_ws/src/inspection_ap_ros`）。
+- 驗證：pilot 24 episodes × 8 個 (policy, budget) 的線上執行與 replay 的 viewpoint 序列、決策 192/192 相同（`results/pilot/`）。

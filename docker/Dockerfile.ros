@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+# ROS 2 live-integration image (decision 001 appendix B): the render image plus a CPU
+# build of torch / torchvision so the inspection node can run detector-v1 in the loop.
+# Formal renders keep using inspection-ap-sim (unchanged); this tag is only for live runs.
+ARG SIM_IMAGE=inspection-ap-sim:jazzy-harmonic
+FROM ${SIM_IMAGE}
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3-pip python3-pil \
+ && rm -rf /var/lib/apt/lists/*
+
+# torch's own dependencies come from PyPI; torchvision without deps so apt's numpy 1.26
+# (used by the ROS Python stack) is never replaced.
+RUN pip install --no-cache-dir --break-system-packages \
+      --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple \
+      torch==2.14.1 \
+ && pip install --no-cache-dir --break-system-packages --no-deps \
+      --index-url https://download.pytorch.org/whl/cpu torchvision==0.29.1 \
+ && python3 -c "import numpy, torch, torchvision; print(numpy.__version__, torch.__version__, torchvision.__version__)"

@@ -199,3 +199,11 @@ def spec_digest(spec: EpisodeSpec) -> str:
     d.pop("split")
     blob = json.dumps(d, sort_keys=True).encode("utf-8")
     return hashlib.sha256(blob).hexdigest()[:16]
+
+
+def load_specs_any(path: str | Path) -> list[EpisodeSpec]:
+    """Specs from either a spec set or an episode set (specs + ground truth)."""
+    payload = json.loads(Path(path).read_text())
+    if payload.get("format") == SPEC_SET_FORMAT:
+        return [spec_from_dict(e) for e in payload["episodes"]]
+    return [spec_from_dict(e["spec"]) for e in payload["episodes"]]

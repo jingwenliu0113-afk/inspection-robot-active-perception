@@ -264,3 +264,12 @@ ros-jazzy-visualization-msgs 5.3.8-1noble.20260902.135335
 ros-jazzy-yaml-cpp-vendor 9.0.1-1noble.20260305.224129
 ros-jazzy-zstd-vendor 0.26.11-1noble.20260604.092801
 ```
+
+## ROS 2 live-integration image（docker/Dockerfile.ros）
+
+| item | value |
+|---|---|
+| image | `inspection-ap-ros:jazzy-harmonic`（FROM inspection-ap-sim:jazzy-harmonic） |
+| image id | `sha256:1353d64417517a79fa722ea9c55a3b1e0a84ac6319be20c7bc3de9da014e4143` |
+| 追加套件 | python3-pip、python3-pil（apt）；torch 2.14.1+cpu、torchvision 0.29.1+cpu（download.pytorch.org/whl/cpu，torchvision --no-deps；apt numpy 1.26.4 保留） |
+| 用途 | 只用於 ROS 2 線上執行（inspector node 跑 detector-v1）；正式 render 仍用 inspection-ap-sim |

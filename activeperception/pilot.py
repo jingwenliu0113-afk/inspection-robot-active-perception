@@ -8,6 +8,7 @@ final test (decision 002); nothing here is a research result.
 4. single / random / rule / oracle see the same candidate viewpoints and observations
 5. the grader never swallows ``inconclusive`` (never counted as false-absent /
    false-present; correct iff decision == expected)
+6. (decision 007) ROS 2 live runs reproduce the replay decisions and viewpoint sequences
 
     python -m activeperception.pilot --episodes data/episodes/gazebo-pilot.json \\
         --frames renders/pilot --detections runs/pilot/detector-v1.jsonl \\
@@ -230,12 +231,48 @@ def check_grader(specs, gts, records) -> dict:
     return {"confusion": confusion, "violations": violations, "pass": not violations}
 
 
+def check_live_consistency(live_dir: str | Path, records) -> dict:
+    """ROS 2 live runs (Mac CPU detector) vs replay (CUDA detection cache), decision 007 #4."""
+    replay = {
+        (r.episode_id, name, budget): r for (name, budget), recs in records.items() for r in recs
+    }
+    compared, same_seq, same_dec, diffs, conf_err = 0, 0, 0, [], []
+    for path in sorted(Path(live_dir).glob("*.json")):
+        live = json.loads(path.read_text())
+        for run in live["runs"]:
+            key = (live["episode_id"], run["policy"], run["budget"])
+            if key not in replay:
+                continue
+            rep = replay[key]
+            compared += 1
+            seq_ok = tuple(run["viewpoint_sequence"]) == rep.viewpoint_sequence
+            dec_ok = run["decision"] == str(rep.decision)
+            same_seq += seq_ok
+            same_dec += dec_ok
+            if seq_ok:
+                conf_err += [
+                    abs(a - o.max_confidence)
+                    for a, o in zip(run["max_conf_per_view"], rep.observations, strict=True)
+                ]
+            if not (seq_ok and dec_ok):
+                diffs.append({"key": key, "live": run["decision"], "replay": str(rep.decision)})
+    return {
+        "runs_compared": compared,
+        "same_viewpoint_sequence": same_seq,
+        "same_decision": same_dec,
+        "max_conf_abs_diff_max": float(max(conf_err)) if conf_err else None,
+        "differences": diffs,
+        "pass": compared > 0 and same_seq == compared and same_dec == compared,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="activeperception.pilot")
     ap.add_argument("--episodes", required=True)
     ap.add_argument("--frames", required=True)
     ap.add_argument("--detections", required=True)
     ap.add_argument("--rerender", help="independent re-render of the same specs")
+    ap.add_argument("--live", help="ROS 2 live-run records (docker/ros_live.sh output)")
     ap.add_argument("--budgets", default="1,3,5")
     ap.add_argument("--proxy-radius", type=float, default=0.15)
     ap.add_argument("--out", required=True)
@@ -265,6 +302,8 @@ def main(argv: list[str] | None = None) -> int:
     records = run_policies(specs, gts, world, rule, budgets)
     report["4_same_candidates"] = check_same_candidates(specs, records)
     report["5_grader"] = check_grader(specs, gts, records)
+    if args.live:
+        report["6_ros2_live_vs_replay"] = check_live_consistency(args.live, records)
     by_id = {s.episode_id: s for s in specs}
     summaries = {
         key: summarize([grade(r, gts[r.episode_id], by_id[r.episode_id]) for r in recs])

@@ -178,15 +178,27 @@ def validate(sdf_text: str) -> ET.Element:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="activeperception.sim.sdf")
-    ap.add_argument("--namespace", required=True)
-    ap.add_argument("--group", type=int, required=True)
+    ap.add_argument("--namespace")
+    ap.add_argument("--group", type=int)
     ap.add_argument("--variant", type=int, default=0)
+    ap.add_argument("--specs", help="spec set or episode set JSON (instead of regenerating)")
+    ap.add_argument("--episode", help="episode id inside --specs")
     ap.add_argument("--render-engine", default="ogre2")
+    ap.add_argument("--update-rate", type=float, default=30.0)
     ap.add_argument("--clear", action="store_true", help="GT pass: no pillars")
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
-    spec = generate_episode(args.namespace, args.group, args.variant, GeneratorConfig())
-    text = world_sdf(spec, render_engine=args.render_engine, clear=args.clear)
+    if args.specs:
+        from ..serialize import load_specs_any
+
+        spec = next(s for s in load_specs_any(args.specs) if s.episode_id == args.episode)
+    else:
+        if args.namespace is None or args.group is None:
+            ap.error("--namespace and --group, or --specs and --episode")
+        spec = generate_episode(args.namespace, args.group, args.variant, GeneratorConfig())
+    text = world_sdf(
+        spec, render_engine=args.render_engine, update_rate=args.update_rate, clear=args.clear
+    )
     validate(text)
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(text)

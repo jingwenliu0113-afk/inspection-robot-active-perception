@@ -4,7 +4,8 @@
 - 影像：`renders/pilot`（image `sha256:49d6e69b…`），獨立重 render：`renders/pilot-rerender`
 - detector：`detector-v1`（FRCNN-MobileNetV3，RTX 5070 Ti、GPU lock 下產生快取）
 - decision rule：`decision-v0`、rule-NBV：`rule-nbv-v0`（尚未調參）
-- 指令：`python -m activeperception.pilot --episodes data/episodes/gazebo-pilot.json --frames renders/pilot --detections runs/pilot/detector-v1.jsonl --rerender renders/pilot-rerender --out results/pilot`
+- 指令：`./docker/ros_live.sh data/episodes/gazebo-pilot.json "single:1,single:3,random:3,random:5,rule:3,rule:5,oracle:3,oracle:5" <24 個 episode id>`，再
+  `python -m activeperception.pilot --episodes data/episodes/gazebo-pilot.json --frames renders/pilot --detections runs/pilot/detector-v1.jsonl --rerender renders/pilot-rerender --live runs/ros --out results/pilot`
 - 完整輸出：`pilot_report.json`
 
 | SPEC §9 項目 | 檢查 | 結果 |
@@ -15,6 +16,7 @@
 | sensor transform | 96 個視角 depth vs ray-cast（planar）：中位誤差 0.25 mm、p99 0.50 mm；非物件像素 label 一致 ≥ 99.92% | 通過 |
 | 四方法同候選集 | 106 個 (episode, viewpoint) 觀測在所有方法間完全相同；初始視角都在第一個；只走訪候選；budget 1 四方法輸出相同 | 通過 |
 | grader 不吃 inconclusive | inconclusive 從未被算成 false-absent / false-present；correct ⇔ decision == expected | 通過 |
+| ROS 2 線上 = replay（decision 007 #4） | 24 episodes × 8 個 (policy, budget)：ROS 2 graph（gz sim + ros_gz_bridge + inspector node，Mac CPU 跑 detector-v1）與 replay（CUDA 偵測快取）的 viewpoint 序列 192/192、決策 192/192 相同；逐視角最高 confidence 差 ≤ 0.0037 | 通過 |
 
 ## Pilot sweep（v0 參數，僅供管線檢查）
 
