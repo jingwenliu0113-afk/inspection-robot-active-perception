@@ -44,6 +44,12 @@
   保證柱子不侵入 zone、不碰到任何候選相機位置。
 - 50% 的 scene group 會刻意把一根柱子放在初始視線上（方位 ±4°），與 gen-v1 相同；這是控制 layout，不是用 GT 篩選。
 
+### Variants 配對（修正 gen-v1 的實作與註解不一致）
+
+gen-v1 的程式註解宣稱同一對 present / absent 的遮擋柱 jitter 相同，但 v2 與 v3 的亂數流以 variant 編號為 key，實際上 jitter 不同。
+gen-v2 改為 jitter 以 `variant // 2` 為 key：v0 / v1 共用基礎佈局，v2 / v3 共用同一組 jitter 後的佈局，每一對只差在物件存在與否（matched pair）。
+物件位置與 yaw 以 variant 為 key 另外抽樣。
+
 ### 不變的部分
 
 候選 viewpoint（12 個、半徑 2.0 ± 0.2、高度 1.1 ± 0.2、只依 namespace / generator version / scene group）、初始 viewpoint、

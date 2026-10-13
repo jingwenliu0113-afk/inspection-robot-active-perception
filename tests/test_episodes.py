@@ -88,3 +88,46 @@ def test_different_groups_differ():
     b = generate_episode("diff", 1, 0)
     assert a.candidate_viewpoints != b.candidate_viewpoints
     assert a.layout != b.layout
+
+
+def _footprint_distance_range(box, cx, cy):
+    """Min / max distance from (cx, cy) to the four corners and the box centre."""
+    corners = [
+        (box.cx + sx * box.sx / 2, box.cy + sy * box.sy / 2) for sx in (-1, 1) for sy in (-1, 1)
+    ]
+    ds = [math.hypot(x - cx, y - cy) for x, y in corners]
+    # the closest point of an axis-aligned square can be on an edge, not a corner
+    nx = min(max(cx, box.cx - box.sx / 2), box.cx + box.sx / 2)
+    ny = min(max(cy, box.cy - box.sy / 2), box.cy + box.sy / 2)
+    return math.hypot(nx - cx, ny - cy), max(ds)
+
+
+def test_pillars_stay_out_of_zone_and_off_the_camera_ring():
+    cfg = GeneratorConfig()
+    for s in build_episode_set("pillars", 60, cfg):
+        for box in s.layout.occluders:
+            near, far = _footprint_distance_range(box, s.zone.cx, s.zone.cy)
+            assert near >= s.zone.radius + cfg.occluder_zone_clearance - 1e-9
+            for vp in (s.initial_viewpoint, *s.candidate_viewpoints):
+                assert far < math.hypot(vp.pose.x - s.zone.cx, vp.pose.y - s.zone.cy)
+            assert box.cz == box.sz / 2  # standing on the ground
+
+
+def test_object_stands_on_ground_inside_zone():
+    for s in build_episode_set("ground", 20):
+        p = s.layout.object_pose
+        if p is None:
+            continue
+        assert p.z == 0.0 and 0.0 <= p.yaw < 2 * math.pi
+        assert s.layout.object_height <= s.zone.height
+        assert s.layout.object_model == "fire_hydrant"
+
+
+def test_present_absent_pairs_share_occluders():
+    for g in range(10):
+        v = [generate_episode("pairs", g, k) for k in range(4)]
+        assert v[0].layout.occluders == v[1].layout.occluders
+        assert v[2].layout.occluders == v[3].layout.occluders
+        assert [b.sz for b in v[0].layout.occluders] == [b.sz for b in v[2].layout.occluders]
+        assert v[0].layout.object_present and not v[1].layout.object_present
+        assert v[2].layout.object_present and not v[3].layout.object_present

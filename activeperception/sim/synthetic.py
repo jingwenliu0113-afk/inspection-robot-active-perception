@@ -1,10 +1,12 @@
 """Analytic synthetic world for development and correctness tests.
 
-Geometry: the object is a sphere; occluders are axis-aligned pillars; the camera
-is a pinhole. GT visibility is the fraction of camera-facing surface samples that
-are inside the field of view and not blocked by any pillar, scaled down when the
-projected area is tiny. The synthetic detector maps (visibility, projected area)
-to a confidence with seeded noise and a small false-positive rate.
+Geometry (gen-v2): the target is a vertical cylinder standing in for the fire hydrant;
+occluders are axis-aligned pillars; the camera is a pinhole. GT visibility is the
+visible fraction of the object's *projected* area (surface samples weighted by sample
+area x cos(view angle)), times the label-v1 small-area penalty; this matches the
+pixel-ratio definition used for Gazebo (decision 007). The synthetic detector maps
+(visibility, projected area) to a confidence with seeded noise and a small
+false-positive rate.
 
 Everything is a deterministic function of (episode seed, viewpoint id), so the
 observation at a viewpoint does not depend on the order of visits (teleport).
@@ -21,8 +23,9 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..episodes import stable_seed
-from ..geometry import disc_samples, fibonacci_sphere, project_points, segments_blocked
-from ..labeling import LabelingParams, label_episode
+from ..geometry import cylinder_surface_samples, project_points, segments_blocked
+from ..labeling import LabelingParams, label_episode, visibility_score
+from ..sensing import zone_sample_points
 from ..types import (
     Detection,
     EpisodeGroundTruth,
@@ -34,9 +37,10 @@ from ..types import (
 
 @dataclass(frozen=True)
 class SyntheticParams:
-    n_surface_samples: int = 128
-    n_zone_samples: int = 48
-    min_area_frac: float = 0.002  # projected area below this starts to penalise visibility
+    proxy_radius: float = 0.15  # cylinder standing in for the hydrant body
+    n_side_angles: int = 24
+    n_side_levels: int = 8
+    n_cap_samples: int = 16
     # detector model
     area_ref: float = 0.006  # area fraction at which detector quality saturates
     conf_slope: float = 9.0
@@ -53,33 +57,48 @@ class SyntheticWorld:
 
     def __init__(self, params: SyntheticParams | None = None):
         self.params = params or SyntheticParams()
-        self._sphere = fibonacci_sphere(self.params.n_surface_samples)
-        self._disc = disc_samples(self.params.n_zone_samples)
+        p = self.params
+        self._unit_pts, self._normals = cylinder_surface_samples(
+            p.n_side_angles, p.n_side_levels, p.n_cap_samples
+        )
+        n_side = p.n_side_angles * p.n_side_levels
+        self._is_side = np.arange(len(self._unit_pts)) < n_side
 
     # ---- geometry -------------------------------------------------------
     def object_view(self, spec: EpisodeSpec, viewpoint: Viewpoint) -> dict[str, float]:
         """GT visibility score, projected area fraction, bbox and centre for the object."""
         lay = spec.layout
+        none = {"visibility": 0.0, "vis_fraction": 0.0, "area_frac": 0.0, "bbox": None}
         if not lay.object_present or lay.object_pose is None:
-            return {"visibility": 0.0, "area_frac": 0.0, "bbox": None, "center_uv": None}
+            return {**none, "center_uv": None}
+        p = self.params
         cam = spec.camera
-        center = np.array(lay.object_pose.position())
+        r, h = p.proxy_radius, lay.object_height
+        base = np.array([lay.object_pose.x, lay.object_pose.y, 0.0])
+        pts = base + self._unit_pts * np.array([r, r, h])
         cam_pos = np.array(viewpoint.pose.position())
-        normals = self._sphere
-        facing = normals @ (cam_pos - center) > 0.0
-        pts = center + lay.object_radius * normals
-        uv, depth, in_fov = project_points(cam, viewpoint.pose, pts)
+        to_cam = cam_pos - pts
+        dist = np.linalg.norm(to_cam, axis=1)
+        cos_view = np.einsum("ij,ij->i", self._normals, to_cam) / np.maximum(dist, 1e-9)
+        sample_area = np.where(
+            self._is_side,
+            2 * math.pi * r * h / (p.n_side_angles * p.n_side_levels),
+            math.pi * r * r / p.n_cap_samples,
+        )
+        weight = np.where(cos_view > 0.0, sample_area * cos_view, 0.0)
+        if weight.sum() <= 0.0:
+            return {**none, "center_uv": None}
+        uv, _, in_fov = project_points(cam, viewpoint.pose, pts)
         blocked = segments_blocked(cam_pos, pts, lay.occluders)
-        n_facing = int(facing.sum())
-        if n_facing == 0:
-            return {"visibility": 0.0, "area_frac": 0.0, "bbox": None, "center_uv": None}
-        ok = facing & in_fov & ~blocked
-        vis_fraction = float(ok.sum()) / n_facing
-        dist = float(np.linalg.norm(center - cam_pos))
-        r_px = cam.focal_px * lay.object_radius / max(dist, 1e-6)
-        area_frac = math.pi * r_px * r_px / (cam.width * cam.height)
-        area_factor = min(1.0, area_frac / self.params.min_area_frac)
-        visibility = vis_fraction * area_factor
+        ok = (weight > 0.0) & in_fov & ~blocked
+        vis_fraction = float(weight[ok].sum() / weight.sum())
+        centre = base + np.array([0.0, 0.0, h / 2.0])
+        d_c = float(np.linalg.norm(centre - cam_pos))
+        sin_el = abs(cam_pos[2] - centre[2]) / max(d_c, 1e-9)
+        cos_el = math.sqrt(max(0.0, 1.0 - sin_el * sin_el))
+        area_m2 = 2 * r * h * cos_el + math.pi * r * r * sin_el
+        area_frac = area_m2 * cam.focal_px**2 / max(d_c, 1e-9) ** 2 / (cam.width * cam.height)
+        visibility = visibility_score(vis_fraction, area_frac, p.labeling)
         bbox = None
         center_uv = None
         if ok.any():
@@ -97,19 +116,12 @@ class SyntheticWorld:
         }
 
     def zone_visible_fraction(self, spec: EpisodeSpec, viewpoint: Viewpoint) -> float:
-        """Fraction of zone sample points in FOV with an unblocked line of sight.
+        """Fraction of zone samples in FOV whose line of sight no pillar blocks.
 
-        This is what a depth camera would tell a deployed system about whether the
-        inspection zone is obstructed from this viewpoint.
+        Pillars never intrude the zone (gen-v2), so this equals the depth-camera
+        definition in ``sensing.zone_visible_fraction_from_depth`` (decision 007).
         """
-        z = spec.zone
-        pts = np.column_stack(
-            [
-                z.cx + z.radius * self._disc[:, 0],
-                z.cy + z.radius * self._disc[:, 1],
-                np.full(len(self._disc), z.cz),
-            ]
-        )
+        pts = zone_sample_points(spec.zone)
         cam_pos = np.array(viewpoint.pose.position())
         _, _, in_fov = project_points(spec.camera, viewpoint.pose, pts)
         blocked = segments_blocked(cam_pos, pts, spec.layout.occluders)

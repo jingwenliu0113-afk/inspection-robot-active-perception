@@ -60,7 +60,9 @@ def spec_from_dict(d: dict) -> EpisodeSpec:
         layout=SceneLayout(
             object_present=lay["object_present"],
             object_pose=_pose(lay["object_pose"]) if lay["object_pose"] is not None else None,
+            object_model=lay["object_model"],
             object_radius=lay["object_radius"],
+            object_height=lay["object_height"],
             occluders=tuple(Box(**b) for b in lay["occluders"]),
         ),
     )

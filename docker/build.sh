@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PLATFORM="${PLATFORM:-linux/$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')}"
-BASE_IMAGE="${BASE_IMAGE:-ros:jazzy-ros-base}"
+BASE_IMAGE="${BASE_IMAGE:-ros@sha256:066420e07f60aa18262f2479981def87ebcfcec42eefb0c0c57c4a46098348ca}"
 IMAGE="${IMAGE:-inspection-ap-sim:jazzy-harmonic}"
 echo "building ${IMAGE} for ${PLATFORM} from ${BASE_IMAGE}"
 docker build --platform "${PLATFORM}" --build-arg "BASE_IMAGE=${BASE_IMAGE}" \

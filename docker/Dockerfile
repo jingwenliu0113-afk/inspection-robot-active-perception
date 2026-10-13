@@ -1,29 +1,21 @@
 # syntax=docker/dockerfile:1
-# Formal simulation platform (decision 001): ROS 2 Jazzy (ros-base) + Gazebo Harmonic,
-# Ubuntu 24.04, headless software rendering (Mesa llvmpipe / EGL surfaceless).
+# Formal simulation platform (decision 001 + appendix B): ROS 2 Jazzy + Gazebo Harmonic via the
+# ROS vendor packages (official Jazzy/Harmonic pairing), Ubuntu 24.04, headless software
+# rendering (Mesa llvmpipe / EGL surfaceless). No OSRF gz-harmonic: one Harmonic copy only.
 #
-# Pinning: after the first successful pull, record the base digest and rebuild with it:
-#   docker pull ros:jazzy-ros-base
-#   docker inspect --format '{{index .RepoDigests 0}}' ros:jazzy-ros-base
-#   docker build --build-arg BASE_IMAGE=ros@sha256:<digest> ...
-# Then run docker/record_versions.sh and commit docs/platform/.
-ARG BASE_IMAGE=ros:jazzy-ros-base
+# Base pinned by digest (pulled 2026-10-13, linux/arm64). apt packages cannot be pinned long
+# term (packages.ros.org keeps only the latest build), so docker/record_versions.sh writes the
+# exact package versions to docs/platform/versions.md, which is committed with every rebuild.
+ARG BASE_IMAGE=ros@sha256:066420e07f60aa18262f2479981def87ebcfcec42eefb0c0c57c4a46098348ca
 FROM ${BASE_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Gazebo Harmonic from packages.osrfoundation.org (arm64 and amd64 builds exist for noble).
 RUN apt-get update \
- && apt-get install -y --no-install-recommends curl gnupg ca-certificates lsb-release \
- && curl -fsSL https://packages.osrfoundation.org/gazebo.gpg \
-      -o /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg \
- && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] http://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" \
-      > /etc/apt/sources.list.d/gazebo-stable.list \
- && apt-get update \
  && apt-get install -y --no-install-recommends \
-      gz-harmonic \
-      python3-gz-transport13 python3-gz-msgs10 python3-gz-sim8 \
-      python3-numpy \
+      ros-jazzy-ros-gz-sim ros-jazzy-ros-gz-bridge ros-jazzy-ros-gz-image ros-jazzy-ros-gz-interfaces \
+      ros-jazzy-vision-msgs \
+      python3-numpy python3-colcon-common-extensions \
       libegl1 libegl-mesa0 libgl1-mesa-dri libgbm1 mesa-utils xvfb \
  && rm -rf /var/lib/apt/lists/*
 

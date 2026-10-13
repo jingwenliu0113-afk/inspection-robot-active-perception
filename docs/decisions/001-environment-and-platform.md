@@ -72,3 +72,27 @@ Core 的 teleport harness 直接用 gz-transport（`/world/inspection/set_pose` 
 預估下載：base 約 0.3 GB（compressed）+ `gz-harmonic` 及依賴約 1 GB 以上；需使用者核准。
 
 Smoke test 腳本（`docker/smoke.sh`、`docker/grab_frames.py`）與 SDF 產生器（`activeperception/sim/sdf.py`）已寫好；SDF 產生器有單元測試，容器腳本在 image 建好前未經執行。
+
+## 附錄 B（2026-10-13）：改用 ROS vendor 套件，ROS 2 進入 Core 系統整合
+
+**背景**：使用者 2026-10-13 指示專案採「研究＋實用兼顧」：Core 必須透過 ROS 2 + Gazebo 運作（Mac M4 Pro 負責 ROS 2 / Gazebo / 模擬與系統整合）。附錄 A 把 `ros-jazzy-ros-gz` 延到 Advanced B 的安排因此改變。
+
+**實測（`ros:jazzy-ros-base` arm64，digest `sha256:066420e07f60aa18262f2479981def87ebcfcec42eefb0c0c57c4a46098348ca`）**：
+`ros-jazzy-ros-gz-sim ros-jazzy-ros-gz-bridge ros-jazzy-ros-gz-image ros-jazzy-vision-msgs` 共 596 個套件、壓縮下載約 316 MB；
+其中 `ros-jazzy-gz-*-vendor` 已帶入 Harmonic（gz-sim 8、gz-rendering 8 / ogre2、gz-sensors 8、gz CLI），
+`ros-jazzy-gz-transport-vendor` 依賴 `pybind11-dev`（Python bindings 一併建置）。
+
+**決定**：
+
+- Dockerfile 改為只用 packages.ros.org 的 vendor 套件，不再另裝 OSRF `gz-harmonic`，避免同一映像內有兩份不同小版本的 Harmonic 函式庫與 plugin。這是 ROS 2 Jazzy 官方的 Jazzy + Harmonic 配對方式。
+- ROS 2 在 Core 的角色：`ros_gz_bridge` 橋接相機影像與 `set_pose` 服務，ROS 2 node 以**同一套** decision rule / policy 程式碼線上執行巡檢（系統整合與 demo）。
+- 正式指標的資料來源仍是同一個 Gazebo world 的**決定性 render**（見 decision 007），ROS 2 線上執行需與離線 replay 的決策一致（pilot 檢查項）。這樣 ROS 2 訊息時序不會成為實驗的非決定性來源。
+- apt 套件無法長期釘版本（ROS apt repo 只保留最新版），可重現性以「base digest + 建好映像的 image ID + `docs/platform/versions.md` 套件版本清單」為準。
+
+**是否在看過正式結果後才修改**：否，尚無任何結果。
+
+## 附錄 C（2026-10-13）：M2 smoke test 通過，方案 A 確認
+
+`inspection-ap-sim:jazzy-harmonic`（image id `sha256:49d6e69b240a…`，套件清單見 `docs/platform/versions.md`）在 Mac arm64 Docker 上：
+headless ogre2 渲染 RGB / depth / segmentation 正常、`set_pose` teleport 生效、同 pose 重 render 逐像素相同、每 viewpoint 約 0.3 s。
+細節見 `docs/platform/m2-smoke.md`。方案 B（gpu-server amd64）不需要。

@@ -22,7 +22,7 @@ data/cache/
 !docs/**/*.gif
 
 # 模型權重與 detector artifacts 不進 repo
-models/
+/models/
 checkpoints/
 *.pt
 *.pth
@@ -56,3 +56,6 @@ log/
 
 # synthetic episode sets are regenerable in seconds; only Gazebo frozen sets get committed
 data/episodes/synthetic-*.json
+
+# vendored Gazebo model textures (CC0, see gazebo/models/*/SOURCE.md)
+!gazebo/models/**/*.png

@@ -18,6 +18,15 @@ LABELING_VERSION = "label-v1"
 @dataclass(frozen=True)
 class LabelingParams:
     visible_min_score: float = 0.5
+    # GT visibility = visible fraction * min(1, projected area fraction / min_area_frac)
+    min_area_frac: float = 0.002
+
+
+def visibility_score(vis_fraction: float, area_frac: float, params: LabelingParams) -> float:
+    """label-v1 GT visibility from the visible fraction and the unoccluded projected area."""
+    if area_frac <= 0.0:
+        return 0.0
+    return float(vis_fraction) * min(1.0, float(area_frac) / params.min_area_frac)
 
 
 def label_episode(

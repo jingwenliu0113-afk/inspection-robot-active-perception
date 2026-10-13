@@ -5,7 +5,8 @@ Independence guarantees (tested in ``tests/test_leakage.py``):
 * Candidate viewpoints and the initial viewpoint are a function of
   ``(namespace, generator_version, scene_group)`` only. They never depend on the
   object (present/absent, pose) or on the occluder layout.
-* Object placement uses a separate random stream keyed by the variant.
+* Occluder jitter is keyed by the variant *pair* (v0/v1, v2/v3) and object
+  placement by the variant, so each present/absent pair shares one occluder layout.
 * Split is a function of ``(namespace, scene_group)``. All variants of a scene
   group land in the same split, so near-duplicate scenes never straddle splits.
 * The ``pilot`` namespace is disjoint from the formal namespace at the seed level.
@@ -32,13 +33,13 @@ from .types import (
     Viewpoint,
 )
 
-GENERATOR_VERSION = "gen-v1"
+GENERATOR_VERSION = "gen-v2"  # decision 006
 PILOT_NAMESPACE = "pilot"
 
 
 @dataclass(frozen=True)
 class GeneratorConfig:
-    zone: InspectionZone = InspectionZone(cx=0.0, cy=0.0, cz=0.6, radius=0.5)
+    zone: InspectionZone = InspectionZone(cx=0.0, cy=0.0, cz=0.45, radius=0.5, height=0.95)
     camera: CameraModel = CameraModel()
     # candidate ring (per scene group: phase, radius and height jitter)
     n_candidates: int = 12
@@ -49,18 +50,32 @@ class GeneratorConfig:
     # initial viewpoint (separate pose, not one of the candidates)
     initial_radius: float = 2.0
     initial_height: float = 1.1
-    # object
-    object_radius: float = 0.12
-    # occluders: square pillars standing on the ground between ring and zone
+    # object: Fuel "Fire hydrant" v3 standing on the ground (decision 006)
+    object_model: str = "fire_hydrant"
+    object_radius: float = 0.21
+    object_height: float = 0.93
+    # occluders: square pillars on the ground between ring and zone. The centre radius is
+    # drawn per pillar so the footprint stays out of the zone and away from every camera.
     n_occluders_range: tuple[int, int] = (1, 3)
-    occluder_radius_range: tuple[float, float] = (0.85, 1.3)
-    occluder_width_range: tuple[float, float] = (0.4, 0.8)
+    occluder_width_range: tuple[float, float] = (0.3, 0.6)
     occluder_height_range: tuple[float, float] = (0.9, 1.5)
+    occluder_zone_clearance: float = 0.05
+    occluder_ring_clearance: float = 0.15
     p_block_initial: float = 0.5  # place one pillar on the initial line of sight
     occluder_jitter_m: float = 0.08
     occluder_jitter_rad: float = math.radians(5.0)
     variants_per_group: int = 4
     split_fractions: tuple[float, float, float] = (0.4, 0.2, 0.4)  # train, val, test
+
+    def occluder_radius_bounds(self, width: float) -> tuple[float, float]:
+        """Allowed pillar-centre distance from the zone centre for a pillar of ``width``."""
+        half_diag = width / math.sqrt(2.0)
+        lo = self.zone.radius + half_diag + self.occluder_zone_clearance
+        ring_min = min(self.ring_radius - self.ring_radius_jitter, self.initial_radius)
+        hi = ring_min - half_diag - self.occluder_ring_clearance
+        if hi < lo:
+            raise ValueError(f"no room for a {width:.2f} m pillar between zone and camera ring")
+        return lo, hi
 
 
 def stable_seed(*parts: object) -> int:
@@ -140,9 +155,10 @@ def _base_occluders(
             az = init_azimuth + rng.uniform(-1, 1) * math.radians(4.0)
         else:
             az = rng.uniform(0.0, 2 * math.pi)
-        radius = rng.uniform(*config.occluder_radius_range)
         width = rng.uniform(*config.occluder_width_range)
         height = rng.uniform(*config.occluder_height_range)
+        r_lo, r_hi = config.occluder_radius_bounds(width)
+        radius = r_lo + rng.uniform() * (r_hi - r_lo)
         params.append((az, radius, width, height))
     return params
 
@@ -151,15 +167,18 @@ def _layout(
     namespace: str, scene_group: int, variant: int, init_azimuth: float, config: GeneratorConfig
 ) -> SceneLayout:
     base = _base_occluders(namespace, scene_group, init_azimuth, config)
-    rng = _rng("variant", namespace, GENERATOR_VERSION, scene_group, variant)
     object_present = variant % 2 == 0
     jitter = variant >= 2
     zone = config.zone
+    jitter_rng = _rng("jitter", namespace, GENERATOR_VERSION, scene_group, variant // 2)
     occluders = []
     for az, radius, width, height in base:
         if jitter:
-            az = az + rng.uniform(-1, 1) * config.occluder_jitter_rad
-            radius = radius + rng.uniform(-1, 1) * config.occluder_jitter_m
+            az = az + jitter_rng.uniform(-1, 1) * config.occluder_jitter_rad
+            r_lo, r_hi = config.occluder_radius_bounds(width)
+            radius = min(
+                max(radius + jitter_rng.uniform(-1, 1) * config.occluder_jitter_m, r_lo), r_hi
+            )
         occluders.append(
             Box(
                 cx=zone.cx + radius * math.cos(az),
@@ -171,19 +190,23 @@ def _layout(
             )
         )
     object_pose = None
-    # draw the object position from the same stream regardless of presence so the
-    # occluder jitter above is identical between the present/absent pair of a group
-    r_max = max(zone.radius - config.object_radius, 0.0)
-    r = r_max * math.sqrt(rng.uniform())
-    theta = rng.uniform(0.0, 2 * math.pi)
     if object_present:
+        rng = _rng("object", namespace, GENERATOR_VERSION, scene_group, variant)
+        r_max = max(zone.radius - config.object_radius, 0.0)
+        r = r_max * math.sqrt(rng.uniform())
+        theta = rng.uniform(0.0, 2 * math.pi)
         object_pose = Pose(
-            x=zone.cx + r * math.cos(theta), y=zone.cy + r * math.sin(theta), z=zone.cz, yaw=0.0
+            x=zone.cx + r * math.cos(theta),
+            y=zone.cy + r * math.sin(theta),
+            z=0.0,
+            yaw=rng.uniform(0.0, 2 * math.pi),
         )
     return SceneLayout(
         object_present=object_present,
         object_pose=object_pose,
+        object_model=config.object_model,
         object_radius=config.object_radius,
+        object_height=config.object_height,
         occluders=tuple(occluders),
     )
 

@@ -66,12 +66,17 @@ class CameraModel:
 
 @dataclass(frozen=True)
 class InspectionZone:
-    """The region the task asks us to inspect. Known at deployment time."""
+    """The region the task asks us to inspect. Known at deployment time.
+
+    A vertical cylinder standing on the ground: centre (cx, cy), ``radius``, z in
+    [0, ``height``]. ``cz`` is the height every viewpoint looks at.
+    """
 
     cx: float
     cy: float
     cz: float
     radius: float
+    height: float
 
 
 @dataclass(frozen=True)
@@ -102,8 +107,10 @@ class SceneLayout:
     """Simulator-facing scene content. Never exposed to deployable policies."""
 
     object_present: bool
-    object_pose: Pose | None
-    object_radius: float
+    object_pose: Pose | None  # base of the object on the ground; yaw = heading
+    object_model: str  # Gazebo model name (gazebo/models/<object_model>)
+    object_radius: float  # footprint circumradius (placement; synthetic proxy bound)
+    object_height: float
     occluders: tuple[Box, ...]
 
 
