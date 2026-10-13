@@ -13,7 +13,11 @@ import numpy as np
 from ..detector.cache import DetectionCache
 from ..framestore import FrameStore
 from ..labeling import LabelingParams, label_episode
-from ..sensing import gt_visibility_from_labels, zone_visible_fraction_from_depth
+from ..sensing import (
+    gt_visibility_from_labels,
+    obstacle_cells_from_depth,
+    zone_visible_fraction_from_depth,
+)
 from ..serialize import spec_digest
 from ..types import EpisodeGroundTruth, EpisodeSpec, Observation, Viewpoint
 from .sdf import LABEL_OBJECT
@@ -38,6 +42,7 @@ class GazeboReplayWorld:
         self.labeling = labeling or LabelingParams()
         self.depth_kind = depth_kind
         self._zone_cache: dict[tuple[str, int], float] = {}
+        self._obstacle_cache: dict[tuple[str, int], tuple] = {}
         self._checked: set[str] = set()
 
     def _frames(self, spec: EpisodeSpec):
@@ -61,6 +66,15 @@ class GazeboReplayWorld:
             )
         return self._zone_cache[key]
 
+    def obstacle_cells(self, spec: EpisodeSpec, viewpoint: Viewpoint) -> tuple:
+        key = (spec.episode_id, viewpoint.id)
+        if key not in self._obstacle_cache:
+            self.zone_visible_fraction(spec, viewpoint)  # spec digest + pose checks
+            self._obstacle_cache[key] = obstacle_cells_from_depth(
+                self._frames(spec).depth(viewpoint.id), spec.camera, viewpoint.pose, spec.zone
+            )
+        return self._obstacle_cache[key]
+
     def observe(self, spec: EpisodeSpec, viewpoint: Viewpoint) -> Observation:
         if self.detections is None:
             raise RuntimeError("replay world has no detection cache; observe() needs one")
@@ -72,6 +86,7 @@ class GazeboReplayWorld:
             zone_visible_fraction=self.zone_visible_fraction(spec, viewpoint),
             timestamp=frames.stamp_s(viewpoint.id),
             image_ref=f"{spec.episode_id}#{viewpoint.id}",
+            obstacle_cells=self.obstacle_cells(spec, viewpoint),
             meta={"world": self.name, "detector": self.detections.detector},
         )
 

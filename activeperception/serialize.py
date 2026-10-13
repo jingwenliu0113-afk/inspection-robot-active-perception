@@ -26,7 +26,12 @@ from .types import (
 
 
 def to_dict(obj: Any) -> Any:
-    return dataclasses.asdict(obj)
+    d = dataclasses.asdict(obj)
+    if isinstance(obj, EpisodeRecord):
+        # obstacle maps are recomputable from the frame store and would dominate run logs
+        for o in d["observations"]:
+            o["n_obstacle_cells"] = len(o.pop("obstacle_cells"))
+    return d
 
 
 def _pose(d: dict) -> Pose:

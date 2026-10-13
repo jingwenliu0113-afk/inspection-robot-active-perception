@@ -194,6 +194,9 @@ class Observation:
     zone_visible_fraction: float
     timestamp: float
     image_ref: str | None = None
+    # depth-derived obstacle height map of this view (decision 008): (ix, iy, height_cm)
+    # cells of 5 cm outside the zone cylinder; deployable sensor data, not GT
+    obstacle_cells: tuple[tuple[int, int, int], ...] = ()
     meta: dict[str, Any] = field(default_factory=dict)
 
     @property

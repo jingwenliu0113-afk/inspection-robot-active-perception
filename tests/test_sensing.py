@@ -138,3 +138,52 @@ def test_depth_shape_and_nan_handling():
     empty = np.full_like(depth, np.inf)
     got = zone_visible_fraction_from_depth(empty, spec.camera, vp.pose, spec.zone)
     assert got == pytest.approx(in_fov.mean())
+
+
+def test_obstacle_cells_come_from_pillars_only():
+    from activeperception.sensing import OBSTACLE_CELL_M, obstacle_cells_from_depth
+
+    for spec in build_episode_set("obs", 4)[::2]:  # present variants: the target is in view
+        boxes = spec.layout.occluders
+        for vp in _viewpoints(spec, every=4):
+            depth, _ = render_spec(spec, vp.pose, PROXY)
+            for ix, iy, h_cm in obstacle_cells_from_depth(depth, spec.camera, vp.pose, spec.zone):
+                x, y = (ix + 0.5) * OBSTACLE_CELL_M, (iy + 0.5) * OBSTACLE_CELL_M
+                owner = [
+                    b
+                    for b in boxes
+                    if abs(x - b.cx) <= b.sx / 2 + OBSTACLE_CELL_M
+                    and abs(y - b.cy) <= b.sy / 2 + OBSTACLE_CELL_M
+                ]
+                assert owner, "obstacle cell not on any pillar (ground / zone / target leaked)"
+                assert h_cm <= max(b.sz for b in owner) * 100 + 1
+
+
+def test_predicted_visibility_matches_depth_with_full_map():
+    from activeperception.sensing import (
+        merge_obstacle_cells,
+        obstacle_cells_from_depth,
+        predicted_zone_visibility,
+    )
+
+    diffs = []
+    for spec in build_episode_set("pred", 6)[1::2]:
+        vps = [spec.initial_viewpoint, *spec.candidate_viewpoints]
+        depths = {vp.id: render_spec(spec, vp.pose, PROXY)[0] for vp in vps}
+        hmap = merge_obstacle_cells(
+            obstacle_cells_from_depth(depths[v.id], spec.camera, v.pose, spec.zone) for v in vps
+        )
+        for vp in vps:
+            pred = predicted_zone_visibility(hmap, spec.camera, vp.pose, spec.zone)
+            true = zone_visible_fraction_from_depth(depths[vp.id], spec.camera, vp.pose, spec.zone)
+            diffs.append(abs(pred - true))
+    assert np.mean(diffs) < 0.03 and max(diffs) < 0.15, (np.mean(diffs), max(diffs))
+
+
+def test_empty_map_predicts_field_of_view_only():
+    from activeperception.sensing import predicted_zone_visibility
+
+    spec = generate_episode("emp", 0, 1)
+    vp = spec.candidate_viewpoints[3]
+    _, _, in_fov = project_points(spec.camera, vp.pose, zone_sample_points(spec.zone))
+    assert predicted_zone_visibility({}, spec.camera, vp.pose, spec.zone) == in_fov.mean()

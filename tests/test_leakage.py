@@ -7,7 +7,12 @@ import pytest
 from activeperception.decision import DecisionRule
 from activeperception.episodes import GeneratorConfig, candidate_viewpoints, generate_episode
 from activeperception.harness import run_episode
-from activeperception.policies import RandomNBVPolicy, RuleNBVPolicy, SingleViewPolicy
+from activeperception.policies import (
+    RandomNBVPolicy,
+    RuleNBVParams,
+    RuleNBVPolicy,
+    SingleViewPolicy,
+)
 from activeperception.sim import SyntheticWorld
 from activeperception.types import DeployableEpisode
 
@@ -52,7 +57,15 @@ class TripwireWorld(SyntheticWorld):
         raise AssertionError("ground truth accessed during a deployable policy run")
 
 
-@pytest.mark.parametrize("policy", [SingleViewPolicy(), RandomNBVPolicy(), RuleNBVPolicy()])
+@pytest.mark.parametrize(
+    "policy",
+    [
+        SingleViewPolicy(),
+        RandomNBVPolicy(),
+        RuleNBVPolicy(),
+        RuleNBVPolicy(RuleNBVParams(w_coverage=1.0, w_visibility=1.0)),
+    ],
+)
 def test_deployable_policies_never_touch_ground_truth(policy):
     world = TripwireWorld()
     rule = DecisionRule()

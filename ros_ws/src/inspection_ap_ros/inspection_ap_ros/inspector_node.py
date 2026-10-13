@@ -43,7 +43,10 @@ from activeperception.policies import (
     RuleNBVPolicy,
     SingleViewPolicy,
 )
-from activeperception.sensing import zone_visible_fraction_from_depth
+from activeperception.sensing import (
+    obstacle_cells_from_depth,
+    zone_visible_fraction_from_depth,
+)
 from activeperception.serialize import load_episode_set
 from activeperception.sim.sdf import CAMERA_MODEL
 from activeperception.types import Observation
@@ -171,6 +174,7 @@ class InspectorNode(Node):
             ),
             timestamp=stamp_ns(msgs["rgb"]) / 1e9,
             image_ref=f"live:{spec.episode_id}#{vp.id}",
+            obstacle_cells=obstacle_cells_from_depth(depth, spec.camera, vp.pose, spec.zone),
             meta={"world": "gazebo-live", "detector": FROZEN_DETECTOR, "t_ref_ns": t_ref},
         )
 

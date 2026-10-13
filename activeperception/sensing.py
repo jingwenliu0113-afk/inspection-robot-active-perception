@@ -133,3 +133,96 @@ def gt_visibility_from_labels(
         bbox_visible=label_bbox(vis_mask),
         bbox_full=label_bbox(full_mask),
     )
+
+
+# ---- depth-derived obstacle map (decision 008, rule-NBV v1) -------------------------
+OBSTACLE_CELL_M = 0.05
+OBSTACLE_MIN_HEIGHT_M = 0.05
+OBSTACLE_ZONE_MARGIN_M = 0.03
+OBSTACLE_MAX_RANGE_M = 4.0
+OBSTACLE_PIXEL_STRIDE = 4
+
+
+def obstacle_cells_from_depth(
+    depth: np.ndarray,
+    camera: CameraModel,
+    pose: Pose,
+    zone: InspectionZone,
+    stride: int = OBSTACLE_PIXEL_STRIDE,
+) -> tuple[tuple[int, int, int], ...]:
+    """Height map cells (ix, iy, max height cm) of surfaces seen in a planar depth image.
+
+    Ground (z <= 5 cm), anything inside the zone cylinder (+3 cm) and anything farther than
+    4 m from the zone centre are dropped, so the target itself never enters the map.
+    """
+    from .geometry import rotation_matrix
+
+    h, w = depth.shape
+    rows = np.arange(stride // 2, h, stride)
+    cols = np.arange(stride // 2, w, stride)
+    uu, vv = np.meshgrid(cols + 0.5, rows + 0.5)
+    d = depth[np.ix_(rows, cols)].astype(float)
+    valid = np.isfinite(d) & (d > 0)
+    f = camera.focal_px
+    cam = np.stack([np.ones_like(uu), -(uu - w / 2.0) / f, -(vv - h / 2.0) / f], axis=-1)
+    pts = (cam * d[..., None])[valid] @ rotation_matrix(pose.yaw, pose.pitch).T
+    pts += np.array(pose.position())
+    r = np.hypot(pts[:, 0] - zone.cx, pts[:, 1] - zone.cy)
+    keep = (
+        (pts[:, 2] > OBSTACLE_MIN_HEIGHT_M)
+        & (r > zone.radius + OBSTACLE_ZONE_MARGIN_M)
+        & (r < OBSTACLE_MAX_RANGE_M)
+    )
+    pts = pts[keep]
+    if not len(pts):
+        return ()
+    ix = np.floor(pts[:, 0] / OBSTACLE_CELL_M).astype(int)
+    iy = np.floor(pts[:, 1] / OBSTACLE_CELL_M).astype(int)
+    hz = np.ceil(pts[:, 2] * 100.0).astype(int)
+    best: dict[tuple[int, int], int] = {}
+    for a, b, c in zip(ix.tolist(), iy.tolist(), hz.tolist(), strict=True):
+        if c > best.get((a, b), -1):
+            best[(a, b)] = c
+    return tuple(sorted((a, b, c) for (a, b), c in best.items()))
+
+
+def merge_obstacle_cells(maps) -> dict[tuple[int, int], int]:
+    out: dict[tuple[int, int], int] = {}
+    for cells in maps:
+        for a, b, c in cells:
+            if c > out.get((a, b), -1):
+                out[(a, b)] = c
+    return out
+
+
+def predicted_zone_visibility(
+    height_map: dict[tuple[int, int], int],
+    camera: CameraModel,
+    pose: Pose,
+    zone: InspectionZone,
+    n_steps: int = 64,
+) -> float:
+    """Fraction of zone samples a camera at ``pose`` would see past the known obstacles.
+
+    Unknown cells count as free (optimistic); samples outside the field of view count as
+    not visible, matching ``zone_visible_fraction_from_depth``.
+    """
+    pts = zone_sample_points(zone)
+    _, _, in_fov = project_points(camera, pose, pts)
+    if not height_map:
+        return float(in_fov.mean())
+    keys = np.array(list(height_map))
+    lo = keys.min(axis=0)
+    grid = np.zeros(tuple(keys.max(axis=0) - lo + 1), dtype=float)
+    grid[keys[:, 0] - lo[0], keys[:, 1] - lo[1]] = np.array(list(height_map.values())) / 100.0
+    origin = np.array(pose.position())
+    t = np.linspace(0.0, 1.0, n_steps, endpoint=False)[1:]
+    ray = origin + t[:, None, None] * (pts - origin)[None, :, :]  # (steps, N, 3)
+    ix = np.floor(ray[..., 0] / OBSTACLE_CELL_M).astype(int) - lo[0]
+    iy = np.floor(ray[..., 1] / OBSTACLE_CELL_M).astype(int) - lo[1]
+    inside = (ix >= 0) & (iy >= 0) & (ix < grid.shape[0]) & (iy < grid.shape[1])
+    heights = np.zeros(ix.shape)
+    heights[inside] = grid[ix[inside], iy[inside]]
+    outside_zone = np.hypot(ray[..., 0] - zone.cx, ray[..., 1] - zone.cy) > zone.radius
+    blocked = ((ray[..., 2] < heights) & outside_zone).any(axis=0)
+    return float((in_fov & ~blocked).mean())

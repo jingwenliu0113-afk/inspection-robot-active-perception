@@ -127,6 +127,33 @@ class SyntheticWorld:
         blocked = segments_blocked(cam_pos, pts, spec.layout.occluders)
         return float((in_fov & ~blocked).mean())
 
+    def obstacle_cells(self, spec: EpisodeSpec, viewpoint: Viewpoint) -> tuple:
+        """Analytic stand-in for ``sensing.obstacle_cells_from_depth`` (dev / tests only).
+
+        A pillar contributes its whole footprint (5 cm cells, top height) when its centre
+        at half height is in the field of view and not hidden behind another pillar.
+        """
+        from ..sensing import OBSTACLE_CELL_M
+
+        cam_pos = np.array(viewpoint.pose.position())
+        cells: dict[tuple[int, int], int] = {}
+        boxes = spec.layout.occluders
+        for i, b in enumerate(boxes):
+            centre = np.array([[b.cx, b.cy, b.cz]])
+            _, _, in_fov = project_points(spec.camera, viewpoint.pose, centre)
+            others = [o for j, o in enumerate(boxes) if j != i]
+            if not in_fov[0] or segments_blocked(cam_pos, centre, others)[0]:
+                continue
+            x0 = int(np.floor((b.cx - b.sx / 2) / OBSTACLE_CELL_M))
+            x1 = int(np.floor((b.cx + b.sx / 2) / OBSTACLE_CELL_M))
+            y0 = int(np.floor((b.cy - b.sy / 2) / OBSTACLE_CELL_M))
+            y1 = int(np.floor((b.cy + b.sy / 2) / OBSTACLE_CELL_M))
+            h = int(np.ceil(b.sz * 100.0))
+            for ix in range(x0, x1 + 1):
+                for iy in range(y0, y1 + 1):
+                    cells[(ix, iy)] = max(h, cells.get((ix, iy), 0))
+        return tuple(sorted((a, c, h) for (a, c), h in cells.items()))
+
     # ---- oracle pass ------------------------------------------------------
     def ground_truth(self, spec: EpisodeSpec) -> EpisodeGroundTruth:
         vis_init = self.object_view(spec, spec.initial_viewpoint)["visibility"]
@@ -184,5 +211,6 @@ class SyntheticWorld:
             zone_visible_fraction=self.zone_visible_fraction(spec, viewpoint),
             timestamp=0.0,
             image_ref=None,
+            obstacle_cells=self.obstacle_cells(spec, viewpoint),
             meta={"world": self.name},
         )

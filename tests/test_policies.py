@@ -54,3 +54,25 @@ def test_sanity_ordering_on_synthetic_world(world, rule, dev_specs, dev_gts):
         assert false_absent_rate(outs) == 0.0
     assert acc["oracle"] >= acc["random"] >= acc["single"]
     assert acc["oracle"] >= acc["rule"] >= acc["single"]
+
+
+def test_rule_nbv_v1_coverage_gain_and_visibility_features(world):
+    from activeperception.decision import DecisionRuleParams, sector_of
+    from activeperception.episodes import generate_episode
+    from activeperception.policies import RuleNBVParams, RuleNBVPolicy
+
+    spec = generate_episode("v1feat", 3, 1)
+    dep = spec.deployable()
+    dp = DecisionRuleParams()
+    pol = RuleNBVPolicy(RuleNBVParams(w_coverage=1.0, w_visibility=1.0), dp)
+    pol.reset(dep, 0)
+    h0 = [world.observe(spec, spec.initial_viewpoint)]
+    effective = h0[0].zone_visible_fraction >= dp.effective_zone_fraction
+    init_sector = sector_of(spec.initial_viewpoint.azimuth, dp.n_sectors)
+    for vp in spec.candidate_viewpoints:
+        f = pol.features(dep, h0, vp)
+        same = sector_of(vp.azimuth, dp.n_sectors) == init_sector
+        assert f["coverage_gain"] == (0.0 if (same and effective) else 1.0)
+        assert 0.0 <= f["predicted_visibility"] <= 1.0
+    nxt = pol.select_next(dep, h0, 4)
+    assert nxt in {vp.id for vp in spec.candidate_viewpoints}
