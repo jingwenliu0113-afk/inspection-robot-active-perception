@@ -95,6 +95,40 @@ def map_files(spec: EpisodeSpec, image_name: str) -> tuple[bytes, str]:
     return pgm, yaml
 
 
+GENERATOR_VERSION_V1 = "gen-nav-v1"  # = gen-nav-b0 settings, frozen for B1 / B2 (decision 017)
+B1_NAMESPACE = "nav-b1"  # B1 integration (dev) data
+
+
+def nav_specs(
+    namespace: str, n_groups: int, variants: tuple[int, ...] = (0, 1, 2, 3)
+) -> list[EpisodeSpec]:
+    """B1 / B2 episodes: gen-v2 variants (present / absent x pillar jitter) on gen-nav-v1."""
+    return [
+        dataclasses.replace(s, generator_version=GENERATOR_VERSION_V1)
+        for s in b0_specs(n_groups, variants, namespace)
+    ]
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    from ..serialize import save_spec_set
+
+    ap = argparse.ArgumentParser(prog="activeperception.nav.scene")
+    ap.add_argument("--namespace", required=True)
+    ap.add_argument("--groups", type=int, required=True)
+    ap.add_argument("--out", required=True)
+    args = ap.parse_args(argv)
+    specs = nav_specs(args.namespace, args.groups)
+    save_spec_set(args.out, specs, extra={"namespace": args.namespace})
+    print(f"wrote {len(specs)} {GENERATOR_VERSION_V1} specs -> {args.out}")
+    return 0
+
+
 def specs_by_id() -> dict[str, EpisodeSpec]:
     namespaces = (NAMESPACE, CONFIRM_NAMESPACE, RECONFIRM_NAMESPACE)
     return {s.episode_id: s for ns in namespaces for s in b0_specs(namespace=ns)}
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

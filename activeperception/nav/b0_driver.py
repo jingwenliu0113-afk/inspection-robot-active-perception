@@ -229,6 +229,7 @@ class Driver:
             labels=labels,  # scoring only
         )
         self.n_caps += 1
+        self.last_frames = frames  # B1 closed loop reads the capture it just made
         return {
             "tag": tag,
             "target": target,
