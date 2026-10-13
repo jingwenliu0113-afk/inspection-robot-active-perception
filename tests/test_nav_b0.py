@@ -158,3 +158,80 @@ def test_clearance_uses_robot_radius():
     assert b0_analysis.clearance(trace, s)["obstacle_m"] == pytest.approx(
         0.1 - b0_analysis.ROBOT_RADIUS_M
     )
+
+
+# --- decision 016: pose refinement + pose-robust see-through ---------------------------
+
+
+def _synthetic_depth(spec, pose):
+    from activeperception.sim.raycast import render
+
+    depth, _ = render(spec.camera, pose, (*spec.layout.occluders, *scene.walls()), None)
+    return depth
+
+
+def test_refinement_recovers_a_pose_offset_from_depth_and_map_only():
+    from activeperception.nav import localize
+
+    s = SPECS[0]
+    truth = s.candidate_viewpoints[3].pose
+    depth = _synthetic_depth(s, truth)
+    est = dataclasses.replace(truth, x=truth.x + 0.05, y=truth.y - 0.03, yaw=truth.yaw + 0.03)
+    r = localize.refine_pose(depth, s.camera, est, s.zone, localize.map_outlines(s))
+    assert r.ok
+    assert math.hypot(r.pose.x - truth.x, r.pose.y - truth.y) < 0.01
+    assert abs(r.pose.yaw - truth.yaw) < 0.003
+    params = set(inspect.signature(localize.refine_pose).parameters)
+    assert params == {
+        "depth",
+        "camera",
+        "estimate",
+        "zone",
+        "outlines",
+        "min_eigenvalue",
+        "min_points",
+    }
+
+
+def test_refinement_rejects_a_single_wall_view():
+    from activeperception.nav import localize
+
+    s = SPECS[0]
+    # stand near the +x wall, look straight at it: one plane only -> sliding along it is free
+    pose = Pose(3.0, 3.0, 1.1, 0.0, scene.MAST_PITCH)
+    depth = _synthetic_depth(s, pose)
+    r = localize.refine_pose(depth, s.camera, pose, s.zone, localize.map_outlines(s))
+    assert not r.ok and r.pose == pose
+
+
+def test_map_outlines_are_inner_wall_faces_and_pillars_never_the_target():
+    from activeperception.nav import localize
+
+    present, absent = SPECS[0], SPECS[1]
+    assert localize.map_outlines(present) == localize.map_outlines(absent)
+    faces = localize.inner_wall_faces()
+    assert {(abs(b.cx), abs(b.cy)) for b in faces} == {(4.0, 0.0), (0.0, 4.0)}
+    assert all(min(b.sx, b.sy) == 0.0 for b in faces)
+
+
+def test_robust_visibility_is_never_larger_than_plain_visibility():
+    from activeperception.nav import localize
+    from activeperception.sensing import location_visibility_from_depth
+
+    s = SPECS[1]
+    pose = s.candidate_viewpoints[0].pose
+    depth = _synthetic_depth(s, pose)
+    plain = np.array(location_visibility_from_depth(depth, s.camera, pose, s.zone))
+    robust = np.array(
+        localize.robust_location_visibility(depth, s.camera, pose, s.zone, 0.015, 0.005)
+    )
+    assert (robust <= plain + 1e-12).all()
+    assert len(localize.pose_set(pose, 0.015, 0.005)) == 27
+    assert pose in localize.pose_set(pose, 0.015, 0.005)
+
+
+def test_confirmation_namespace_is_new_data():
+    confirm = scene.b0_specs(namespace=scene.CONFIRM_NAMESPACE)
+    assert {s.split for s in confirm} == {Split.NAV_DEV}
+    assert {s.seed for s in confirm}.isdisjoint({s.seed for s in SPECS})
+    assert set(scene.specs_by_id()) == {s.episode_id for s in (*SPECS, *confirm)}

@@ -21,7 +21,8 @@ from ..episodes import GeneratorConfig, generate_episode
 from ..types import Box, EpisodeSpec, Split
 
 GENERATOR_VERSION = "gen-nav-b0"
-NAMESPACE = "nav-b0"
+NAMESPACE = "nav-b0"  # B0 runs and decision 016 development
+CONFIRM_NAMESPACE = "nav-b0c"  # decision 016 confirmation, generated after its freeze, run once
 CONFIG = GeneratorConfig(
     ring_radius=2.0,
     ring_radius_jitter=0.0,
@@ -39,11 +40,13 @@ MAP_HALF_M = 4.5
 MAST_PITCH = math.atan2(CONFIG.ring_height - CONFIG.zone.cz, CONFIG.ring_radius)
 
 
-def b0_specs(n_groups: int = 6, variants: tuple[int, ...] = (0, 1)) -> list[EpisodeSpec]:
+def b0_specs(
+    n_groups: int = 6, variants: tuple[int, ...] = (0, 1), namespace: str = NAMESPACE
+) -> list[EpisodeSpec]:
     """``variants`` 0 / 1 = object present / absent with the same pillars (gen-v2 rule)."""
     return [
         dataclasses.replace(
-            generate_episode(NAMESPACE, g, v, CONFIG),
+            generate_episode(namespace, g, v, CONFIG),
             generator_version=GENERATOR_VERSION,
             split=Split.NAV_DEV,
         )
@@ -89,3 +92,9 @@ def map_files(spec: EpisodeSpec, image_name: str) -> tuple[bytes, str]:
         "occupied_thresh: 0.65\nfree_thresh: 0.25\n"
     )
     return pgm, yaml
+
+
+def specs_by_id() -> dict[str, EpisodeSpec]:
+    return {
+        s.episode_id: s for ns in (NAMESPACE, CONFIRM_NAMESPACE) for s in b0_specs(namespace=ns)
+    }

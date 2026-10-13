@@ -324,7 +324,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--episode", required=True)
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
-    spec = {s.episode_id: s for s in scene.b0_specs()}[args.episode]
+    spec = scene.specs_by_id()[args.episode]
     out = Path(args.out) / spec.episode_id
     if args.action == "prepare":
         prepare(spec, out)

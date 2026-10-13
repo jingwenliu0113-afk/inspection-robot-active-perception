@@ -109,6 +109,19 @@ def observation(
     )
 
 
+def observation_d016(
+    spec: EpisodeSpec, index: int, depth: np.ndarray, dets: tuple[Detection, ...], estimate: Pose
+):
+    """decision 016 decision input: refined pose + pose-robust see-through (deployable only)."""
+    from .localize import deployable_pose_and_visibility, map_outlines
+
+    pose, vis, ref = deployable_pose_and_visibility(
+        depth, spec.camera, estimate, spec.zone, map_outlines(spec)
+    )
+    obs = dataclasses.replace(observation(spec, index, depth, dets, pose), location_visibility=vis)
+    return obs, ref
+
+
 def _angle(a: float) -> float:
     return abs((a + math.pi) % (2 * math.pi) - math.pi)
 
@@ -160,17 +173,19 @@ def _q(v: list[float], q: float) -> float | None:
 
 
 def analyze(runs: Path, cache) -> dict:
-    specs = {s.episode_id: s for s in scene.b0_specs()}
+    specs = scene.specs_by_id()
     rule = frozen_v2.decision_rule()
     eps = sorted(p.parent.name for p in runs.glob("*/episode.json"))
     rtf, goals, cancels, loc_xy, loc_yaw, depth_err, depth_err_est = [], [], [], [], [], [], []
     fresh = total = 0
     pairs = {"n": 0, "wrong_definitive": [], "geometric_risk": [], "by_gt": {}}
+    pairs16 = {"n": 0, "wrong_definitive": [], "geometric_risk": [], "by_gt": {}}
+    refine_rows, per_episode16 = [], []
     per_episode, roll_max, detection_rows = [], 0.0, []
     for eid in eps:
         spec = specs[eid]
         rep = json.loads((runs / eid / "episode.json").read_text())
-        obs_est, obs_gt = [], []
+        obs_est, obs_gt, obs_d16 = [], [], []
         for i, row in enumerate(rep["rows"]):
             cap = np.load(runs / eid / row["file"])
             depth, labels = decode_depth_mm(cap["depth_mm"]), cap["labels"]
@@ -185,6 +200,19 @@ def analyze(runs: Path, cache) -> dict:
             roll_max = max(roll_max, abs(resid))
             dets = cache.get(eid, i)
             obs_est.append(observation(spec, i, depth, dets, p_est))
+            o16, ref = observation_d016(spec, i, depth, dets, p_est)
+            obs_d16.append(o16)
+            refine_rows.append(
+                {
+                    "ok": ref.ok,
+                    "xy_m": math.hypot(
+                        o16.viewpoint.pose.x - p_gt.x, o16.viewpoint.pose.y - p_gt.y
+                    ),
+                    "yaw": _angle(o16.viewpoint.pose.yaw - p_gt.yaw),
+                    "eig": ref.min_eigenvalue,
+                    "tag": row["tag"],
+                }
+            )
             obs_gt.append(observation(spec, i, depth, dets, p_gt))  # comparison only
             depth_err.append(depth_check(spec, depth, labels, p_gt))
             depth_err_est.append(depth_check(spec, depth, labels, p_est))
@@ -242,6 +270,29 @@ def analyze(runs: Path, cache) -> dict:
                 pairs["wrong_definitive"].append({"episode": eid, "capture": k, "tag": tag})
             if present and rule.cleared_fraction(hist) >= 1.0 - 1e-9:
                 pairs["geometric_risk"].append({"episode": eid, "capture": k, "tag": tag})
+        for k in range(1, len(obs_d16)):
+            hist = [obs_d16[0], obs_d16[k]]
+            out = rule.decide(spec.deployable(), hist)
+            pairs16["n"] += 1
+            key = f"{'present' if present else 'absent'}->{out.decision.value}"
+            pairs16["by_gt"][key] = pairs16["by_gt"].get(key, 0) + 1
+            if (out.decision == Decision.ABSENT and present) or (
+                out.decision == Decision.PRESENT and not present
+            ):
+                pairs16["wrong_definitive"].append({"episode": eid, "capture": k})
+            if present and rule.cleared_fraction(hist) >= 1.0 - 1e-9:
+                pairs16["geometric_risk"].append({"episode": eid, "capture": k})
+        u16 = rule.decide(spec.deployable(), obs_d16)
+        per_episode16.append(
+            {
+                "episode": eid,
+                "present": present,
+                "all_views_decision": u16.decision.value,
+                "cleared_fraction": rule.cleared_fraction(obs_d16),
+                "all_views_geometric_risk": present
+                and rule.cleared_fraction(obs_d16) >= 1.0 - 1e-9,
+            }
+        )
         union = rule.decide(spec.deployable(), obs_est)
         union_gt = rule.decide(spec.deployable(), obs_gt)
         # protection margin per view (scoring): locations NOT seen through, est vs GT pose
@@ -343,6 +394,28 @@ def analyze(runs: Path, cache) -> dict:
                 (r["max_conf"] for r in detection_rows if not r["present"]), default=None
             ),
         },
+        "decision_016": {
+            "refinement": {
+                "captures": len(refine_rows),
+                "ok": sum(r["ok"] for r in refine_rows),
+                "ok_xy_p50_m": _q([r["xy_m"] for r in refine_rows if r["ok"]], 0.5),
+                "ok_xy_p95_m": _q([r["xy_m"] for r in refine_rows if r["ok"]], 0.95),
+                "ok_xy_max_m": max((r["xy_m"] for r in refine_rows if r["ok"]), default=None),
+                "ok_yaw_p95": _q([r["yaw"] for r in refine_rows if r["ok"]], 0.95),
+                "ok_yaw_max": max((r["yaw"] for r in refine_rows if r["ok"]), default=None),
+                "degenerate_by_tag": {
+                    t: sum(1 for r in refine_rows if not r["ok"] and r["tag"] == t)
+                    for t in ("initial", "goal", "cancel")
+                },
+            },
+            "R1_wrong_definitive": len(pairs16["wrong_definitive"]),
+            "R1_geometric_risk": len(pairs16["geometric_risk"]),
+            "R2_all_views_geometric_risk": sum(
+                e["all_views_geometric_risk"] for e in per_episode16
+            ),
+            "pairs": pairs16,
+            "per_episode": per_episode16,
+        },
         "decisions": {
             "pairs": pairs,
             "all_views_geometric_risk_episodes": sum(
@@ -364,7 +437,7 @@ def pose_sensitivity(runs: Path) -> dict:
     signs) or along the viewing direction; a view is unsafe when all 64 locations count as
     seen through.
     """
-    specs = {s.episode_id: s for s in scene.b0_specs()}
+    specs = scene.specs_by_id()
     views = []
     for p in sorted(runs.glob("*/episode.json")):
         spec = specs[p.parent.name]
