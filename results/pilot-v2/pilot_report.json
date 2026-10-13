@@ -1,0 +1,184 @@
+{
+ "episode_set": "data/episodes/gazebo-pilot.json",
+ "image_ids": [
+  "sha256:49d6e69b240a93033f6c68e13af7164c0c9a82f6f23cf6f4a507e726bbd57011"
+ ],
+ "detector": "frcnn-mnv3",
+ "decision_rule": "decision-v2",
+ "config": "v2",
+ "note": "pilot only - not a research result; pilot episodes never enter the final test",
+ "1_states": {
+  "counts": {
+   "unobservable": 6,
+   "absent": 12,
+   "visible": 6
+  },
+  "initial_view": {
+   "unobservable": {
+    "n": 6,
+    "max_conf_mean": 0.004211649570303659,
+    "max_conf_p10_p90": [
+     0.002126780920661986,
+     0.006061415188014507
+    ],
+    "zone_visible_mean": 0.0
+   },
+   "absent": {
+    "n": 12,
+    "max_conf_mean": 0.0021058247851518295,
+    "max_conf_p10_p90": [
+     0.0,
+     0.00542518007569015
+    ],
+    "zone_visible_mean": 0.5
+   },
+   "visible": {
+    "n": 6,
+    "max_conf_mean": 0.9907322327295939,
+    "max_conf_p10_p90": [
+     0.9849698543548584,
+     0.9944352507591248
+    ],
+    "zone_visible_mean": 1.0
+   }
+  },
+  "auroc_initial_visible_vs_absent": 1.0,
+  "auroc_initial_visible_vs_unobservable": 1.0,
+  "auroc_initial_unobservable_vs_absent": 0.75,
+  "auroc_best_view_present_vs_absent": 1.0,
+  "pass": true
+ },
+ "2_determinism": {
+  "episodes": 24,
+  "identical_over_compared": {
+   "rgb": "24/24",
+   "depth_mm": "24/24",
+   "labels": "24/24",
+   "labels_clear": "12/12"
+  },
+  "mismatches": [],
+  "pass": true
+ },
+ "3a_timestamps": {
+  "frames": 312,
+  "stamp_minus_teleport_s": [
+   0.092,
+   0.1
+  ],
+  "problems": [],
+  "pass": true
+ },
+ "3b_transform": {
+  "depth_kind": "planar",
+  "views": 96,
+  "depth_abs_err_m": {
+   "median": 0.0002549290657043457,
+   "p99": 0.0004982948303222656,
+   "max": 1.7925572395324707
+  },
+  "label_agreement_non_object_min": 0.9992316681378137,
+  "label_agreement_non_object_mean": 0.9998651760910247,
+  "pass": true
+ },
+ "4_same_candidates": {
+  "observations_compared": 53,
+  "problems": [],
+  "pass": true
+ },
+ "5_grader": {
+  "confusion": {
+   "single@1": {
+    "absent->absent": 6,
+    "absent->inconclusive": 6,
+    "present->inconclusive": 6,
+    "present->present": 6
+   },
+   "random@1": {
+    "absent->absent": 6,
+    "absent->inconclusive": 6,
+    "present->inconclusive": 6,
+    "present->present": 6
+   },
+   "rule@1": {
+    "absent->absent": 6,
+    "absent->inconclusive": 6,
+    "present->inconclusive": 6,
+    "present->present": 6
+   },
+   "oracle@1": {
+    "absent->absent": 6,
+    "absent->inconclusive": 6,
+    "present->inconclusive": 6,
+    "present->present": 6
+   },
+   "single@2": {
+    "absent->absent": 6,
+    "absent->inconclusive": 6,
+    "present->inconclusive": 6,
+    "present->present": 6
+   },
+   "random@2": {
+    "absent->absent": 11,
+    "absent->inconclusive": 1,
+    "present->inconclusive": 1,
+    "present->present": 11
+   },
+   "rule@2": {
+    "absent->absent": 12,
+    "present->present": 12
+   },
+   "oracle@2": {
+    "absent->absent": 12,
+    "present->present": 12
+   },
+   "single@3": {
+    "absent->absent": 6,
+    "absent->inconclusive": 6,
+    "present->inconclusive": 6,
+    "present->present": 6
+   },
+   "random@3": {
+    "absent->absent": 12,
+    "present->present": 12
+   },
+   "rule@3": {
+    "absent->absent": 12,
+    "present->present": 12
+   },
+   "oracle@3": {
+    "absent->absent": 12,
+    "present->present": 12
+   },
+   "single@5": {
+    "absent->absent": 6,
+    "absent->inconclusive": 6,
+    "present->inconclusive": 6,
+    "present->present": 6
+   },
+   "random@5": {
+    "absent->absent": 12,
+    "present->present": 12
+   },
+   "rule@5": {
+    "absent->absent": 12,
+    "present->present": 12
+   },
+   "oracle@5": {
+    "absent->absent": 12,
+    "present->present": 12
+   }
+  },
+  "violations": [],
+  "pass": true
+ },
+ "6_ros2_live_vs_replay": {
+  "runs_compared": 168,
+  "same_viewpoint_sequence": 168,
+  "same_decision": 168,
+  "max_conf_abs_diff_max": 0.0036819353699684143,
+  "differences": [],
+  "pass": true
+ },
+ "sweep_table": "| policy | budget | n | accuracy | macro_f1 | false_absent_rate | false_present_rate | inconclusive_rate | avg_viewpoints | ece |\n|---|---|---|---|---|---|---|---|---|---|\n| oracle | 1 | 24 | 0.500 | 0.444 | 0.000 | 0.000 | 0.500 | 1.000 | 0.005 |\n| random | 1 | 24 | 0.500 | 0.444 | 0.000 | 0.000 | 0.500 | 1.000 | 0.005 |\n| rule | 1 | 24 | 0.500 | 0.444 | 0.000 | 0.000 | 0.500 | 1.000 | 0.005 |\n| single | 1 | 24 | 0.500 | 0.444 | 0.000 | 0.000 | 0.500 | 1.000 | 0.005 |\n| oracle | 2 | 24 | 1.000 | 1.000 | 0.000 | 0.000 | 0.000 | 1.500 | 0.007 |\n| random | 2 | 24 | 0.917 | 0.638 | 0.000 | 0.000 | 0.083 | 1.500 | 0.005 |\n| rule | 2 | 24 | 1.000 | 1.000 | 0.000 | 0.000 | 0.000 | 1.500 | 0.007 |\n| single | 2 | 24 | 0.500 | 0.444 | 0.000 | 0.000 | 0.500 | 1.000 | 0.005 |\n| oracle | 3 | 24 | 1.000 | 1.000 | 0.000 | 0.000 | 0.000 | 1.500 | 0.007 |\n| random | 3 | 24 | 1.000 | 1.000 | 0.000 | 0.000 | 0.000 | 1.583 | 0.006 |\n| rule | 3 | 24 | 1.000 | 1.000 | 0.000 | 0.000 | 0.000 | 1.500 | 0.007 |\n| single | 3 | 24 | 0.500 | 0.444 | 0.000 | 0.000 | 0.500 | 1.000 | 0.005 |\n| oracle | 5 | 24 | 1.000 | 1.000 | 0.000 | 0.000 | 0.000 | 1.500 | 0.007 |\n| random | 5 | 24 | 1.000 | 1.000 | 0.000 | 0.000 | 0.000 | 1.583 | 0.006 |\n| rule | 5 | 24 | 1.000 | 1.000 | 0.000 | 0.000 | 0.000 | 1.500 | 0.007 |\n| single | 5 | 24 | 0.500 | 0.444 | 0.000 | 0.000 | 0.500 | 1.000 | 0.005 |",
+ "all_pass": true
+}
