@@ -31,3 +31,9 @@ B0 通過標準在 decision 016 附錄 C 的第二次確認（`nav-b0d`）全部
 
 - `nav-b1` 上全部方法跑完、teleport 對照 render 完成、報告產生、tests 綠燈。
 - 之後寫 decision 018（B2 的宣稱、樣本數、統計方式），再在全新的 `nav-b2` 上只跑一次。
+
+## 附錄 A（2026-10-14）：B1 完成
+
+`nav-b1` 96 / 96 次執行完成（`results/nav-b1/README.md`）：管線端到端可用；所有方法 false absent / false present / geometric risk 皆 0；
+導航 32 / 32 準確到點、碰撞 0。沒有調整任何 §2 的凍結值。整合中修正兩個工程問題（每個工作獨立的場景目錄、Nav2 啟動看門狗、動態佇列）。
+→ 依 §4 寫 decision 018 後進 B2。

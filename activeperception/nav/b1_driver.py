@@ -82,9 +82,7 @@ class ClosedLoop(Driver):
         episode = self.spec.deployable()
         p = self.spec.initial_viewpoint.pose
         w0 = time.monotonic()
-        self.nav.setInitialPose(self.pose_msg(p.x, p.y, p.yaw))
-        self.nav.waitUntilNav2Active()
-        self.gz.wait_ready(120.0)
+        self.start(p.x, p.y, p.yaw)
         self.policy.reset(episode, seed)
         row = {"step": None, "nav": None, **self.capture("initial", -1)}
         obs, info = self.observe(row, -1)

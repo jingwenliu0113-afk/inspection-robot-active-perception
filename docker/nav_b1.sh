@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Advanced B1 / B2 closed-loop runs (decision 017): one fresh container per (episode, method,
-# seed) from inspection-ap-navdet, WORKERS in parallel, resumable (a job with run.json is
-# skipped; a failed job is retried once; attempts in $OUT/attempts.log).
+# seed) from inspection-ap-navdet, WORKERS in parallel pulling from a shared queue, resumable
+# (a job with run.json is skipped; a failed job is retried once; attempts in
+# $OUT/attempts.log).
 #   ./docker/nav_b1.sh 3 nav-b1      (namespace -> data/episodes/{specs,gazebo}-<ns>.json,
 #                                     renders/<ns>, runs/<ns>/teleport-detector-v1.jsonl)
 set -uo pipefail
@@ -29,9 +30,9 @@ run_job() {
     -v "$(pwd)":/work -w /work "$IMAGE" bash -c '
 set -eo pipefail
 source /opt/ros/jazzy/setup.bash
-W="$OUT/$EP/_world"; R="$OUT/$EP/$METHOD-s$SEED"; rm -rf "$R"; mkdir -p "$R"
-python3 -m activeperception.nav.b1_driver prepare --specs "$SPECS" --episode "$EP" --out "$OUT/_worlds"
-W="$OUT/_worlds/$EP"
+R="$OUT/$EP/$METHOD-s$SEED"; rm -rf "$R"; mkdir -p "$R"
+python3 -m activeperception.nav.b1_driver prepare --specs "$SPECS" --episode "$EP" --out "$OUT/_worlds/$METHOD-s$SEED"
+W="$OUT/_worlds/$METHOD-s$SEED/$EP"  # per job: parallel jobs of one episode never share files
 ros2 launch nav2_bringup tb4_simulation_launch.py headless:=True use_rviz:=False \
   world:="/work/$W/world.sdf" map:="/work/$W/map.yaml" params_file:="/work/$W/nav2_params.yaml" \
   robot_sdf:="/work/$W/robot.urdf" $(cat "$W/launch_args.txt") > "$R/launch.log" 2>&1 &
@@ -40,7 +41,7 @@ ros2 run ros_gz_bridge parameter_bridge "/gt/odom@nav_msgs/msg/Odometry[gz.msgs.
   --ros-args -p use_sim_time:=true > "$R/gt_bridge.log" 2>&1 &
 BRIDGE=$!
 status=0
-timeout 3600 python3 -m activeperception.nav.b1_driver run --specs "$SPECS" --episodes-gt "$GT" \
+timeout 1500 python3 -m activeperception.nav.b1_driver run --specs "$SPECS" --episodes-gt "$GT" \
   --renders "$RENDERS" --teleport-detections "$TDETS" --episode "$EP" --method "$METHOD" \
   --seed "$SEED" --budget 5 --out "$OUT" > "$R/driver.log" 2>&1 || status=$?
 kill -INT $BRIDGE $LAUNCH 2>/dev/null || true
@@ -49,24 +50,25 @@ exit $status
 ' > /dev/null 2>&1
 }
 
+# dynamic queue: a worker claims the next job with an atomic mkdir (fresh claims per run)
+CLAIMS="$OUT/.claims-$$"
+mkdir -p "$CLAIMS"
 worker() {
-  local k="$1" i=0
   for ep in $EPISODES; do
     for job in $JOBS; do
       method="${job%%:*}"; seed="${job##*:}"
-      if [ $((i % WORKERS)) -eq "$k" ] && [ ! -f "$OUT/$ep/$method-s$seed/run.json" ]; then
-        for attempt in 1 2; do
-          run_job "$ep" "$method" "$seed"; rc=$?
-          echo "$(date -u +%FT%TZ) $ep $method-s$seed attempt $attempt exit $rc" >> "$OUT/attempts.log"
-          [ -f "$OUT/$ep/$method-s$seed/run.json" ] && break
-        done
-      fi
-      i=$((i + 1))
+      [ -f "$OUT/$ep/$method-s$seed/run.json" ] && continue
+      mkdir "$CLAIMS/$ep--$method-$seed" 2>/dev/null || continue
+      for attempt in 1 2; do
+        run_job "$ep" "$method" "$seed"; rc=$?
+        echo "$(date -u +%FT%TZ) $ep $method-s$seed attempt $attempt exit $rc" >> "$OUT/attempts.log"
+        [ -f "$OUT/$ep/$method-s$seed/run.json" ] && break
+      done
     done
   done
 }
 
 pids=()
-for k in $(seq 0 $((WORKERS - 1))); do worker "$k" & pids+=($!); done
+for k in $(seq 0 $((WORKERS - 1))); do worker & pids+=($!); done
 for pid in "${pids[@]}"; do wait "$pid"; done
 find "$OUT" -name run.json | wc -l

@@ -48,6 +48,7 @@ AMCL_UPDATE_MIN_A = 0.1
 MAX_CORRECTIONS = 2
 RELOCALIZE_SIGMA = (0.02, 0.01)  # m, rad
 CORRECTION_TIMEOUT_S = 30.0
+STARTUP_TIMEOUT_S = 180.0  # Nav2 not active by then (e.g. gz sim died at start) -> exit, retry
 
 
 def plan(spec: EpisodeSpec) -> list[dict]:
@@ -347,6 +348,26 @@ class Driver:
             "trace_file": tname,
         }
 
+    def start(self, x: float, y: float, yaw: float) -> float:
+        """Initial pose + wait for Nav2, with a watchdog: BasicNavigator waits forever if the
+        simulator died during start-up (seen once in nav-b1), so exit and let the batch retry."""
+        import os
+        import threading
+
+        def give_up() -> None:
+            print(f"Nav2 not active after {STARTUP_TIMEOUT_S} s; exiting", flush=True)
+            os._exit(3)
+
+        w0 = time.monotonic()
+        watchdog = threading.Timer(STARTUP_TIMEOUT_S, give_up)
+        watchdog.daemon = True
+        watchdog.start()
+        self.nav.setInitialPose(self.pose_msg(x, y, yaw))
+        self.nav.waitUntilNav2Active()
+        self.gz.wait_ready(120.0)
+        watchdog.cancel()
+        return time.monotonic() - w0
+
     @staticmethod
     def _log(row: dict) -> None:
         est, gt = row["deployable"]["estimate"], row["scoring"]["gt_base"] or {}
@@ -370,10 +391,7 @@ class Driver:
     def run(self) -> dict:
         p = self.spec.initial_viewpoint.pose
         w0 = time.monotonic()
-        self.nav.setInitialPose(self.pose_msg(p.x, p.y, p.yaw))
-        self.nav.waitUntilNav2Active()
-        active_wall = time.monotonic() - w0
-        self.gz.wait_ready(120.0)
+        active_wall = self.start(p.x, p.y, p.yaw)
         rows = [{"step": None, "nav": None, **self.capture("initial", -1)}]
         self._log(rows[-1])
         for step in plan(self.spec):
