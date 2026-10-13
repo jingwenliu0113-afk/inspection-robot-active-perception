@@ -4,13 +4,13 @@
 
 ## 狀態
 
-**Active（2026-10-10 啟動）。目前在 Core，尚無正式結果。**
+**Core v1 完成（2026-10-13）。正式 test 已跑一次，Gate 已判定（decision 010）：Rule-based NBV 穩定勝過 Single / Random、已接近 Oracle → 不做 RL。**
 
-已完成：frozen task definition（decision 002–004）、seeded episode generator、teleport harness、
-shared decision rule、Single / Random / Rule / Oracle 四個 policy、grader、metrics（cluster bootstrap CI）、
-69 個 correctness tests、synthetic world（僅供開發與測試）。
+已完成：decision 001–010、Jazzy + Harmonic 容器（Mac arm64）、gen-v2 消防栓 world、render-then-replay 管線、
+detector 選型 `detector-v1`（FRCNN-MobileNetV3）、pilot、ROS 2 線上整合、core 1200 episodes、調參、凍結 v1、正式 test、README 結果。
 
-尚未完成：Gazebo Harmonic 環境與 world、detector 整合、pilot、budget / rule 參數凍結、正式 test。
+下一步（Advanced B Nav2、rule-NBV v2、Optional、repo 公開與授權）都需要使用者決定，見 `NEXT.md`。
+GitHub remote：`origin`（private）。每個 milestone commit 後 push。
 
 ## 每個 session 的第一步
 
