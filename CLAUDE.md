@@ -4,13 +4,15 @@
 
 ## 狀態
 
-**Core v1 完成（2026-10-13）。正式 test 已跑一次，Gate 已判定（decision 010）：Rule-based NBV 穩定勝過 Single / Random、已接近 Oracle → 不做 RL。**
+**Core v1 完成（decision 010）＋ v2 完成（decision 011–013，2026-10-13）。**
 
-已完成：decision 001–010、Jazzy + Harmonic 容器（Mac arm64）、gen-v2 消防栓 world、render-then-replay 管線、
-detector 選型 `detector-v1`（FRCNN-MobileNetV3）、pilot、ROS 2 線上整合、core 1200 episodes、調參、凍結 v1、正式 test、README 結果。
+- v1：正式 test 一次；Rule 穩定勝過 Single / Random。holdout 上「接近 Oracle」未重現（decision 013）。
+- v2：看過 v1 test 後提出；只用 core train / val 開發，在新的 `holdout` split 一次性與 v1 分開比較；
+  所有方法 false-absent = 0，Rule budget 2 0.683 → 0.957；改善主要來自 `decision-v2`。
+- **原 `core` test 與 `holdout` 都已用過，不可再用於任何新版本的開發或正式驗證**；新版本需要新的、未參與開發的資料。
+- v1 / v2 的程式、結果、失敗紀錄都保留（`frozen.py` / `frozen_v2.py`、`results/test-v1/`、`results/holdout/`）。
 
-下一步（Advanced B Nav2、rule-NBV v2、Optional、repo 公開與授權）都需要使用者決定，見 `NEXT.md`。
-GitHub remote：`origin`（private）。每個 milestone commit 後 push。
+下一步（Advanced C / B 等）需要使用者決定，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
 
 ## 每個 session 的第一步
 

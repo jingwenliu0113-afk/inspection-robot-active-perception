@@ -2,37 +2,31 @@
 
 ## 目前位置（2026-10-13）
 
-**Core v1 完成。正式 test 已跑一次，Gate 已判定（decision 010）：Rule-based NBV 穩定勝過 Single / Random，且已接近 Oracle → 依 SPEC 不做 RL。**
-**所有 Core 工作已完成；下一步需要使用者決定（見「待使用者決定」）。**
+**Core v1 完成（decision 010）＋ v2 完成（decision 011–013，holdout 評估）。目前沒有進行中的工作；下一步需要使用者決定。**
 
-GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private）。每個 milestone commit 後 push。
+GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private，不加 LICENSE——使用者 2026-10-13 決定）。每個 milestone commit 後 push。
 
-| Milestone | 內容 | 狀態 |
+| 階段 | 內容 | 狀態 |
 |---|---|---|
-| M0 | repo init、環境稽核、decision 001 | 完成 |
-| M1 | task definition（002–004）、generator、synthetic world、harness、4 policies、grader、metrics | 完成 |
-| M2 | Jazzy + Harmonic 容器（ROS vendor 套件、base digest 釘死）、headless render、teleport、determinism | 完成（`docs/platform/`） |
-| M3 | world gen-v2（消防栓）、render-then-replay、depth / label sensing、detector 選型 `detector-v1`、ROS 2 線上整合 | 完成 |
-| M4 | pilot（SPEC §9）六項 + ROS 2 線上 = replay（192 / 192） | 完成（`results/pilot/`） |
-| M5 | core set 1200 ep、train 調參（decision 008）、val 檢查、凍結 v1（009）、test 一次 | 完成（`results/test-v1/`） |
-| Gate | decision 010：1–3 成立；rule ≈ oracle → 不做 RL；perception 非瓶頸 → 不做 detector fine-tune | **已判定** |
+| M0–M5 | Core v1（平台、world、detector、pilot、調參、凍結、正式 test、Gate） | 完成（decision 001–010） |
+| v2 設計 | decision-v2（看穿每個候選位置才可 absent）、rule-nbv-v2（已知 / 未知空間）、oracle-v2；協定先登錄 | 完成（decision 011；附錄 A：64 點 / 3 cm） |
+| v2 調參 | core train 調參、core val 檢查；原 test 封存不用 | 完成（decision 012，`results/tuning-v2/`） |
+| holdout | 新 namespace 150 groups / 600 ep；v1、v2、消融各跑一次 | 完成（decision 013，`results/holdout/`） |
+| ROS 2 | inspector node 可選 v0 / v1 / v2；pilot 上 v2 線上 = replay 168 / 168 | 完成（`results/pilot-v2/`） |
 
-## 主要結果（core test，524 episodes）
+## 主要結果
 
-budget 2 / 3 accuracy：Single 0.202 / 0.202、Random 0.620 / 0.907、**Rule 0.706 / 0.996**、Oracle 0.710 / 1.000。
-Rule − Random：+0.086 [0.072, 0.101] / +0.089 [0.069, 0.108]。false absent：Rule 0、Random 0.0015。
+- v1 原 test（524 ep）：Rule 0.706 / 0.996（budget 2 / 3），Random 0.620 / 0.907；Oracle − Rule 0.004。
+- holdout（600 ep）v1：Rule 0.683 / 0.968，Random 0.608 / 0.898；**Oracle − Rule 0.028 / 0.032 → 原 test 的「接近 Oracle」未重現**。
+- holdout v2：Rule **0.957 / 0.998**，Random 0.868 / 0.975，Single 0.392，Oracle 1.0 / 1.0；所有方法 false-absent = 0；ECE ≤ 0.008。
+- v2 − v1 Rule：+0.273 [0.228, 0.317] / +0.030 [0.010, 0.052]；改善主要來自判定規則（+0.253），新策略的額外貢獻不顯著（+0.020 [−0.020, 0.058]）。
 
 ## 待使用者決定
 
-1. **Advanced B（Nav2）要不要做**：Gate 1–3 成立，技術上允許，但 Advanced 不是自動下一步。若做，必須保留 teleport 結果作對照（SPEC Advanced B）。
-2. **是否做 rule-NBV v2**（處理殘餘失敗 2：未觀測格子的樂觀假設，`core-g0298`）：只能以新版本在新一輪 test 報告，v1 結果保留。
-3. **Optional**（真實相機、domain randomization 等）只在使用者明確要求時做。
-4. repo 目前 private；是否公開、是否加 LICENSE（vendored 模型為 CC0；若未來改用 Ultralytics 會有 AGPL 義務）。
-
-## 可以不需決策就做的整理（低優先）
-
-- README 失敗案例改成 GIF（目前為 PNG）。
-- 把 `tools/make_figures.py` 的圖加上 CI 誤差條（目前 CI 在表格中）。
+1. **Advanced**：v2 在 budget 2 與 Oracle 差 0.043 [0.020, 0.070]（可歸因於視角選擇）→ SPEC 的「接近 Oracle、不需要 RL」停止條件在 budget 2 不成立。
+   是否進 Advanced C（學習式 / RL 視角策略，需與 Random / Rule / Oracle 同 budget 比較）或 B（Nav2，使用者已決定暫不做），由使用者決定。
+2. 若要再改策略（v3），需要另一批未參與開發的資料；holdout 已用過一次，不能再當 v3 的正式驗證。
+3. repo 維持 private、不加 LICENSE（已決定）。
 
 ## 已驗證的事實（不要重做）
 
@@ -57,8 +51,11 @@ Rule − Random：+0.086 [0.072, 0.101] / +0.089 [0.069, 0.108]。false absent�
 - SPEC §2 `visible` 寫「初始/可達視角可觀測」；實作採「初始視角」定義，「可達」另記為 `revealable`（decision 002）。core 中 revealable 皆為真（沒有「所有候選都看不到」的 present episode）。
 - SPEC §3 寫 Nav2 放 Advanced：維持。ROS 2 在 Core 只做 teleport 與系統整合（decision 001 附錄 B / D）。
 
-## 本 session 完成的事（2026-10-13）
+## 本 session 完成的事（2026-10-13，含 v2）
 
 - M2–M5 全部：Docker 映像與 smoke test、decision 005–010、gen-v2 消防栓 world、render-then-replay、depth / label sensing、
   detector 選型（RTX 5070 Ti、GPU lock）、pilot 六項 + ROS 2 線上一致性、core 1200 ep、調參、凍結、正式 test、Gate 判定、README 結果與圖。
 - GitHub private repo 建立並 push。
+- v2：decision 011（設計 / 資料 / 協定）、附錄 A（train 上修正位置密度）、012（凍結）、013（holdout 結果）；
+  `decision-v2`、`rule-nbv-v2`、`oracle-v2`、`frozen_v2`、`experiment_v2`、v2 tests、v1 回歸測試（val 數字逐位元重現）。
+- holdout 渲染、GPU 偵測、一次性比較；README 新增 v2 段落與圖（v1 段落數字未改）。

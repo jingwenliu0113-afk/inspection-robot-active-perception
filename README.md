@@ -1,8 +1,11 @@
 # Inspection Robot + Active Perception
 
-> **狀態（2026-10-13）：Core v1 完成，正式 test 已跑完一次，Gate 已判定（[decision 010](docs/decisions/010-core-test-result-and-gate.md)）。**
-> Rule-based NBV 在固定 viewpoint budget 下穩定勝過 Single View 與 Random，且已接近 Oracle 上限 → 依 SPEC 不進 RL。
-> 正式數字只來自 ROS 2 Jazzy + Gazebo Harmonic 的 `core` test split；synthetic world 只用於 correctness tests。
+> **狀態（2026-10-13）**
+> - **v1（Core）**：正式 test 跑完一次，Gate 已判定（[decision 010](docs/decisions/010-core-test-result-and-gate.md)）——Rule-based NBV 穩定勝過 Single View 與 Random。
+> - **v2（看過 v1 test 後的改進）**：只用開發資料設計與調參，在全新的 holdout 上與 v1 分開比較（[decision 011–013](docs/decisions/013-holdout-v1-v2-result.md)）——
+>   absent 改成需要「看穿每個可能位置」的空間證據：所有方法 false-absent = 0、Rule 在 budget 2 從 0.683 → 0.957。
+>   holdout 也顯示 v1 在原 test 上「接近 Oracle」的結論**沒有重現**，而 v2 在 budget 2 與 Oracle 仍差 4.3 點（見下方 v2 段落）。
+> - 正式數字只來自 ROS 2 Jazzy + Gazebo Harmonic；synthetic world 只用於 correctness tests。
 
 ## 一句話問題
 
@@ -17,7 +20,7 @@
 巡檢目標是 Gazebo Fuel 的消防栓（COCO `fire hydrant`），放在半徑 0.5 m 的 inspection zone 裡；1–3 根方柱可能擋住視線。
 「沒偵測到」不等於 `absent`：單一視角時，被擋住的消防栓與根本沒有消防栓幾乎無法分辨（pilot AUROC 0.75）。
 
-## 結果（`core` test split：131 scene groups、524 episodes）
+## v1 結果（`core` test split：131 scene groups、524 episodes）
 
 Accuracy（3 類），95% CI 為以 scene group 為 cluster 的 bootstrap（1000 次）；Random NBV 為 5 個 run seeds 平均。
 
@@ -42,6 +45,7 @@ Accuracy（3 類），95% CI 為以 scene group 為 cluster 的 bootstrap（1000
 - **主動換視角把 inconclusive 變成正確答案**：Rule-based NBV 用已走訪視角的 depth 建出 zone 外障礙物高度圖，
   預測每個候選視角能看到多少 inspection zone；budget 3 時 accuracy 0.996（Random 0.907），平均只用 2.09 個視角。
 - **已接近上限**：Oracle（讀 simulator GT）只多 0.004。依 SPEC 的 Gate，**不需要 RL**。
+  （補註：這個「接近 Oracle」在新的 holdout 上**沒有重現**，差距為 0.028–0.032，見下方 v2 段落與 decision 013；原紀錄不改。）
 
 ### False-absent 分析
 
@@ -78,7 +82,38 @@ Rule-based NBV 在 budget 2 / 3 共 156 件未答對：152 件是上述 budget �
 （[decision 005](docs/decisions/005-detector-selection-protocol.md)、[`results/detector-selection/`](results/detector-selection/)）。
 test frame 上，可見消防栓像素 ≥ 10k 時偵測率 99.8%；< 5k 時幾乎偵測不到——**瓶頸是視角，不是 detector**。
 
-## 方法
+## v2：未觀察區域不再被當成 absent（holdout 評估）
+
+v1 判定 absent 的依據是「≥ 2 個方位扇區有 zone 大致可見的視角」，這只是代理指標：消防栓若剛好站在沒被看到的位置，仍可能被判 absent
+（v1 test 上 Random 出現過一次）。v2 由使用者核准開發（2026-10-13），**只用 core train / val 設計與調參，原 test 封存不用**，
+並在新產生、未參與開發的 `holdout`（150 scene groups、600 episodes）上與 v1 一起各跑一次。
+
+- **`decision-v2`（四個方法共用）**：zone 內 64 個「物件可能站立的位置」，每個位置必須在某個視角的 depth 中被**看穿**（視線一路到底沒被擋），
+  而且所有偵測 confidence < 0.02，才判 `absent`；任何一個位置沒看過就是 `inconclusive`。物件真正站的位置不可能被看穿（depth 先打到物件表面），
+  所以即使 detector 漏看也不會 false absent。
+- **`rule-nbv-v2`**：優先選能看穿尚未看穿位置的視角；用 depth 建出已知障礙 / 已知空 / 未知的地圖，經過未知空間的視線只給一半信任（v1 視為一定空）。
+
+![v1 vs v2 on holdout](docs/figures/holdout_v1_v2.png)
+
+| holdout（600 episodes） | budget 2 | budget 3 | budget 5 |
+|---|---|---|---|
+| v1 Rule | 0.683 [0.64, 0.73] | 0.968 [0.95, 0.99] | 1.000 |
+| **v2 Rule** | **0.957 [0.93, 0.98]** | **0.998 [0.995, 1.000]** | 1.000 |
+| v2 Rule − v1 Rule | **+0.273 [0.228, 0.317]** | **+0.030 [0.010, 0.052]** | 0 |
+| v2 Random / Single | 0.868 / 0.392 | 0.975 / 0.392 | 0.998 / 0.392 |
+| v2 Oracle | 1.000 | 1.000 | 1.000 |
+
+- **安全**：v2 所有方法、所有 budget 的 false-absent 都是 0（v1 Random 0.07%）；「物件沒被看到卻滿足 absent 幾何條件」的情況為 0。
+- **校準**：definitive decision 的 ECE 從 0.21–0.38 降到 ≤ 0.008（absent 的 confidence 改為看穿比例）。
+- **改善來自哪裡（消融）**：判定規則 +0.253 [0.215, 0.293]（budget 2）；新策略相對 v1 策略只多 +0.020 [−0.020, 0.058]，**不顯著**——v2 的進步主要是「怎麼判 absent」，不是「怎麼選視角」。
+- **v1 結論的重現**：holdout 上 v1 Rule 仍穩定勝過 Random（+0.075 / +0.070），但 Oracle − Rule = 0.028 / 0.032，**原 test 的「接近 Oracle」沒有重現**。
+- **v2 與上限的差距**：budget 2 時 Oracle 高 0.043 [0.020, 0.070]，可歸因於視角選擇；budget 3 只差 0.002。
+  依 SPEC，「已接近 Oracle → 不需要 RL」在 budget 2 不成立；是否進 Advanced 由使用者決定。
+- **殘餘失敗**：27 件全部是 `inconclusive`（沒有錯誤的肯定答案）：budget 2 兩個視角看不穿全部位置，或只看到消防栓一小部分（弱偵測 < 0.7）。
+
+ROS 2 線上執行 v2：pilot 上 168 / 168 與 replay 相同（[`results/pilot-v2/`](results/pilot-v2/)）。
+
+## 方法（v1；v2 的差異見上一段）
 
 | Policy | 可用資訊 | 角色 |
 |---|---|---|
@@ -120,6 +155,10 @@ uv run python -m activeperception.detector.run --frames renders/core --detector 
 uv run python -m activeperception.experiment test --episodes data/episodes/gazebo-core.json \
     --detections runs/core/detector-v1.jsonl --renders renders/core --out results/test-v1
 uv run python tools/make_figures.py
+# v2（decision 011–013）
+uv run python -m activeperception.tune decision2 --episodes data/episodes/gazebo-core.json --detections runs/core/detector-v1.jsonl --out results/tuning-v2
+uv run python -m activeperception.experiment_v2 holdout --episodes data/episodes/gazebo-holdout.json \
+    --detections runs/holdout/detector-v1.jsonl --renders renders/holdout --out results/holdout
 ```
 
 平台版本（image digest、套件版本）見 [`docs/platform/versions.md`](docs/platform/versions.md)；
@@ -133,9 +172,9 @@ activeperception/        核心套件：episodes / sim（gz_client、render、re
 ros_ws/src/inspection_ap_ros/   ROS 2 package（inspector node、launch）
 docker/                  Jazzy + Harmonic 映像、render / smoke / ROS 線上執行腳本
 gazebo/models/           vendored Fuel 模型（fire_hydrant，CC0）
-data/episodes/           frozen spec / episode sets（含 GT）
-results/                 detector 選型、pilot、調參、正式 test
-docs/decisions/          decision logs 001–010
+data/episodes/           frozen spec / episode sets（含 GT）：core、pilot、detsel、holdout
+results/                 detector 選型、pilot（v1 / v2）、調參（v1 / v2）、v1 正式 test、holdout v1 vs v2
+docs/decisions/          decision logs 001–013
 ```
 
 ## 限制
@@ -143,4 +182,5 @@ docs/decisions/          decision logs 001–010
 - 場景刻意簡化（方柱遮擋、固定光照、單一目標類別）；detector 在此 world 幾乎不誤報，perception 偏容易。
 - `decision-v1` 的 absent 規則較寬；test 上 Random 出現一例 false absent，Rule / Oracle 沒有。
 - 多視角方法的 definitive decision confidence 校準不佳（ECE 0.21–0.38；Single 0.016）：absent 的 confidence = coverage × (1 − c_max)，公式在 v1 凍結未改。
-- Core 只用 teleport；Nav2（Advanced B）尚未進行，是否進行由使用者決定。
+- Core 只用 teleport；Nav2（Advanced B）依使用者決定暫不進行。
+- v2 是看過 v1 test 後提出的改進；它的所有宣稱只來自 holdout，原 test 不用於 v2。
