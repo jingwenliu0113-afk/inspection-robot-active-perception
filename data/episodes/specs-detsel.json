@@ -213,7 +213,7 @@
    "namespace": "detsel",
    "scene_group": 0,
    "seed": 2012647352103948077,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -430,7 +430,7 @@
    "namespace": "detsel",
    "scene_group": 0,
    "seed": 2683406437461290312,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -653,7 +653,7 @@
    "namespace": "detsel",
    "scene_group": 0,
    "seed": 445878183487822242,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -870,7 +870,7 @@
    "namespace": "detsel",
    "scene_group": 0,
    "seed": 1025649407799059137,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -1085,7 +1085,7 @@
    "namespace": "detsel",
    "scene_group": 1,
    "seed": 974002389449367447,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -1294,7 +1294,7 @@
    "namespace": "detsel",
    "scene_group": 1,
    "seed": 232782585929540901,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -1509,7 +1509,7 @@
    "namespace": "detsel",
    "scene_group": 1,
    "seed": 1854583909038792558,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -1718,7 +1718,7 @@
    "namespace": "detsel",
    "scene_group": 1,
    "seed": 111489646385247310,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -1949,7 +1949,7 @@
    "namespace": "detsel",
    "scene_group": 2,
    "seed": 3980140358931052880,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -2174,7 +2174,7 @@
    "namespace": "detsel",
    "scene_group": 2,
    "seed": 1360573906120711351,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -2405,7 +2405,7 @@
    "namespace": "detsel",
    "scene_group": 2,
    "seed": 2340670469507750407,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -2630,7 +2630,7 @@
    "namespace": "detsel",
    "scene_group": 2,
    "seed": 2579757809314644996,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -2853,7 +2853,7 @@
    "namespace": "detsel",
    "scene_group": 3,
    "seed": 3165370318773675866,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -3070,7 +3070,7 @@
    "namespace": "detsel",
    "scene_group": 3,
    "seed": 1830623314161120358,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -3293,7 +3293,7 @@
    "namespace": "detsel",
    "scene_group": 3,
    "seed": 3817710165044327908,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -3510,7 +3510,7 @@
    "namespace": "detsel",
    "scene_group": 3,
    "seed": 1343803379042198251,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -3725,7 +3725,7 @@
    "namespace": "detsel",
    "scene_group": 4,
    "seed": 1697549502243031141,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -3934,7 +3934,7 @@
    "namespace": "detsel",
    "scene_group": 4,
    "seed": 1087603751225031038,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -4149,7 +4149,7 @@
    "namespace": "detsel",
    "scene_group": 4,
    "seed": 906252907469590179,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -4358,7 +4358,7 @@
    "namespace": "detsel",
    "scene_group": 4,
    "seed": 1006561905435784621,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -4573,7 +4573,7 @@
    "namespace": "detsel",
    "scene_group": 5,
    "seed": 702966298583819318,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -4782,7 +4782,7 @@
    "namespace": "detsel",
    "scene_group": 5,
    "seed": 967366450942057252,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -4997,7 +4997,7 @@
    "namespace": "detsel",
    "scene_group": 5,
    "seed": 2487597724344862498,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -5206,7 +5206,7 @@
    "namespace": "detsel",
    "scene_group": 5,
    "seed": 298924798862120938,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -5421,7 +5421,7 @@
    "namespace": "detsel",
    "scene_group": 6,
    "seed": 1075073995110105668,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -5630,7 +5630,7 @@
    "namespace": "detsel",
    "scene_group": 6,
    "seed": 3700301570914329990,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -5845,7 +5845,7 @@
    "namespace": "detsel",
    "scene_group": 6,
    "seed": 170959736693221569,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -6054,7 +6054,7 @@
    "namespace": "detsel",
    "scene_group": 6,
    "seed": 2654930672695595638,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -6285,7 +6285,7 @@
    "namespace": "detsel",
    "scene_group": 7,
    "seed": 3559196363235166836,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -6510,7 +6510,7 @@
    "namespace": "detsel",
    "scene_group": 7,
    "seed": 2916045174456876127,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -6741,7 +6741,7 @@
    "namespace": "detsel",
    "scene_group": 7,
    "seed": 4142699350553352985,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -6966,7 +6966,7 @@
    "namespace": "detsel",
    "scene_group": 7,
    "seed": 3624029043495866263,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -7181,7 +7181,7 @@
    "namespace": "detsel",
    "scene_group": 8,
    "seed": 2577204581419047401,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -7390,7 +7390,7 @@
    "namespace": "detsel",
    "scene_group": 8,
    "seed": 1051573552895677642,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -7605,7 +7605,7 @@
    "namespace": "detsel",
    "scene_group": 8,
    "seed": 361876425588157003,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -7814,7 +7814,7 @@
    "namespace": "detsel",
    "scene_group": 8,
    "seed": 2266054079086095916,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -8045,7 +8045,7 @@
    "namespace": "detsel",
    "scene_group": 9,
    "seed": 3716975519582827127,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -8270,7 +8270,7 @@
    "namespace": "detsel",
    "scene_group": 9,
    "seed": 2508583254514081494,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -8501,7 +8501,7 @@
    "namespace": "detsel",
    "scene_group": 9,
    "seed": 447016131376360328,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -8726,7 +8726,7 @@
    "namespace": "detsel",
    "scene_group": 9,
    "seed": 3116218015890951386,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -8957,7 +8957,7 @@
    "namespace": "detsel",
    "scene_group": 10,
    "seed": 3497491169223931599,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -9182,7 +9182,7 @@
    "namespace": "detsel",
    "scene_group": 10,
    "seed": 1801148749792924884,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -9413,7 +9413,7 @@
    "namespace": "detsel",
    "scene_group": 10,
    "seed": 1302638671661916861,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -9638,7 +9638,7 @@
    "namespace": "detsel",
    "scene_group": 10,
    "seed": 4559149741692888845,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -9853,7 +9853,7 @@
    "namespace": "detsel",
    "scene_group": 11,
    "seed": 1854528448940073111,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -10062,7 +10062,7 @@
    "namespace": "detsel",
    "scene_group": 11,
    "seed": 1989040495882349446,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -10277,7 +10277,7 @@
    "namespace": "detsel",
    "scene_group": 11,
    "seed": 4225800987777703834,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -10486,7 +10486,7 @@
    "namespace": "detsel",
    "scene_group": 11,
    "seed": 2136023164842279652,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -10717,7 +10717,7 @@
    "namespace": "detsel",
    "scene_group": 12,
    "seed": 864089344956436636,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -10942,7 +10942,7 @@
    "namespace": "detsel",
    "scene_group": 12,
    "seed": 4062493447973709493,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -11173,7 +11173,7 @@
    "namespace": "detsel",
    "scene_group": 12,
    "seed": 890623106722845369,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -11398,7 +11398,7 @@
    "namespace": "detsel",
    "scene_group": 12,
    "seed": 2117801114582822026,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -11621,7 +11621,7 @@
    "namespace": "detsel",
    "scene_group": 13,
    "seed": 4172411210023993223,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -11838,7 +11838,7 @@
    "namespace": "detsel",
    "scene_group": 13,
    "seed": 805921367844972098,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -12061,7 +12061,7 @@
    "namespace": "detsel",
    "scene_group": 13,
    "seed": 2973864757796409107,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -12278,7 +12278,7 @@
    "namespace": "detsel",
    "scene_group": 13,
    "seed": 3350326516182246297,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -12509,7 +12509,7 @@
    "namespace": "detsel",
    "scene_group": 14,
    "seed": 3451811000141060718,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -12734,7 +12734,7 @@
    "namespace": "detsel",
    "scene_group": 14,
    "seed": 3233152922905401049,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -12965,7 +12965,7 @@
    "namespace": "detsel",
    "scene_group": 14,
    "seed": 3905155903605527725,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -13190,7 +13190,7 @@
    "namespace": "detsel",
    "scene_group": 14,
    "seed": 4020785700616209121,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -13413,7 +13413,7 @@
    "namespace": "detsel",
    "scene_group": 15,
    "seed": 63931108113447942,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -13630,7 +13630,7 @@
    "namespace": "detsel",
    "scene_group": 15,
    "seed": 3221289391570067505,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -13853,7 +13853,7 @@
    "namespace": "detsel",
    "scene_group": 15,
    "seed": 3259387842726748509,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -14070,7 +14070,7 @@
    "namespace": "detsel",
    "scene_group": 15,
    "seed": 2550261272865376197,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -14285,7 +14285,7 @@
    "namespace": "detsel",
    "scene_group": 16,
    "seed": 2175885894414913063,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -14494,7 +14494,7 @@
    "namespace": "detsel",
    "scene_group": 16,
    "seed": 1015797829598656593,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -14709,7 +14709,7 @@
    "namespace": "detsel",
    "scene_group": 16,
    "seed": 4242068542544592651,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -14918,7 +14918,7 @@
    "namespace": "detsel",
    "scene_group": 16,
    "seed": 2171239098313784483,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -15149,7 +15149,7 @@
    "namespace": "detsel",
    "scene_group": 17,
    "seed": 1347627484939941857,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -15374,7 +15374,7 @@
    "namespace": "detsel",
    "scene_group": 17,
    "seed": 3255733310161145916,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -15605,7 +15605,7 @@
    "namespace": "detsel",
    "scene_group": 17,
    "seed": 1553193767081376685,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -15830,7 +15830,7 @@
    "namespace": "detsel",
    "scene_group": 17,
    "seed": 89962673989653954,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -16061,7 +16061,7 @@
    "namespace": "detsel",
    "scene_group": 18,
    "seed": 3147343323111554087,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -16286,7 +16286,7 @@
    "namespace": "detsel",
    "scene_group": 18,
    "seed": 1110887008857321463,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -16517,7 +16517,7 @@
    "namespace": "detsel",
    "scene_group": 18,
    "seed": 3076603669328328760,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -16742,7 +16742,7 @@
    "namespace": "detsel",
    "scene_group": 18,
    "seed": 313841394327104466,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -16965,7 +16965,7 @@
    "namespace": "detsel",
    "scene_group": 19,
    "seed": 224203802873895917,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -17182,7 +17182,7 @@
    "namespace": "detsel",
    "scene_group": 19,
    "seed": 2539335330478005268,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -17405,7 +17405,7 @@
    "namespace": "detsel",
    "scene_group": 19,
    "seed": 1262139039379498153,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -17622,7 +17622,7 @@
    "namespace": "detsel",
    "scene_group": 19,
    "seed": 3149064205400797239,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -17837,7 +17837,7 @@
    "namespace": "detsel",
    "scene_group": 20,
    "seed": 3268187443074120616,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -18046,7 +18046,7 @@
    "namespace": "detsel",
    "scene_group": 20,
    "seed": 4210431337203310773,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -18261,7 +18261,7 @@
    "namespace": "detsel",
    "scene_group": 20,
    "seed": 385771907443637788,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -18470,7 +18470,7 @@
    "namespace": "detsel",
    "scene_group": 20,
    "seed": 2836458265788351888,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -18685,7 +18685,7 @@
    "namespace": "detsel",
    "scene_group": 21,
    "seed": 3555135204876761206,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -18894,7 +18894,7 @@
    "namespace": "detsel",
    "scene_group": 21,
    "seed": 2915459422569073742,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -19109,7 +19109,7 @@
    "namespace": "detsel",
    "scene_group": 21,
    "seed": 301473706110206171,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -19318,7 +19318,7 @@
    "namespace": "detsel",
    "scene_group": 21,
    "seed": 1282598592500872128,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -19549,7 +19549,7 @@
    "namespace": "detsel",
    "scene_group": 22,
    "seed": 16460624591699581,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -19774,7 +19774,7 @@
    "namespace": "detsel",
    "scene_group": 22,
    "seed": 1576360827011971879,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -20005,7 +20005,7 @@
    "namespace": "detsel",
    "scene_group": 22,
    "seed": 4343212855887573878,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -20230,7 +20230,7 @@
    "namespace": "detsel",
    "scene_group": 22,
    "seed": 1780534010237535280,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -20461,7 +20461,7 @@
    "namespace": "detsel",
    "scene_group": 23,
    "seed": 913488171263486522,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -20686,7 +20686,7 @@
    "namespace": "detsel",
    "scene_group": 23,
    "seed": 4090952813692788558,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -20917,7 +20917,7 @@
    "namespace": "detsel",
    "scene_group": 23,
    "seed": 379401619139008515,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -21142,7 +21142,7 @@
    "namespace": "detsel",
    "scene_group": 23,
    "seed": 3831844346816980254,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -21365,7 +21365,7 @@
    "namespace": "detsel",
    "scene_group": 24,
    "seed": 4261427383680764078,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -21582,7 +21582,7 @@
    "namespace": "detsel",
    "scene_group": 24,
    "seed": 4389049757398080344,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -21805,7 +21805,7 @@
    "namespace": "detsel",
    "scene_group": 24,
    "seed": 14680082526561332,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -22022,7 +22022,7 @@
    "namespace": "detsel",
    "scene_group": 24,
    "seed": 4561760157897664576,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -22245,7 +22245,7 @@
    "namespace": "detsel",
    "scene_group": 25,
    "seed": 1821714949946532810,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -22462,7 +22462,7 @@
    "namespace": "detsel",
    "scene_group": 25,
    "seed": 3598189327557471357,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -22685,7 +22685,7 @@
    "namespace": "detsel",
    "scene_group": 25,
    "seed": 3318682381146049855,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -22902,7 +22902,7 @@
    "namespace": "detsel",
    "scene_group": 25,
    "seed": 1679955422642052782,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -23117,7 +23117,7 @@
    "namespace": "detsel",
    "scene_group": 26,
    "seed": 2280473162896900916,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -23326,7 +23326,7 @@
    "namespace": "detsel",
    "scene_group": 26,
    "seed": 2547658945407441635,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -23541,7 +23541,7 @@
    "namespace": "detsel",
    "scene_group": 26,
    "seed": 1693457109123076492,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -23750,7 +23750,7 @@
    "namespace": "detsel",
    "scene_group": 26,
    "seed": 1976716781697115584,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -23965,7 +23965,7 @@
    "namespace": "detsel",
    "scene_group": 27,
    "seed": 2323835326546070203,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -24174,7 +24174,7 @@
    "namespace": "detsel",
    "scene_group": 27,
    "seed": 2786702197849951846,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -24389,7 +24389,7 @@
    "namespace": "detsel",
    "scene_group": 27,
    "seed": 3793729526294139730,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -24598,7 +24598,7 @@
    "namespace": "detsel",
    "scene_group": 27,
    "seed": 625605364376181414,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -24813,7 +24813,7 @@
    "namespace": "detsel",
    "scene_group": 28,
    "seed": 3646049890752338488,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -25022,7 +25022,7 @@
    "namespace": "detsel",
    "scene_group": 28,
    "seed": 2325693404185596915,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -25237,7 +25237,7 @@
    "namespace": "detsel",
    "scene_group": 28,
    "seed": 1112704981511747206,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -25446,7 +25446,7 @@
    "namespace": "detsel",
    "scene_group": 28,
    "seed": 988196663265740199,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -25677,7 +25677,7 @@
    "namespace": "detsel",
    "scene_group": 29,
    "seed": 3822959799217897384,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -25902,7 +25902,7 @@
    "namespace": "detsel",
    "scene_group": 29,
    "seed": 4464975477134071977,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -26133,7 +26133,7 @@
    "namespace": "detsel",
    "scene_group": 29,
    "seed": 2919113850527815300,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -26358,7 +26358,7 @@
    "namespace": "detsel",
    "scene_group": 29,
    "seed": 2770409788474805016,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -26573,7 +26573,7 @@
    "namespace": "detsel",
    "scene_group": 30,
    "seed": 1940345893634989591,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -26782,7 +26782,7 @@
    "namespace": "detsel",
    "scene_group": 30,
    "seed": 1250195217283990454,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -26997,7 +26997,7 @@
    "namespace": "detsel",
    "scene_group": 30,
    "seed": 412128110728200001,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -27206,7 +27206,7 @@
    "namespace": "detsel",
    "scene_group": 30,
    "seed": 3375127438339234395,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -27421,7 +27421,7 @@
    "namespace": "detsel",
    "scene_group": 31,
    "seed": 3038977194484854358,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -27630,7 +27630,7 @@
    "namespace": "detsel",
    "scene_group": 31,
    "seed": 2022299676002655047,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -27845,7 +27845,7 @@
    "namespace": "detsel",
    "scene_group": 31,
    "seed": 4054029659114284891,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -28054,7 +28054,7 @@
    "namespace": "detsel",
    "scene_group": 31,
    "seed": 2066414218275779818,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -28269,7 +28269,7 @@
    "namespace": "detsel",
    "scene_group": 32,
    "seed": 3038487071266666806,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -28478,7 +28478,7 @@
    "namespace": "detsel",
    "scene_group": 32,
    "seed": 1048155099139904827,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -28693,7 +28693,7 @@
    "namespace": "detsel",
    "scene_group": 32,
    "seed": 2787424664030170532,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -28902,7 +28902,7 @@
    "namespace": "detsel",
    "scene_group": 32,
    "seed": 4231677219348921597,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -29125,7 +29125,7 @@
    "namespace": "detsel",
    "scene_group": 33,
    "seed": 3196137456353187928,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -29342,7 +29342,7 @@
    "namespace": "detsel",
    "scene_group": 33,
    "seed": 3762120451474425642,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -29565,7 +29565,7 @@
    "namespace": "detsel",
    "scene_group": 33,
    "seed": 4115502297690993631,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -29782,7 +29782,7 @@
    "namespace": "detsel",
    "scene_group": 33,
    "seed": 3403908058503811182,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -29997,7 +29997,7 @@
    "namespace": "detsel",
    "scene_group": 34,
    "seed": 3366543483333840210,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -30206,7 +30206,7 @@
    "namespace": "detsel",
    "scene_group": 34,
    "seed": 3451023907535137916,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -30421,7 +30421,7 @@
    "namespace": "detsel",
    "scene_group": 34,
    "seed": 2417712506204546982,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -30630,7 +30630,7 @@
    "namespace": "detsel",
    "scene_group": 34,
    "seed": 1314573583964627766,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -30853,7 +30853,7 @@
    "namespace": "detsel",
    "scene_group": 35,
    "seed": 3587071345446386956,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -31070,7 +31070,7 @@
    "namespace": "detsel",
    "scene_group": 35,
    "seed": 1567981552409314918,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -31293,7 +31293,7 @@
    "namespace": "detsel",
    "scene_group": 35,
    "seed": 2932935041759109393,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -31510,7 +31510,7 @@
    "namespace": "detsel",
    "scene_group": 35,
    "seed": 3970123701981491629,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -31741,7 +31741,7 @@
    "namespace": "detsel",
    "scene_group": 36,
    "seed": 1392539832408147718,
-   "split": "train",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -31966,7 +31966,7 @@
    "namespace": "detsel",
    "scene_group": 36,
    "seed": 2457432656533987819,
-   "split": "train",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -32197,7 +32197,7 @@
    "namespace": "detsel",
    "scene_group": 36,
    "seed": 3469999312857467782,
-   "split": "train",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -32422,7 +32422,7 @@
    "namespace": "detsel",
    "scene_group": 36,
    "seed": 423289857058518228,
-   "split": "train",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -32653,7 +32653,7 @@
    "namespace": "detsel",
    "scene_group": 37,
    "seed": 1698095992475597272,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -32878,7 +32878,7 @@
    "namespace": "detsel",
    "scene_group": 37,
    "seed": 354102851989311229,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -33109,7 +33109,7 @@
    "namespace": "detsel",
    "scene_group": 37,
    "seed": 2619379071012904684,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -33334,7 +33334,7 @@
    "namespace": "detsel",
    "scene_group": 37,
    "seed": 3827750153652827636,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -33565,7 +33565,7 @@
    "namespace": "detsel",
    "scene_group": 38,
    "seed": 546939842037274382,
-   "split": "test",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -33790,7 +33790,7 @@
    "namespace": "detsel",
    "scene_group": 38,
    "seed": 3220081906560367112,
-   "split": "test",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -34021,7 +34021,7 @@
    "namespace": "detsel",
    "scene_group": 38,
    "seed": 4496530412985166334,
-   "split": "test",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -34246,7 +34246,7 @@
    "namespace": "detsel",
    "scene_group": 38,
    "seed": 3050711209164921084,
-   "split": "test",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,
@@ -34469,7 +34469,7 @@
    "namespace": "detsel",
    "scene_group": 39,
    "seed": 2050117336432168503,
-   "split": "val",
+   "split": "detsel",
    "variant": 0,
    "zone": {
     "cx": 0.0,
@@ -34686,7 +34686,7 @@
    "namespace": "detsel",
    "scene_group": 39,
    "seed": 1958065220274511081,
-   "split": "val",
+   "split": "detsel",
    "variant": 1,
    "zone": {
     "cx": 0.0,
@@ -34909,7 +34909,7 @@
    "namespace": "detsel",
    "scene_group": 39,
    "seed": 1955897909075497171,
-   "split": "val",
+   "split": "detsel",
    "variant": 2,
    "zone": {
     "cx": 0.0,
@@ -35126,7 +35126,7 @@
    "namespace": "detsel",
    "scene_group": 39,
    "seed": 82653857123519132,
-   "split": "val",
+   "split": "detsel",
    "variant": 3,
    "zone": {
     "cx": 0.0,

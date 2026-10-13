@@ -131,3 +131,10 @@ def test_present_absent_pairs_share_occluders():
         assert [b.sz for b in v[0].layout.occluders] == [b.sz for b in v[2].layout.occluders]
         assert v[0].layout.object_present and not v[1].layout.object_present
         assert v[2].layout.object_present and not v[3].layout.object_present
+
+
+def test_detsel_namespace_is_its_own_split():
+    from activeperception.episodes import DETSEL_NAMESPACE
+
+    specs = build_episode_set(DETSEL_NAMESPACE, 20)
+    assert {s.split for s in specs} == {Split.DETSEL}

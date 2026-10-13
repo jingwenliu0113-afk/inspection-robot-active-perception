@@ -58,3 +58,14 @@ Core 不做 fine-tuning（那是 Advanced A）。
 ## 被凍結的項目
 
 候選模型清單、資料來源與 namespace、推論設定、指標定義、選擇規則。
+
+## 附錄 A（2026-10-13，任何 detector 執行之前）：推論設定的實作細節
+
+- torchvision 的 `box_detections_per_img` 是**所有類別合計**的上限，低門檻時 fire hydrant 的框可能被其他類別擠掉；
+  Ultralytics 的 `classes=[fire hydrant]` 則是先過濾類別再取 `max_det`。為了讓兩者都得到「最多 100 個 fire hydrant 候選」，
+  torchvision 改設 `box_detections_per_img=1000`，輸出後只保留 fire hydrant、依 confidence 取前 100。
+- Ultralytics 對 numpy 輸入視為 **BGR**；frame store 的 RGB 影像在送進 Ultralytics 前轉成 BGR。torchvision 吃 RGB float [0, 1]。
+- Ultralytics 以環境變數 `YOLO_OFFLINE=1` 執行（不連網、不送使用統計），不修改使用者層級設定檔。
+- 權重檔手動下載到 `models/`（不進 git），sha256 記錄在選型結果附錄：
+  - `yolov8m.pt`、`yolo11m.pt`：`https://github.com/ultralytics/assets/releases/download/v8.4.0/`
+  - `fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth`：`https://download.pytorch.org/models/`（torchvision `COCO_V1`）

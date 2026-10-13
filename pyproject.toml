@@ -8,6 +8,13 @@ dependencies = [
     "numpy>=1.26",
 ]
 
+[project.optional-dependencies]
+detectors = [
+    "torch>=2.11",
+    "torchvision>=0.26",
+    "ultralytics>=8.3",
+]
+
 [dependency-groups]
 dev = [
     "pytest>=8",

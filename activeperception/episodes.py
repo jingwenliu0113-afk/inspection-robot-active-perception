@@ -35,6 +35,7 @@ from .types import (
 
 GENERATOR_VERSION = "gen-v2"  # decision 006
 PILOT_NAMESPACE = "pilot"
+DETSEL_NAMESPACE = "detsel"  # decision 005 / 006
 
 
 @dataclass(frozen=True)
@@ -92,6 +93,8 @@ def _rng(*parts: object) -> np.random.Generator:
 def split_for_group(namespace: str, scene_group: int, config: GeneratorConfig) -> Split:
     if namespace == PILOT_NAMESPACE:
         return Split.PILOT
+    if namespace == DETSEL_NAMESPACE:
+        return Split.DETSEL
     bucket = stable_seed("split", namespace, GENERATOR_VERSION, scene_group) % 1000
     train_end = int(round(config.split_fractions[0] * 1000))
     val_end = train_end + int(round(config.split_fractions[1] * 1000))

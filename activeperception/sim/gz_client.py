@@ -131,26 +131,67 @@ class GzClient:
         w, x, y, z = pose_quaternion(pose.yaw, pose.pitch)
         req.orientation.w, req.orientation.x = w, x
         req.orientation.y, req.orientation.z = y, z
-        self._request(f"/world/{self.world}/set_pose/blocking", req, PoseMsg, Boolean, timeout_ms)
+        self._request(
+            f"/world/{self.world}/set_pose/blocking",
+            req,
+            PoseMsg,
+            Boolean,
+            timeout_ms,
+            retry_on_false=True,
+        )
 
-    def remove_model(self, name: str, timeout_ms: int = 5000) -> None:
+    def park_models(self, names: list[str], timeout_ms: int = 5000) -> None:
+        """Move models 1 km away and 100 m below ground (beyond the 20 m far clip).
+
+        Used for the clear GT pass. Unlike ``remove`` this is idempotent, so a failed
+        call can be retried safely (``remove/blocking`` occasionally replied false under
+        4 parallel render containers, 2026-10-13).
+        """
         from gz.msgs10.boolean_pb2 import Boolean
-        from gz.msgs10.entity_pb2 import Entity
+        from gz.msgs10.pose_v_pb2 import Pose_V
 
-        req = Entity()
-        req.name = name
-        req.type = Entity.MODEL
-        self._request(f"/world/{self.world}/remove/blocking", req, Entity, Boolean, timeout_ms)
+        req = Pose_V()
+        for i, name in enumerate(names):
+            pose = req.pose.add()
+            pose.name = name
+            pose.position.x, pose.position.y, pose.position.z = 1000.0 + 10.0 * i, 1000.0, -100.0
+            pose.orientation.w = 1.0
+        self._request(
+            f"/world/{self.world}/set_pose_vector/blocking",
+            req,
+            Pose_V,
+            Boolean,
+            timeout_ms,
+            retry_on_false=True,
+        )
 
-    def _request(self, service, req, req_type, rep_type, timeout_ms, discovery_s=20.0) -> None:
-        """Call a Boolean-reply service; retry while gz-transport is still discovering it."""
+    def _request(
+        self,
+        service,
+        req,
+        req_type,
+        rep_type,
+        timeout_ms,
+        discovery_s=20.0,
+        retry_on_false=False,
+        attempts=5,
+    ) -> None:
+        """Call a Boolean-reply service; retry while it is being discovered.
+
+        ``retry_on_false`` also retries a ``false`` reply; only for idempotent requests.
+        """
         deadline = time.monotonic() + discovery_s
+        false_replies = 0
         while True:
             ok, rep = self._node.request(service, req, req_type, rep_type, timeout_ms)
             if ok and rep.data:
                 return
-            if ok or time.monotonic() > deadline:
-                raise GzClientError(f"{service} failed (reached={ok}) for {req}")
+            if ok:
+                false_replies += 1
+                if not retry_on_false or false_replies >= attempts:
+                    raise GzClientError(f"{service} replied false for {req}")
+            elif time.monotonic() > deadline:
+                raise GzClientError(f"{service} unreachable for {req}")
             time.sleep(0.2)
 
     def grab(self, after_ns: int, timeout: float = 30.0) -> dict[str, Frame]:

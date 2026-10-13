@@ -34,6 +34,7 @@ class Split(StrEnum):
     VAL = "val"
     TEST = "test"
     PILOT = "pilot"
+    DETSEL = "detsel"  # detector-selection data (decision 005), never train / val / test
 
 
 @dataclass(frozen=True)

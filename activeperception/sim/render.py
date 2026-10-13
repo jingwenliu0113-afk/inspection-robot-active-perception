@@ -2,7 +2,7 @@
 
 For each episode: write the full-scene SDF, start a headless ``gz sim`` server, and for
 the initial viewpoint + all candidates teleport and grab RGB / depth / labels. When the
-object is present, remove the pillars over gz-transport and grab the labels again (the
+object is present, park the pillars out of view over gz-transport and grab the labels again (the
 clear GT pass). Output format: ``activeperception.framestore`` (``render-v1``).
 
 Sensors run at 30 Hz by default: frames are pixel-identical to 10 Hz renders (checked
@@ -26,7 +26,7 @@ from ..framestore import encode_depth_mm, write_episode_frames
 from ..serialize import load_spec_set, spec_digest
 from ..types import EpisodeSpec
 from .gz_client import GzClient
-from .sdf import PILLAR_PREFIX, SDF_VERSION, world_sdf
+from .sdf import LABEL_PILLAR, PILLAR_PREFIX, SDF_VERSION, world_sdf
 
 
 class GzServer:
@@ -89,10 +89,9 @@ def render_episode(
         full = _grab_pass(client, spec, settle_ns)
         clear = None
         if spec.layout.object_present:
-            for i in range(len(spec.layout.occluders)):
-                client.remove_model(f"{PILLAR_PREFIX}{i}")
+            client.park_models([f"{PILLAR_PREFIX}{i}" for i in range(len(spec.layout.occluders))])
             clear = _grab_pass(client, spec, settle_ns)
-            if (clear["labels"] == 20).any():
+            if (clear["labels"] == LABEL_PILLAR).any():
                 raise RuntimeError("clear pass still shows pillar labels")
     finally:
         server.stop()
@@ -140,17 +139,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.episodes:
         wanted = set(args.episodes.split(","))
         specs = [s for s in specs if s.episode_id in wanted]
+    out_dir = Path(args.out)
+    if not args.overwrite:  # skip finished episodes before sharding so resumes stay balanced
+        specs = [s for s in specs if not (out_dir / f"{s.episode_id}.npz").exists()]
     specs = specs[args.worker :: args.workers]
     if args.limit:
         specs = specs[: args.limit]
-    out_dir = Path(args.out)
     work_dir = out_dir / "_work"
     work_dir.mkdir(parents=True, exist_ok=True)
     client = GzClient()
     done = 0
     for spec in specs:
-        if (out_dir / f"{spec.episode_id}.npz").exists() and not args.overwrite:
-            continue
         meta = render_episode(
             spec, out_dir, work_dir, client, args.update_rate, args.settle_periods
         )

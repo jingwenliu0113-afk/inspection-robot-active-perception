@@ -27,6 +27,10 @@ decision 002 / 004 把 `zone_visible_fraction`（部署可得）與 GT visibilit
 - 每個 episode 產生兩個 SDF：**full**（完整場景）與 **clear**（移除所有遮擋柱，只在物件存在時需要）。
 - 對每個 viewpoint：`/world/inspection/set_pose` 移動 `inspector_cam` → 只接受 header stamp 晚於 pose 生效時間的 frame → 存 RGB（uint8）、depth（float32 → 以 mm 存 uint16，無回波記為 65535）、semantic labels（uint8）。
 - clear pass 只存 labels。
+- 實作註記（2026-10-13，看任何 detector / 正式結果之前）：clear pass 不另開 SDF，而是在同一個 server 以 `set_pose_vector/blocking` 把所有遮擋柱移到 1 km 外的地下（遠截 20 m 之外）。
+  與「移除柱子」逐像素相同（`detsel-g0000-v0`、`detsel-g0001-v2` 驗證），但它是冪等操作，可以安全重試；`remove/blocking` 在 4 個平行容器下偶爾回覆 false。
+  render 會檢查 clear pass 不得出現任何柱子 label。
+- sensor 以 30 Hz 更新：與 10 Hz render 逐像素相同、耗時約一半。
 - 每個 frame 記錄：請求的 pose、sim time stamp、render 設定、image ID、SDF 版本。
 - frame store 目錄：`renders/<render_set>/<episode_id>.npz` + `manifest.json`（大型資料，不進 git）。
 

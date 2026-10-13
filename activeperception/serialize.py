@@ -189,8 +189,13 @@ def load_spec_set(path: str | Path) -> tuple[list[EpisodeSpec], dict]:
 
 
 def spec_digest(spec: EpisodeSpec) -> str:
-    """Stable content hash of a spec (renders record it; replay checks it)."""
+    """Stable hash of everything a render depends on (renders record it; replay checks it).
+
+    The split label is excluded: it never changes what is rendered.
+    """
     import hashlib
 
-    blob = json.dumps(to_dict(spec), sort_keys=True).encode("utf-8")
+    d = to_dict(spec)
+    d.pop("split")
+    blob = json.dumps(d, sort_keys=True).encode("utf-8")
     return hashlib.sha256(blob).hexdigest()[:16]
