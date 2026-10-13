@@ -16,11 +16,20 @@
 
 ## 任務定義（已凍結，見 decision 002 / 003 / 004）
 
-| Ground truth（每個 episode） | 系統輸出 |
+Ground truth 狀態（每個 episode 一個）：
+
+- `visible`：物件存在且初始視角可觀測
+- `unobservable`：物件存在但初始視角被遮擋
+- `absent`：物件不存在
+
+系統輸出只能是 `present` / `absent` / `inconclusive`。評分時的正確答案（decision 003）：
+
+| GT 狀態 | 正確輸出 |
 |---|---|
-| `visible`：物件存在且初始視角可觀測 | `present` |
-| `unobservable`：物件存在但初始視角被遮擋 | `absent` |
-| `absent`：物件不存在 | `inconclusive` |
+| `visible` | `present` |
+| `unobservable`，且某個候選視角看得到 | `present` |
+| `unobservable`，且所有候選視角都看不到 | `inconclusive` |
+| `absent` | `absent` |
 
 - Core 以 **teleport** 到候選 viewpoint，不含 Nav2，不含 RL。
 - 候選 viewpoint 只由 inspection zone 與 scene-group seed 決定，與物件位置 / 遮擋無關（有 leakage test）。
