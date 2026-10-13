@@ -35,10 +35,9 @@ def sector_of(azimuth: float, n_sectors: int) -> int:
 
 
 class DecisionRule:
-    version = DECISION_RULE_VERSION
-
-    def __init__(self, params: DecisionRuleParams | None = None):
+    def __init__(self, params: DecisionRuleParams | None = None, version: str | None = None):
         self.params = params or DecisionRuleParams()
+        self.version = version or DECISION_RULE_VERSION
 
     def effective_sectors(self, history: Sequence[Observation]) -> set[int]:
         p = self.params

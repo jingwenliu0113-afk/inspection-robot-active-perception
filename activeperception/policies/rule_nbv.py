@@ -18,8 +18,8 @@ geometry, coverage proxy. Each unvisited candidate is scored with
 * unobstructed (v0): kernel-weighted average of the ``zone_visible_fraction`` of visited
   viewpoints near the candidate's bearing; prior 0.5 when nothing is nearby.
 
-Highest score wins; ties go to the lowest candidate id. The v1 weights default to 0 (v0
-behaviour) until decision 009 freezes the tuned values.
+Highest score wins; ties go to the lowest candidate id. Defaults are the v0 weights; the
+frozen v1 configuration lives in ``activeperception.frozen`` (decision 009).
 """
 
 from __future__ import annotations
@@ -60,11 +60,13 @@ class RuleNBVPolicy:
         params: RuleNBVParams | None = None,
         decision_params: DecisionRuleParams | None = None,
         visibility_cache: dict | None = None,
+        version: str | None = None,
     ):
         """``visibility_cache`` may be shared across policy instances that run on the SAME
         world (e.g. a parameter sweep); keys are (episode, visited ids, candidate)."""
         self.params = params or RuleNBVParams()
         self.dp = decision_params or DecisionRuleParams()
+        self.version = version or RULE_NBV_VERSION
         self._shared = visibility_cache is not None
         self._vis_cache: dict[tuple, float] = {} if visibility_cache is None else visibility_cache
 
