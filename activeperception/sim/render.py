@@ -150,9 +150,16 @@ def main(argv: list[str] | None = None) -> int:
     client = GzClient()
     done = 0
     for spec in specs:
-        meta = render_episode(
-            spec, out_dir, work_dir, client, args.update_rate, args.settle_periods
-        )
+        for attempt in range(3):  # transient gz-transport discovery stalls under load
+            try:
+                meta = render_episode(
+                    spec, out_dir, work_dir, client, args.update_rate, args.settle_periods
+                )
+                break
+            except Exception as exc:  # noqa: BLE001 - logged and retried with a fresh server
+                print(f"[w{args.worker}] {spec.episode_id} attempt {attempt + 1}: {exc!r}")
+                if attempt == 2:
+                    raise
         done += 1
         print(f"[w{args.worker}] {spec.episode_id} {meta['seconds']}s", flush=True)
     print(f"[w{args.worker}] rendered {done} episodes into {out_dir}", flush=True)
