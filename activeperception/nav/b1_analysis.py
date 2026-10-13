@@ -272,6 +272,74 @@ def nav_metrics(navs: list[dict]) -> dict:
     }
 
 
+def _ci(r: dict) -> str:
+    return f"{r['mean']:+.3f} [{r['ci95'][0]:+.3f}, {r['ci95'][1]:+.3f}]"
+
+
+def markdown_tables(report: dict) -> str:
+    """Tables for the results README / decision log (Traditional Chinese headers)."""
+    t, n = report["teleport"], report["nav2"]
+    lines = ["| 方法 | budget 1 | 2 | 3 | 5 |", "|---|---|---|---|---|"]
+    for m, label in (
+        ("single", "Single"),
+        ("random", "Random"),
+        ("rule", "Rule-NBV v2"),
+        ("oracle", "Oracle v2"),
+    ):
+        cells = [
+            f"{t[f'{m}@{b}']['accuracy']:.3f} / {n[f'{m}@{b}']['accuracy']:.3f}"
+            for b in (1, 2, 3, 5)
+        ]
+        lines.append(f"| {label}（teleport / Nav2） | " + " | ".join(cells) + " |")
+    out = ["### Accuracy", "", *lines, ""]
+    safe = ["| 方法 | false absent | false present | geometric risk |", "|---|---|---|---|"]
+    for m in ("single", "random", "rule", "oracle"):
+        fa = sum(n[f"{m}@{b}"]["false_absent"] for b in BUDGETS)
+        fp = sum(n[f"{m}@{b}"]["false_present"] for b in BUDGETS)
+        gr = sum(n[f"{m}@{b}"]["geometric_risk"] for b in BUDGETS)
+        safe.append(f"| {m} | {fa} | {fp} | {gr} |")
+    out += ["### Q1 安全（Nav2，budget 1–5 合計）", "", *safe, ""]
+    c = report.get("claims")
+    if c:
+        q2 = ["| 方法 | budget 2 | budget 3 |", "|---|---|---|"]
+        for m in ("single", "random", "rule", "oracle"):
+            r2, r3 = c["Q2_nav_minus_teleport"][f"{m}@2"], c["Q2_nav_minus_teleport"][f"{m}@3"]
+            q2.append(f"| {m} | {_ci(r2)} {r2['verdict']} | {_ci(r3)} {r3['verdict']} |")
+        q3 = ["| 比較（Nav2） | budget 2 | budget 3 |", "|---|---|---|"]
+        for base in ("single", "random"):
+            r2 = c["Q3_active_vs_baselines_nav"][f"rule-{base}@2"]
+            r3 = c["Q3_active_vs_baselines_nav"][f"rule-{base}@3"]
+            q3.append(f"| Rule − {base} | {_ci(r2)} {r2['verdict']} | {_ci(r3)} {r3['verdict']} |")
+        q4 = c["Q4_cost"]
+        out += [
+            "### Q2 Nav2 − teleport（accuracy）",
+            "",
+            *q2,
+            "",
+            "### Q3 主動視角（Nav2）",
+            "",
+            *q3,
+            "",
+            "### Q4 成本（每個 episode）",
+            "",
+            f"- 行走距離：Rule {q4['rule_path_m_per_episode']:.2f} m、Random {q4['random_path_m_per_episode']:.2f} m；"
+            f"差 {_ci(q4['rule_minus_random_path_m_per_episode'])} m",
+            f"- 導航時間（模擬）：Rule {q4['rule_nav_sim_s_per_episode']:.1f} s、Random {q4['random_nav_sim_s_per_episode']:.1f} s；"
+            f"差 {_ci(q4['rule_minus_random_nav_sim_s_per_episode'])} s",
+            "",
+        ]
+    nm = report["navigation"]
+    out += [
+        "### 導航（SPEC Advanced B 指標）",
+        "",
+        f"- 導航次數 {nm['navigations']}；準確到點（path success / reachable viewpoint）{nm['path_success_rate']:.3f}；"
+        f"Nav2 回報成功 {nm['nav2_reported_success']}；碰撞 {nm['collisions']}；逾時 {nm['timeouts']}；進入 zone {nm['zone_entries']}",
+        f"- 每次導航延遲（模擬，含重定位）p50 {nm['latency_sim_s_p50']:.1f} s、p95 {nm['latency_sim_s_p95']:.1f} s；"
+        f"重定位修正次數 {nm['relocalize_corrections']}；精修失敗 {nm['refine_failed']}",
+    ]
+    return "\n".join(out) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="activeperception.nav.b1_analysis")
     ap.add_argument("--ns", required=True)
@@ -304,6 +372,7 @@ def main(argv: list[str] | None = None) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "b1_report.json").write_text(json.dumps(report, indent=1) + "\n")
+    (out / "tables.md").write_text(markdown_tables(report))
     for b in (1, 2, 3, 5):
         line = []
         for m in ("single", "random", "rule", "oracle"):

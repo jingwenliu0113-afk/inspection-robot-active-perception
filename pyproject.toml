@@ -44,3 +44,4 @@ select = ["E", "F", "I", "B", "UP"]
 "activeperception/sim/sdf.py" = ["E501"]
 "activeperception/nav/world.py" = ["E501"]
 "activeperception/nav/robot.py" = ["E501"]
+"activeperception/nav/b1_analysis.py" = ["E501"]  # markdown table templates
