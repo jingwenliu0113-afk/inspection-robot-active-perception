@@ -103,3 +103,16 @@ def test_gen_nav_v1_specs_and_methods():
     assert {s.split for s in specs} == {Split.NAV_DEV}
     assert [s.variant for s in specs[:4]] == [0, 1, 2, 3]
     assert b1_driver.METHODS == ("single", "random", "rule", "oracle")
+
+
+def test_cluster_bootstrap_is_seeded_and_clustered():
+    v = np.array([1.0, 1.0, 0.0, 0.0])
+    g = np.array([0, 0, 1, 1])
+    a = B.cluster_bootstrap(v, g, 200, 0)
+    assert a == B.cluster_bootstrap(v, g, 200, 0)
+    assert a["mean"] == 0.5 and a["ci95"][0] == 0.0 and a["ci95"][1] == 1.0
+
+
+def test_b2_namespace_is_the_formal_split():
+    assert {s.split for s in scene.nav_specs(scene.B2_NAMESPACE, 2)} == {Split.NAV_EVAL}
+    assert {s.split for s in scene.nav_specs(scene.B1_NAMESPACE, 2)} == {Split.NAV_DEV}

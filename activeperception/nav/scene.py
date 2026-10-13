@@ -97,14 +97,17 @@ def map_files(spec: EpisodeSpec, image_name: str) -> tuple[bytes, str]:
 
 GENERATOR_VERSION_V1 = "gen-nav-v1"  # = gen-nav-b0 settings, frozen for B1 / B2 (decision 017)
 B1_NAMESPACE = "nav-b1"  # B1 integration (dev) data
+B2_NAMESPACE = "nav-b2"  # B2 formal evaluation (decision 018), generated after it, run once
+EVAL_NAMESPACES = (B2_NAMESPACE,)
 
 
 def nav_specs(
     namespace: str, n_groups: int, variants: tuple[int, ...] = (0, 1, 2, 3)
 ) -> list[EpisodeSpec]:
     """B1 / B2 episodes: gen-v2 variants (present / absent x pillar jitter) on gen-nav-v1."""
+    split = Split.NAV_EVAL if namespace in EVAL_NAMESPACES else Split.NAV_DEV
     return [
-        dataclasses.replace(s, generator_version=GENERATOR_VERSION_V1)
+        dataclasses.replace(s, generator_version=GENERATOR_VERSION_V1, split=split)
         for s in b0_specs(n_groups, variants, namespace)
     ]
 

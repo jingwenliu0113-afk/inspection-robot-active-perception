@@ -169,6 +169,75 @@ def paired(nav: dict, tel: dict) -> dict:
     return out
 
 
+FORMAL_BUDGETS = (2, 3)
+NONINFERIOR_MARGIN = 0.05  # decision 018 Q2
+
+
+def _per_episode(outcomes: dict, method: str, b: int, eids: list[str]) -> np.ndarray:
+    seeds = RANDOM_SEEDS if method == "random" else (0,)
+    return np.array(
+        [np.mean([outcomes[(method, sd, b, e)]["correct"] for sd in seeds]) for e in eids]
+    )
+
+
+def cluster_bootstrap(values: np.ndarray, groups: np.ndarray, n_boot: int, seed: int) -> dict:
+    """Mean and 95% percentile CI of per-episode ``values`` resampling scene groups."""
+    uniq = np.unique(groups)
+    members = {g: np.flatnonzero(groups == g) for g in uniq}
+    rng = np.random.default_rng(seed)
+    means = []
+    for _ in range(n_boot):
+        pick = rng.choice(uniq, size=len(uniq), replace=True)
+        means.append(values[np.concatenate([members[g] for g in pick])].mean())
+    return {
+        "mean": float(values.mean()),
+        "ci95": [float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5))],
+    }
+
+
+def claims(nav: dict, tel: dict, navs: list[dict], specs, n_boot: int, seed: int) -> dict:
+    """decision 018 Q2-Q4 (Q1 is a count, see ``summarize``)."""
+    eids = [s.episode_id for s in specs]
+    groups = np.array([s.scene_group for s in specs])
+    out: dict = {"Q2_nav_minus_teleport": {}, "Q3_active_vs_baselines_nav": {}, "Q4_cost": {}}
+    for b in FORMAL_BUDGETS:
+        for m in ("single", "random", "rule", "oracle"):
+            d = _per_episode(nav, m, b, eids) - _per_episode(tel, m, b, eids)
+            r = cluster_bootstrap(d, groups, n_boot, seed)
+            r["verdict"] = "non-inferior" if r["ci95"][0] > -NONINFERIOR_MARGIN else "loss"
+            out["Q2_nav_minus_teleport"][f"{m}@{b}"] = r
+        rule = _per_episode(nav, "rule", b, eids)
+        for base in ("single", "random"):
+            r = cluster_bootstrap(rule - _per_episode(nav, base, b, eids), groups, n_boot, seed)
+            r["verdict"] = "holds" if r["ci95"][0] > 0 else "does not hold"
+            out["Q3_active_vs_baselines_nav"][f"rule-{base}@{b}"] = r
+    for key, field in (("path_m", "path_m"), ("nav_sim_s", "sim_s")):
+        per = {}
+        for m in ("rule", "random"):
+            seeds = RANDOM_SEEDS if m == "random" else (0,)
+            per[m] = np.array(
+                [
+                    np.mean(
+                        [
+                            sum(
+                                n[field]
+                                for n in navs
+                                if n["episode"] == e and n["method"] == m and n["seed"] == sd
+                            )
+                            for sd in seeds
+                        ]
+                    )
+                    for e in eids
+                ]
+            )
+        out["Q4_cost"][f"rule_minus_random_{key}_per_episode"] = cluster_bootstrap(
+            per["rule"] - per["random"], groups, n_boot, seed
+        )
+        out["Q4_cost"][f"rule_{key}_per_episode"] = float(per["rule"].mean())
+        out["Q4_cost"][f"random_{key}_per_episode"] = float(per["random"].mean())
+    return out
+
+
 def nav_metrics(navs: list[dict]) -> dict:
     def q(v, p):
         return float(np.quantile(v, p)) if v else None
@@ -228,6 +297,10 @@ def main(argv: list[str] | None = None) -> int:
         "nav2_minus_teleport": paired(nav, tel),
         "navigation": nav_metrics(navs),
     }
+    if not missing:
+        from ..frozen import BOOT_SEED, N_BOOT
+
+        report["claims"] = claims(nav, tel, navs, specs, N_BOOT, BOOT_SEED)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "b1_report.json").write_text(json.dumps(report, indent=1) + "\n")
