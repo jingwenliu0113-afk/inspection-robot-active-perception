@@ -4,7 +4,7 @@
 
 ## 狀態
 
-**Core 結案（decision 014，2026-10-13）：v1（decision 010）＋ v2（decision 011–013）。**
+**Core 結案（decision 014，2026-10-13）：v1（decision 010）＋ v2（decision 011–013）。Advanced B 在 B0 後暫停（decision 015）。**
 
 - v1：正式 test 一次；Rule 穩定勝過 Single / Random。holdout 上「接近 Oracle」未重現（decision 013）。
 - v2：看過 v1 test 後提出；只用 core train / val 開發，在新的 `holdout` split 一次性與 v1 分開比較；
@@ -13,7 +13,10 @@
 - **原 `core` test 與 `holdout` 都已封存**（`activeperception/seal.py`、`SEALED.sha256`、`tests/test_seal.py`）：不得用於任何新版本的開發、調參或正式驗證，不得合併；
   不得根據 holdout 結果調整模型或規則。新版本需要新 namespace、未參與開發的資料。
 - v1 / v2 的程式、結果、失敗紀錄都保留（`frozen.py` / `frozen_v2.py`、`results/test-v1/`、`results/holdout/`、`docs/failure-analysis.md`）。
-- **Advanced C（RL）**：使用者決定暫不進行。**Advanced B（Nav2）**：只完成評估（`docs/advanced-b-nav2-evaluation.md`），未經使用者決定不得啟動。
+- **Advanced C（RL）**：使用者決定暫不進行。
+- **Advanced B（Nav2）**：使用者核准（decision 015，方案 1，用凍結的 v2、TurtleBot 4、Mac）。B0 完成：C1–C5 通過，**C6 未通過**
+  （AMCL 定位誤差使 v2 看穿判定失去安全邊界）→ **B1 暫停，等使用者決定處理方式**；不得自行修改 v2 或啟動 B1。
+  B 的資料只用 `nav-*` namespace（`Split.NAV_DEV`）；GT 位姿 / 標籤只用於評分，判定只用 AMCL 估計位姿 + 機載影像 + detector。
 
 下一步需要使用者決定，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
 

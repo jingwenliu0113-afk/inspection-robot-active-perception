@@ -1,0 +1,41 @@
+{
+ "nav2_active_after_wall_s": 22.6,
+ "goals": [
+  {
+   "goal": [
+    -4.5,
+    0.0,
+    0.0
+   ],
+   "result": "SUCCEEDED",
+   "succeeded": true,
+   "wall_s": 3.35,
+   "sim_s": 5.34,
+   "rtf": 1.594
+  },
+  {
+   "goal": [
+    -4.5,
+    -1.0,
+    -1.571
+   ],
+   "result": "SUCCEEDED",
+   "succeeded": true,
+   "wall_s": 5.71,
+   "sim_s": 5.43,
+   "rtf": 0.951
+  },
+  {
+   "goal": [
+    -6.0,
+    0.0,
+    3.142
+   ],
+   "result": "SUCCEEDED",
+   "succeeded": true,
+   "wall_s": 8.12,
+   "sim_s": 8.12,
+   "rtf": 1.0
+  }
+ ]
+}

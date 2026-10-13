@@ -7,6 +7,8 @@
 >   holdout 也顯示 v1 在原 test 上「接近 Oracle」的結論**沒有重現**，而 v2 在 budget 2 與 Oracle 仍差 4.3 點（見下方 v2 段落）。
 > - **Core 已結案**（[decision 014](docs/decisions/014-core-closure.md)）：v2 的改善主要來自 absent 判定規則，**不是**選視角策略；
 >   Gate 未通過的項目、失敗分析與資料封存見下方「Core 結案」。Advanced C（RL）暫不進行；Advanced B（Nav2）已完成評估，待決定。
+> - **Advanced B（Nav2）**：使用者核准後已完成 B0 可行性驗證（[decision 015](docs/decisions/015-advanced-b-start-and-b0-protocol.md)）——
+>   導航、定位、觀察可靠性都達標，但 AMCL 的定位誤差會讓 v2 的「看穿」判定失去安全邊界（C6 未通過），**B1 暫停，待使用者決定**。
 > - 正式數字只來自 ROS 2 Jazzy + Gazebo Harmonic；synthetic world 只用於 correctness tests。
 
 ## 一句話問題
@@ -147,10 +149,22 @@ rule-nbv-v2 相對 rule-nbv-v1 沒有顯著改善；v2 相對 v1 有 7 件（bud
 - 程式強制：調參拒絕 test / holdout；正式 runner 對封存資料只允許 `--reproduce`（輸出不得寫進 `results/`，只比對是否逐位元相同）；
   [`SEALED.sha256`](SEALED.sha256) 釘住所有已 commit 的結果、凍結的 episode sets 與 `frozen.py` / `frozen_v2.py`，`tests/test_seal.py` 檢查。
 
-### 下一步：Advanced B（Nav2）評估
+## Advanced B（Nav2）：B0 可行性驗證
 
-Nav2 與 TurtleBot 4 / 3 的 Gazebo Harmonic 模擬套件在 Jazzy arm64 都有現成 binary，可以只在 Mac 上完成，不需要 GPU 或採購。
-方案、風險（CPU 渲染速度、定位誤差對 v2 安全性的影響）與環境需求見 [docs/advanced-b-nav2-evaluation.md](docs/advanced-b-nav2-evaluation.md)；**尚未啟動，待使用者決定**。
+TurtleBot 4（加 1.1 m 桅桿相機，內參同 Core）在 Gazebo Harmonic 裡用 Nav2 實際導航到候選視角，判定只用 AMCL 估計位姿、機載影像與 detector
+（真實位姿與標籤只用於評分）。`nav-b0` 是可行性資料，不是正式評估。細節：[`results/nav-b0/`](results/nav-b0/README.md)。
+
+| 項目 | 結果 |
+|---|---|
+| 相容性 / 速度 | Nav2 1.3.13 + Harmonic 在 Mac arm64 headless 運作；3 個容器並行時 RTF 0.999 |
+| 導航 | 144 個視角目標，91.7% 準確到點，碰撞 0 |
+| 定位（AMCL vs 真實） | 中位 4.0 cm / 0.023 rad；p95 7.6 cm / 0.039 rad |
+| 觀察可靠性 | 機載 depth 與真實位姿幾何一致（中位誤差 0.25 mm）；偵測表現同 Core |
+| 導航失敗是否導致錯誤判斷 | 168 組判定（含 24 次中途取消）**錯誤答案 0** |
+| **安全邊界** | **未通過**：用估計位姿時，2 / 6 個物件存在的 episode 在所有視角聯集後被算成 zone 全空（真實位姿下不會）；這次靠 detector 看到才答對 |
+
+依預先登錄的規則，B0 未全數通過 → **B1 暫停，待使用者決定**（候選做法都需要研究設計變更，凍結的 v2 不自行修改）。
+可行性評估原文：[docs/advanced-b-nav2-evaluation.md](docs/advanced-b-nav2-evaluation.md)。
 
 ## 方法（v1；v2 的差異見上一段）
 
@@ -220,9 +234,10 @@ docker/                  Jazzy + Harmonic 映像、render / smoke / ROS 線上�
 gazebo/models/           vendored Fuel 模型（fire_hydrant，CC0）
 data/episodes/           frozen spec / episode sets（含 GT）：core、pilot、detsel、holdout
 results/                 detector 選型、pilot（v1 / v2）、調參（v1 / v2）、v1 正式 test、holdout v1 vs v2、failure analysis
-docs/decisions/          decision logs 001–014
+docs/decisions/          decision logs 001–015
 docs/failure-analysis.md 跨 v1 / v2 的失敗分析（Core 結案）
-docs/advanced-b-nav2-evaluation.md   Advanced B（Nav2）可行性評估（待決定）
+docs/advanced-b-nav2-evaluation.md   Advanced B（Nav2）可行性評估
+activeperception/nav/    Advanced B：gen-nav-b0 場景 / 地圖、TurtleBot 4 桅桿相機、B0 driver 與分析
 SEALED.sha256            封存檔案的 sha256（tests/test_seal.py 檢查）
 ```
 
@@ -231,7 +246,7 @@ SEALED.sha256            封存檔案的 sha256（tests/test_seal.py 檢查）
 - 場景刻意簡化（方柱遮擋、固定光照、單一目標類別）；detector 在此 world 幾乎不誤報，perception 偏容易。
 - `decision-v1` 的 absent 規則較寬；test 上 Random 出現一例 false absent，Rule / Oracle 沒有。
 - 多視角方法的 definitive decision confidence 校準不佳（ECE 0.21–0.38；Single 0.016）：absent 的 confidence = coverage × (1 − c_max)，公式在 v1 凍結未改。
-- Core 只用 teleport；Nav2（Advanced B）已完成可行性評估，尚未啟動。
+- Core 只用 teleport；Nav2（Advanced B）只完成 B0：定位誤差使 v2 的看穿判定失去安全邊界，B1 待決定。
 - v2 是看過 v1 test 後提出的改進；它的所有宣稱只來自 holdout，原 test 不用於 v2。
 - rule-nbv-v2 在初始視角被擋時常常分數平手、按候選編號選（failure analysis §4）；v2 的改善不應被理解為選視角策略的進步。
 - holdout 與原 test 都已用過；任何新版本都需要新的、未參與開發的資料。

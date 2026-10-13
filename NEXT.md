@@ -2,7 +2,7 @@
 
 ## 目前位置（2026-10-13）
 
-**Core 結案（decision 014）：v1（decision 010）＋ v2（decision 011–013）。Advanced C 暫不進行（使用者決定）；Advanced B 已完成評估，待使用者決定。目前沒有進行中的工作。**
+**Core 結案（decision 014）。Advanced B 已由使用者核准（方案 1，decision 015），目前在 B0 可行性驗證。Advanced C 暫不進行。**
 
 GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private，不加 LICENSE——使用者 2026-10-13 決定）。每個 milestone commit 後 push。
 
@@ -10,8 +10,16 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 |---|---|---|
 | M0–M5 | Core v1（平台、world、detector、pilot、調參、凍結、正式 test、Gate） | 完成（decision 001–010） |
 | v2 | decision-v2、rule-nbv-v2、oracle-v2；train 調參、val 檢查；holdout 一次性比較 | 完成（decision 011–013） |
-| Core 結案 | Gate 總表、改善歸因、failure analysis、資料封存（`seal.py`、`SEALED.sha256`、`tests/test_seal.py`） | 完成（decision 014、`docs/failure-analysis.md`） |
-| Advanced B 評估 | 套件可用性（Jazzy arm64）、範圍、環境需求、方案 | 完成（`docs/advanced-b-nav2-evaluation.md`），**未啟動** |
+| Core 結案 | Gate 總表、改善歸因、failure analysis、資料封存 | 完成（decision 014） |
+| B0 | Nav2 映像（0 upgraded）、官方 TB4 smoke、桅桿相機 TB4、`gen-nav-b0`、driver、分析、tests；12 集批次 | **完成：C1–C5 通過、C6 未通過 → B1 暫停，待使用者決定**（decision 015 附錄 B、`results/nav-b0/`） |
+
+### B0 結論（decision 015 附錄 B）
+
+- 相容性、速度（RTF 0.999）、導航（91.7%、碰撞 0）、定位（p95 7.6 cm / 0.039 rad）、觀察可靠性（真實位姿 depth 誤差 0.25 mm）都達標。
+- 168 組判定（含 24 次中途取消）錯誤答案 0。
+- **C6 未通過**：用 AMCL 估計位姿時 1 / 168 組、以及所有視角聯集時 2 / 6 個物件存在的 episode，64 個位置全被算成看穿（真實位姿下不會）。
+  原因：估計位姿下 depth 幾何誤差中位 2.6 cm、p95 5.0 cm，與 v2 的 3 cm 看穿容忍值同量級；多視角的誤差方向不同，聯集後保護位置被吃光。
+- Docker Desktop 13:48 UTC 更新（29.8.1 → 29.8.2）中斷第一次批次，已整批重跑；容器關閉時 exit 139 為無害的關閉階段 segfault。
 
 ## 主要結果
 
@@ -25,10 +33,13 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 
 ## 待使用者決定
 
-1. **Advanced B（Nav2）**：方案 1（B0 spike → B1 整合 → B2 正式評估，約 1–1.5 週）／方案 2（B0 + 線上展示，約 2–3 天）／方案 3（停在 Core）。
-   另需核准：Mac 上建 Nav2 Docker 映像（約 +1.1 GB）、模擬平台（建議 TurtleBot 4）、主要設定（建議凍結的 v2）。
+1. **B0 的 C6 怎麼處理**（研究設計變更，需使用者決定；凍結的 v2 不自行修改）：
+   - A：以機載 depth 對先驗設施地圖（牆 / 柱子）做位姿精修，再做看穿判定（判定規則不變，只改輸入位姿）。
+   - B：看穿判定加入位姿不確定性餘裕（新判定版本，安全但 inconclusive 會變多）。
+   - A + B（建議）／只調 AMCL（不建議，沒有保證）／停在 B0。
+   任何一個做法都要先寫 decision 016、只用 `nav-b0` 開發，再以新資料驗證；之後才進 B1。
 2. **Advanced C（RL）**：使用者決定暫不進行。
-3. 任何新版本（含 v3 修正平手問題、B 的正式評估）都需要新的 namespace 與未參與開發的資料；`core` test 與 `holdout` 已封存。
+3. 任何新版本都需要新的 namespace 與未參與開發的資料；`core` test 與 `holdout` 已封存。
 4. 實體機器人（SPEC Optional）：需採購與 sim-to-real 感知驗證，另外決定。
 
 ## 已驗證的事實（不要重做）
@@ -62,5 +73,6 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 - v2：decision 011（設計 / 資料 / 協定）、附錄 A（train 上修正位置密度）、012（凍結）、013（holdout 結果）；
   `decision-v2`、`rule-nbv-v2`、`oracle-v2`、`frozen_v2`、`experiment_v2`、v2 tests、v1 回歸測試（val 數字逐位元重現）。
 - holdout 渲染、GPU 偵測、一次性比較；README 新增 v2 段落與圖（v1 段落數字未改）。
+- Advanced B0：decision 015（協定 + 附錄 A 整合調整 + 附錄 B 結果）、`Dockerfile.nav`、`activeperception/nav/`、`docker/nav_smoke.sh` / `nav_b0.sh`、`tests/test_nav_b0.py`、`results/nav-b0/`。
 - Core 結案：decision 014；`failure_analysis.py`（只讀已 commit 結果 + 開發資料平手分析）、`docs/failure-analysis.md`、`failure_attribution.png`；
   `seal.py` + `SEALED.sha256` + `tests/test_seal.py`（正式 runner 對封存資料只允許 `--reproduce`）；Advanced B 評估（唯讀容器檢查 Nav2 套件）。

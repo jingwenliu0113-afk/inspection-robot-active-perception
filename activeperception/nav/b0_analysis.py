@@ -15,6 +15,7 @@ Deployable vs scoring is kept explicit:
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import math
 from pathlib import Path
@@ -352,6 +353,59 @@ def analyze(runs: Path, cache) -> dict:
     }
 
 
+YAW_OFFSETS = (0.0, 0.01, 0.02, 0.03, 0.04, 0.06, 0.08)
+LATERAL_OFFSETS_M = (0.0, 0.02, 0.04, 0.06, 0.08, 0.10)
+
+
+def pose_sensitivity(runs: Path) -> dict:
+    """Descriptive (decision 015 C6 context): how large a camera-pose error makes a view of a
+    PRESENT object look fully seen through. Starts from the ground-truth camera pose of every
+    capture in a present episode and offsets yaw (both signs) or position (sideways, both
+    signs) or along the viewing direction; a view is unsafe when all 64 locations count as
+    seen through.
+    """
+    specs = {s.episode_id: s for s in scene.b0_specs()}
+    views = []
+    for p in sorted(runs.glob("*/episode.json")):
+        spec = specs[p.parent.name]
+        if not spec.layout.object_present:
+            continue
+        for row in json.loads(p.read_text())["rows"]:
+            depth = decode_depth_mm(np.load(p.parent / row["file"])["depth_mm"])
+            views.append((spec, depth, gt_camera_pose(row["scoring"]["gt_base"])[0]))
+
+    def unsafe(spec, depth, pose) -> bool:
+        vis = location_visibility_from_depth(depth, spec.camera, pose, spec.zone)
+        return all(v >= 1 - 1e-9 for v in vis)
+
+    out: dict = {"views": len(views), "yaw": {}, "lateral_m": {}, "forward_m": {}}
+    for d in YAW_OFFSETS:
+        n = sum(
+            any(unsafe(sp, dp, dataclasses.replace(ps, yaw=ps.yaw + sg * d)) for sg in (1, -1))
+            for sp, dp, ps in views
+        )
+        out["yaw"][str(d)] = n
+    for d in LATERAL_OFFSETS_M:
+        n = 0
+        for sp, dp, ps in views:
+            lx, ly = -math.sin(ps.yaw), math.cos(ps.yaw)
+            n += any(
+                unsafe(sp, dp, dataclasses.replace(ps, x=ps.x + sg * d * lx, y=ps.y + sg * d * ly))
+                for sg in (1, -1)
+            )
+        out["lateral_m"][str(d)] = n
+    for d in LATERAL_OFFSETS_M:  # along the horizontal viewing direction (estimate too close / far)
+        n = 0
+        for sp, dp, ps in views:
+            fx, fy = math.cos(ps.yaw), math.sin(ps.yaw)
+            n += any(
+                unsafe(sp, dp, dataclasses.replace(ps, x=ps.x + sg * d * fx, y=ps.y + sg * d * fy))
+                for sg in (1, -1)
+            )
+        out["forward_m"][str(d)] = n
+    return out
+
+
 def _rate(v: list[bool]) -> dict:
     return {"n": len(v), "rate": (sum(v) / len(v)) if v else None}
 
@@ -365,6 +419,7 @@ def main(argv: list[str] | None = None) -> int:
     eps = sorted(p.parent.name for p in runs.glob("*/episode.json"))
     cache = detect_all(runs, eps, runs / "detector-v1.jsonl")
     report = analyze(runs, cache)
+    report["pose_sensitivity"] = pose_sensitivity(runs)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "b0_report.json").write_text(json.dumps(report, indent=1, default=float) + "\n")
