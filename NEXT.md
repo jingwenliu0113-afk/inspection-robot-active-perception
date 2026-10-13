@@ -13,13 +13,18 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 | Core 結案 | Gate 總表、改善歸因、failure analysis、資料封存 | 完成（decision 014） |
 | B0 | Nav2 映像、官方 TB4 smoke、桅桿相機 TB4、`gen-nav-b0`、driver、分析；12 集 | 完成：C1–C5 通過、C6 未通過（decision 015 附錄 B） |
 | decision 016 | 位姿精修 + 看穿餘裕；`nav-b0c` 確認：安全通過、C3 86.1% 未過 → 使用者「再試一次」→ 停點視角重定位 → `nav-b0d` 確認 | **B0 全部通過**（decision 016 附錄 D、`results/nav-b0d/`） |
-| B1 | 閉迴路整合：`inspection-ap-navdet`、四方法 + Nav2、teleport 對照、新指標、`nav-b1` 開發資料 | **進行中**（decision 017） |
+| B1 | 閉迴路整合：`inspection-ap-navdet`、四方法 + Nav2、teleport 對照、`nav-b1` 開發資料 | 完成（decision 017 附錄 A、`results/nav-b1/`） |
+| B2 | 正式評估：`nav-b2`（40 groups × 4，split `nav-eval`），Q1–Q4 預先登錄 | **進行中**（decision 018） |
 
-### 目前狀態
+### B2 執行步驟（可續跑）
 
-- B0 通過：`nav-b0d` 準確到點 100%、重定位後定位 p95 0.42 cm / 0.0021 rad、錯誤答案 0、geometric risk 0、聯集 0 / 6；代價 7 / 84 absent 組合變 inconclusive。
-- B1 依 decision 017 進行；B2 正式評估前要先寫 decision 018。
-- 容器關閉時 exit 139 為無害的關閉階段 segfault。
+1. `uv run python -m activeperception.nav.scene --namespace nav-b2 --groups 40 --out data/episodes/specs-nav-b2.json`
+2. `./docker/render.sh data/episodes/specs-nav-b2.json renders/nav-b2 4`（teleport 對照）
+3. `uv run python -m activeperception build-episodes --world gazebo --specs data/episodes/specs-nav-b2.json --renders renders/nav-b2 --out data/episodes/gazebo-nav-b2.json`
+4. `uv run --extra detectors python -m activeperception.detector.run --frames renders/nav-b2 --detector frcnn-mnv3 --device cpu --out runs/nav-b2/teleport-detector-v1.jsonl`
+5. `./docker/nav_b1.sh 4 nav-b2`（960 個工作，約 4 小時；中斷後重跑同一指令即可續跑）
+6. `uv run python -m activeperception.nav.b1_analysis --ns nav-b2 --out results/nav-b2` → decision 019、README、`seal manifest`
+- `nav-b2` 只跑一次；不依結果調整任何參數。
 
 ## 主要結果
 
