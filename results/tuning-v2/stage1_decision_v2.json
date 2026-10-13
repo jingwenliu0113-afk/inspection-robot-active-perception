@@ -1,0 +1,1132 @@
+{
+ "best": {
+  "params": {
+   "tau_present": 0.7,
+   "tau_absent": 0.02,
+   "tau_clear": 1.0,
+   "col_min": 1.0
+  },
+  "metrics": {
+   "2": {
+    "accuracy": 0.8710526315789474,
+    "false_absent_rate": 0.0,
+    "false_present_rate": 0.0,
+    "inconclusive_rate": 0.12894736842105264,
+    "avg_viewpoints": 1.6469298245614035,
+    "geometric_risk": 0.0,
+    "false_absent_rate_max_over_seeds": 0.0,
+    "false_present_rate_max_over_seeds": 0.0,
+    "geometric_risk_total": 0
+   },
+   "3": {
+    "accuracy": 0.9789473684210526,
+    "false_absent_rate": 0.0,
+    "false_present_rate": 0.0,
+    "inconclusive_rate": 0.021052631578947368,
+    "avg_viewpoints": 1.7758771929824562,
+    "geometric_risk": 0.0,
+    "false_absent_rate_max_over_seeds": 0.0,
+    "false_present_rate_max_over_seeds": 0.0,
+    "geometric_risk_total": 0
+   },
+   "5": {
+    "accuracy": 0.9947368421052631,
+    "false_absent_rate": 0.0,
+    "false_present_rate": 0.0,
+    "inconclusive_rate": 0.005263157894736842,
+    "avg_viewpoints": 1.8035087719298246,
+    "geometric_risk": 0.0,
+    "false_absent_rate_max_over_seeds": 0.0,
+    "false_present_rate_max_over_seeds": 0.0,
+    "geometric_risk_total": 0
+   }
+  },
+  "feasible": true,
+  "accuracy": 0.9482456140350877
+ },
+ "n_configs": 24,
+ "n_feasible": 24,
+ "tied": 24,
+ "all": [
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.02,
+    "tau_clear": 0.9,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8785087719298245,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12149122807017543,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.981140350877193,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.018859649122807017,
+     "avg_viewpoints": 1.7640350877192983,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.7890350877192982,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9514619883040935
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.02,
+    "tau_clear": 0.9,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8785087719298245,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12149122807017543,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.981140350877193,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.018859649122807017,
+     "avg_viewpoints": 1.7640350877192983,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.7890350877192982,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9514619883040935
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.02,
+    "tau_clear": 0.95,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8745614035087719,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12543859649122807,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9793859649122807,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.0206140350877193,
+     "avg_viewpoints": 1.7679824561403508,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.7947368421052634,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9495614035087719
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.02,
+    "tau_clear": 0.95,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8745614035087719,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12543859649122807,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9793859649122807,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.0206140350877193,
+     "avg_viewpoints": 1.7679824561403508,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.7947368421052634,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9495614035087719
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.02,
+    "tau_clear": 1.0,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8710526315789474,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12894736842105264,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9789473684210526,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.021052631578947368,
+     "avg_viewpoints": 1.7714912280701753,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.7991228070175438,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9482456140350877
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.02,
+    "tau_clear": 1.0,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8710526315789474,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12894736842105264,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9789473684210526,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.021052631578947368,
+     "avg_viewpoints": 1.7714912280701753,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.7991228070175438,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9482456140350877
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.05,
+    "tau_clear": 0.9,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8785087719298245,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12149122807017543,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9815789473684211,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.018421052631578946,
+     "avg_viewpoints": 1.7640350877192983,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.7881578947368422,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9517543859649122
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.05,
+    "tau_clear": 0.9,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8785087719298245,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12149122807017543,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9815789473684211,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.018421052631578946,
+     "avg_viewpoints": 1.7640350877192983,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.7881578947368422,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9517543859649122
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.05,
+    "tau_clear": 0.95,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8745614035087719,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12543859649122807,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9798245614035087,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.02017543859649123,
+     "avg_viewpoints": 1.7679824561403508,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.7938596491228072,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9498538011695906
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.05,
+    "tau_clear": 0.95,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8745614035087719,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12543859649122807,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9798245614035087,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.02017543859649123,
+     "avg_viewpoints": 1.7679824561403508,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.7938596491228072,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9498538011695906
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.05,
+    "tau_clear": 1.0,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8710526315789474,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12894736842105264,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9793859649122807,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.0206140350877193,
+     "avg_viewpoints": 1.7714912280701753,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.7982456140350878,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9485380116959065
+  },
+  {
+   "params": {
+    "tau_present": 0.5,
+    "tau_absent": 0.05,
+    "tau_clear": 1.0,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8710526315789474,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12894736842105264,
+     "avg_viewpoints": 1.6425438596491229,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9793859649122807,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.0206140350877193,
+     "avg_viewpoints": 1.7714912280701753,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.7982456140350878,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9485380116959065
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.02,
+    "tau_clear": 0.9,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8785087719298245,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12149122807017543,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.981140350877193,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.018859649122807017,
+     "avg_viewpoints": 1.7684210526315787,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.793421052631579,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9514619883040935
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.02,
+    "tau_clear": 0.9,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8785087719298245,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12149122807017543,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.981140350877193,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.018859649122807017,
+     "avg_viewpoints": 1.7684210526315787,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.793421052631579,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9514619883040935
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.02,
+    "tau_clear": 0.95,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8745614035087719,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12543859649122807,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9793859649122807,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.0206140350877193,
+     "avg_viewpoints": 1.7723684210526316,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.7991228070175438,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9495614035087719
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.02,
+    "tau_clear": 0.95,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8745614035087719,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12543859649122807,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9793859649122807,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.0206140350877193,
+     "avg_viewpoints": 1.7723684210526316,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.7991228070175438,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9495614035087719
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.02,
+    "tau_clear": 1.0,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8710526315789474,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12894736842105264,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9789473684210526,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.021052631578947368,
+     "avg_viewpoints": 1.7758771929824562,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.8035087719298246,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9482456140350877
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.02,
+    "tau_clear": 1.0,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8710526315789474,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12894736842105264,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9789473684210526,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.021052631578947368,
+     "avg_viewpoints": 1.7758771929824562,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9947368421052631,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.005263157894736842,
+     "avg_viewpoints": 1.8035087719298246,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9482456140350877
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.05,
+    "tau_clear": 0.9,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8785087719298245,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12149122807017543,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9815789473684211,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.018421052631578946,
+     "avg_viewpoints": 1.7684210526315787,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.792543859649123,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9517543859649122
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.05,
+    "tau_clear": 0.9,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8785087719298245,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12149122807017543,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9815789473684211,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.018421052631578946,
+     "avg_viewpoints": 1.7684210526315787,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.792543859649123,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9517543859649122
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.05,
+    "tau_clear": 0.95,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8745614035087719,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12543859649122807,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9798245614035087,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.02017543859649123,
+     "avg_viewpoints": 1.7723684210526316,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.7982456140350878,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9498538011695906
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.05,
+    "tau_clear": 0.95,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8745614035087719,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12543859649122807,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9798245614035087,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.02017543859649123,
+     "avg_viewpoints": 1.7723684210526316,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.7982456140350878,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9498538011695906
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.05,
+    "tau_clear": 1.0,
+    "col_min": 0.6666666666666666
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8710526315789474,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12894736842105264,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9793859649122807,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.0206140350877193,
+     "avg_viewpoints": 1.7758771929824562,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.8026315789473686,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9485380116959065
+  },
+  {
+   "params": {
+    "tau_present": 0.7,
+    "tau_absent": 0.05,
+    "tau_clear": 1.0,
+    "col_min": 1.0
+   },
+   "metrics": {
+    "2": {
+     "accuracy": 0.8710526315789474,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.12894736842105264,
+     "avg_viewpoints": 1.6469298245614035,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "3": {
+     "accuracy": 0.9793859649122807,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.0206140350877193,
+     "avg_viewpoints": 1.7758771929824562,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    },
+    "5": {
+     "accuracy": 0.9951754385964913,
+     "false_absent_rate": 0.0,
+     "false_present_rate": 0.0,
+     "inconclusive_rate": 0.004824561403508771,
+     "avg_viewpoints": 1.8026315789473686,
+     "geometric_risk": 0.0,
+     "false_absent_rate_max_over_seeds": 0.0,
+     "false_present_rate_max_over_seeds": 0.0,
+     "geometric_risk_total": 0
+    }
+   },
+   "feasible": true,
+   "accuracy": 0.9485380116959065
+  }
+ ]
+}

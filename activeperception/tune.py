@@ -252,10 +252,6 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
-
-
 # ---- v2 (decision 011 section 6): train only, the v1 functions above are unchanged -------
 V2_BUDGETS = (2, 3, 5)
 V2_DECISION_TIE = 0.01
@@ -459,3 +455,7 @@ def main_v2(args, out: Path) -> int:
     for name, per_b in res.items():
         print(name, {b: round(m["accuracy"], 3) for b, m in per_b.items()})
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

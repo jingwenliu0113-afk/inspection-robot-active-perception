@@ -76,3 +76,14 @@ def test_cli_refuses_existing_output(tmp_path):
         experiment.main(
             ["test", "--episodes", "x.json", "--detections", "y", "--out", str(tmp_path)]
         )
+
+
+def test_frozen_v2_matches_tuning_results():
+    from activeperception import frozen_v2
+
+    root = Path(__file__).resolve().parents[1] / "results" / "tuning-v2"
+    s1 = json.loads((root / "stage1_decision_v2.json").read_text())["best"]["params"]
+    s2 = json.loads((root / "stage2_rule_v2.json").read_text())["best"]["params"]
+    assert {k: getattr(frozen_v2.DECISION_V2, k) for k in s1} == pytest.approx(s1)
+    assert {k: getattr(frozen_v2.RULE_NBV_V2, k) for k in s2} == pytest.approx(s2)
+    assert frozen_v2.FORMAL_BUDGETS == (1, 2, 3, 5)
