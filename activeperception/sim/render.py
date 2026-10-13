@@ -81,7 +81,12 @@ def render_episode(
     t0 = time.monotonic()
     settle_ns = int(settle_periods * 1e9 / update_rate)
     sdf_path = work_dir / f"{spec.episode_id}.sdf"
-    sdf_path.write_text(world_sdf(spec, update_rate=update_rate))
+    if spec.generator_version.startswith("gen-nav"):  # Advanced B teleport reference
+        from ..nav.world import nav_world_sdf
+
+        sdf_path.write_text(nav_world_sdf(spec, teleport_camera_rate=update_rate))
+    else:
+        sdf_path.write_text(world_sdf(spec, update_rate=update_rate))
     server = GzServer(sdf_path, work_dir / f"{spec.episode_id}.log")
     try:
         client.reset()
@@ -100,7 +105,11 @@ def render_episode(
         "episode_id": spec.episode_id,
         "spec_digest": spec_digest(spec),
         "generator_version": spec.generator_version,
-        "sdf_version": SDF_VERSION,
+        "sdf_version": (
+            "sdf-nav-world-b0+inspector_cam"
+            if spec.generator_version.startswith("gen-nav")
+            else SDF_VERSION
+        ),
         "image_id": os.environ.get("AP_IMAGE_ID", "unknown"),
         "update_rate": update_rate,
         "settle_ns": settle_ns,

@@ -11,15 +11,16 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 | M0–M5 | Core v1（平台、world、detector、pilot、調參、凍結、正式 test、Gate） | 完成（decision 001–010） |
 | v2 | decision-v2、rule-nbv-v2、oracle-v2；train 調參、val 檢查；holdout 一次性比較 | 完成（decision 011–013） |
 | Core 結案 | Gate 總表、改善歸因、failure analysis、資料封存 | 完成（decision 014） |
-| B0 | Nav2 映像（0 upgraded）、官方 TB4 smoke、桅桿相機 TB4、`gen-nav-b0`、driver、分析、tests；12 集批次 | **完成：C1–C5 通過、C6 未通過 → B1 暫停，待使用者決定**（decision 015 附錄 B、`results/nav-b0/`） |
+| B0 | Nav2 映像、官方 TB4 smoke、桅桿相機 TB4、`gen-nav-b0`、driver、分析；12 集 | 完成：C1–C5 通過、C6 未通過（decision 015 附錄 B） |
+| decision 016 | depth 對設施地圖位姿精修 + 看穿判定位姿餘裕；`nav-b0` 開發、`nav-b0c` 新資料確認一次 | **R1、R2（安全）通過；R3 未通過（C3 86.1% < 90%）→ B1 暫停，待使用者決定**（`results/nav-b0c/`） |
 
-### B0 結論（decision 015 附錄 B）
+### 目前狀態（decision 016 附錄 B）
 
-- 相容性、速度（RTF 0.999）、導航（91.7%、碰撞 0）、定位（p95 7.6 cm / 0.039 rad）、觀察可靠性（真實位姿 depth 誤差 0.25 mm）都達標。
-- 168 組判定（含 24 次中途取消）錯誤答案 0。
-- **C6 未通過**：用 AMCL 估計位姿時 1 / 168 組、以及所有視角聯集時 2 / 6 個物件存在的 episode，64 個位置全被算成看穿（真實位姿下不會）。
-  原因：估計位姿下 depth 幾何誤差中位 2.6 cm、p95 5.0 cm，與 v2 的 3 cm 看穿容忍值同量級；多視角的誤差方向不同，聯集後保護位置被吃光。
-- Docker Desktop 13:48 UTC 更新（29.8.1 → 29.8.2）中斷第一次批次，已整批重跑；容器關閉時 exit 139 為無害的關閉階段 segfault。
+- 安全問題已解決並在新資料確認：精修位姿誤差 p95 0.32 cm；錯誤答案 0、geometric risk 0、所有停點聯集 0 / 6（AMCL 原路徑 3 / 6 不安全）；沒有準確率代價。
+- 新的阻擋項是 C3（準確到點）86.1%：18 / 20 次是到點朝向誤差 0.100–0.116 rad（Nav2 容忍 0.05 + 到點當下 AMCL 朝向誤差），與判定安全無關。
+- 依預先登錄規則需詢問使用者。建議：在每個停點用精修位姿回饋 AMCL 並做小幅修正移動（視角重定位），再以另一批新資料確認一次。
+- B1 準備（未啟動、未執行）：`docker/Dockerfile.navdet`（Nav2 + CPU detector，尚未建置）、`sim/render.py` 支援 gen-nav 場景的 teleport 對照渲染。
+- 容器關閉時 exit 139 為無害的關閉階段 segfault；Docker Desktop 13:48 UTC 曾更新重啟（已重跑）。
 
 ## 主要結果
 
@@ -33,11 +34,8 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 
 ## 待使用者決定
 
-1. **B0 的 C6 怎麼處理**（研究設計變更，需使用者決定；凍結的 v2 不自行修改）：
-   - A：以機載 depth 對先驗設施地圖（牆 / 柱子）做位姿精修，再做看穿判定（判定規則不變，只改輸入位姿）。
-   - B：看穿判定加入位姿不確定性餘裕（新判定版本，安全但 inconclusive 會變多）。
-   - A + B（建議）／只調 AMCL（不建議，沒有保證）／停在 B0。
-   任何一個做法都要先寫 decision 016、只用 `nav-b0` 開發，再以新資料驗證；之後才進 B1。
+1. **decision 016 R3（C3 準確到點 86.1% < 90%）**：建議加「停點視角重定位」（精修位姿回饋 AMCL + 小幅修正移動）後，再用新資料確認一次；
+   或接受為已報告的限制直接進 B1（屬於看結果後放寬預先登錄標準，需使用者決定）；或停在 B0。
 2. **Advanced C（RL）**：使用者決定暫不進行。
 3. 任何新版本都需要新的 namespace 與未參與開發的資料；`core` test 與 `holdout` 已封存。
 4. 實體機器人（SPEC Optional）：需採購與 sim-to-real 感知驗證，另外決定。

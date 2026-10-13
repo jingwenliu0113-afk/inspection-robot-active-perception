@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1
+# Advanced B1 image (decision 017): the Nav2 image plus the CPU build of torch / torchvision
+# used by Dockerfile.ros, so the closed-loop runs can call detector-v1 between Nav2 goals.
+ARG NAV_IMAGE=inspection-ap-nav:jazzy-harmonic
+FROM ${NAV_IMAGE}
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3-pip python3-pil \
+ && rm -rf /var/lib/apt/lists/*
+
+# same pins as docker/Dockerfile.ros; torchvision without deps so apt's numpy stays
+RUN pip install --no-cache-dir --break-system-packages \
+      --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple \
+      torch==2.14.1 \
+ && pip install --no-cache-dir --break-system-packages --no-deps \
+      --index-url https://download.pytorch.org/whl/cpu torchvision==0.29.1 \
+ && python3 -c "import numpy, torch, torchvision; print(numpy.__version__, torch.__version__, torchvision.__version__)"
