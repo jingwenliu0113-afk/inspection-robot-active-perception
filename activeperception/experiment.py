@@ -19,7 +19,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import frozen
+from . import frozen, seal
 from .detector.cache import DetectionCache
 from .framestore import FrameStore
 from .grader import Outcome, grade
@@ -280,12 +280,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--renders")
     ap.add_argument("--out", required=True)
     ap.add_argument("--n-boot", type=int, default=frozen.N_BOOT)
+    ap.add_argument("--reproduce", action="store_true", help="re-check a sealed run (decision 014)")
     args = ap.parse_args(argv)
     out = Path(args.out)
+    split = Split.TEST if args.stage == "test" else Split.VAL
+    sealed = seal.guard_formal_run(args.episodes, split, out, args.reproduce)
     if out.exists():
         raise SystemExit(f"{out} exists: the formal test runs once (decision 009)")
     specs, gts, meta = load_episode_set(args.episodes)
-    split = Split.TEST if args.stage == "test" else Split.VAL
     specs = [s for s in specs if s.split == split]
     world = GazeboReplayWorld(
         FrameStore(args.renders or meta["renders"]), DetectionCache.load(args.detections)
@@ -341,6 +343,8 @@ def main(argv: list[str] | None = None) -> int:
         ],
     )
     print(json.dumps(report["gate"], indent=1, default=str))
+    if sealed is not None:
+        return 0 if seal.compare_reproduction(sealed, out) else 1
     return 0
 
 

@@ -2,31 +2,34 @@
 
 ## 目前位置（2026-10-13）
 
-**Core v1 完成（decision 010）＋ v2 完成（decision 011–013，holdout 評估）。目前沒有進行中的工作；下一步需要使用者決定。**
+**Core 結案（decision 014）：v1（decision 010）＋ v2（decision 011–013）。Advanced C 暫不進行（使用者決定）；Advanced B 已完成評估，待使用者決定。目前沒有進行中的工作。**
 
 GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private，不加 LICENSE——使用者 2026-10-13 決定）。每個 milestone commit 後 push。
 
 | 階段 | 內容 | 狀態 |
 |---|---|---|
 | M0–M5 | Core v1（平台、world、detector、pilot、調參、凍結、正式 test、Gate） | 完成（decision 001–010） |
-| v2 設計 | decision-v2（看穿每個候選位置才可 absent）、rule-nbv-v2（已知 / 未知空間）、oracle-v2；協定先登錄 | 完成（decision 011；附錄 A：64 點 / 3 cm） |
-| v2 調參 | core train 調參、core val 檢查；原 test 封存不用 | 完成（decision 012，`results/tuning-v2/`） |
-| holdout | 新 namespace 150 groups / 600 ep；v1、v2、消融各跑一次 | 完成（decision 013，`results/holdout/`） |
-| ROS 2 | inspector node 可選 v0 / v1 / v2；pilot 上 v2 線上 = replay 168 / 168 | 完成（`results/pilot-v2/`） |
+| v2 | decision-v2、rule-nbv-v2、oracle-v2；train 調參、val 檢查；holdout 一次性比較 | 完成（decision 011–013） |
+| Core 結案 | Gate 總表、改善歸因、failure analysis、資料封存（`seal.py`、`SEALED.sha256`、`tests/test_seal.py`） | 完成（decision 014、`docs/failure-analysis.md`） |
+| Advanced B 評估 | 套件可用性（Jazzy arm64）、範圍、環境需求、方案 | 完成（`docs/advanced-b-nav2-evaluation.md`），**未啟動** |
 
 ## 主要結果
 
 - v1 原 test（524 ep）：Rule 0.706 / 0.996（budget 2 / 3），Random 0.620 / 0.907；Oracle − Rule 0.004。
 - holdout（600 ep）v1：Rule 0.683 / 0.968，Random 0.608 / 0.898；**Oracle − Rule 0.028 / 0.032 → 原 test 的「接近 Oracle」未重現**。
 - holdout v2：Rule **0.957 / 0.998**，Random 0.868 / 0.975，Single 0.392，Oracle 1.0 / 1.0；所有方法 false-absent = 0；ECE ≤ 0.008。
-- v2 − v1 Rule：+0.273 [0.228, 0.317] / +0.030 [0.010, 0.052]；改善主要來自判定規則（+0.253），新策略的額外貢獻不顯著（+0.020 [−0.020, 0.058]）。
+- **v2 的改善主要來自 absent 判定規則，不是 NBV 策略**：判定規則 +0.253（修好 152、弄壞 0）；策略 +0.020 [−0.020, 0.058]（修好 31、弄壞 19，不顯著）。
+- Gate 未通過：v1 Gate 4 在 holdout；v2 Gate 4 在 budget 2（Oracle − Rule 0.043 [0.020, 0.070]）。
+- failure analysis：v1 budget 2 失敗約 90% 是結構性（Oracle 也失敗）；v2 殘餘失敗 100% 可歸因於視角選擇；
+  rule-nbv-v2 在初始視角被擋時 75–81% 的第二視角決策是平手、按候選編號選（開發資料）。
 
 ## 待使用者決定
 
-1. **Advanced**：v2 在 budget 2 與 Oracle 差 0.043 [0.020, 0.070]（可歸因於視角選擇）→ SPEC 的「接近 Oracle、不需要 RL」停止條件在 budget 2 不成立。
-   是否進 Advanced C（學習式 / RL 視角策略，需與 Random / Rule / Oracle 同 budget 比較）或 B（Nav2，使用者已決定暫不做），由使用者決定。
-2. 若要再改策略（v3），需要另一批未參與開發的資料；holdout 已用過一次，不能再當 v3 的正式驗證。
-3. repo 維持 private、不加 LICENSE（已決定）。
+1. **Advanced B（Nav2）**：方案 1（B0 spike → B1 整合 → B2 正式評估，約 1–1.5 週）／方案 2（B0 + 線上展示，約 2–3 天）／方案 3（停在 Core）。
+   另需核准：Mac 上建 Nav2 Docker 映像（約 +1.1 GB）、模擬平台（建議 TurtleBot 4）、主要設定（建議凍結的 v2）。
+2. **Advanced C（RL）**：使用者決定暫不進行。
+3. 任何新版本（含 v3 修正平手問題、B 的正式評估）都需要新的 namespace 與未參與開發的資料；`core` test 與 `holdout` 已封存。
+4. 實體機器人（SPEC Optional）：需採購與 sim-to-real 感知驗證，另外決定。
 
 ## 已驗證的事實（不要重做）
 
@@ -51,7 +54,7 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 - SPEC §2 `visible` 寫「初始/可達視角可觀測」；實作採「初始視角」定義，「可達」另記為 `revealable`（decision 002）。core 中 revealable 皆為真（沒有「所有候選都看不到」的 present episode）。
 - SPEC §3 寫 Nav2 放 Advanced：維持。ROS 2 在 Core 只做 teleport 與系統整合（decision 001 附錄 B / D）。
 
-## 本 session 完成的事（2026-10-13，含 v2）
+## 本 session 完成的事（2026-10-13，含 v2 與 Core 結案）
 
 - M2–M5 全部：Docker 映像與 smoke test、decision 005–010、gen-v2 消防栓 world、render-then-replay、depth / label sensing、
   detector 選型（RTX 5070 Ti、GPU lock）、pilot 六項 + ROS 2 線上一致性、core 1200 ep、調參、凍結、正式 test、Gate 判定、README 結果與圖。
@@ -59,3 +62,5 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 - v2：decision 011（設計 / 資料 / 協定）、附錄 A（train 上修正位置密度）、012（凍結）、013（holdout 結果）；
   `decision-v2`、`rule-nbv-v2`、`oracle-v2`、`frozen_v2`、`experiment_v2`、v2 tests、v1 回歸測試（val 數字逐位元重現）。
 - holdout 渲染、GPU 偵測、一次性比較；README 新增 v2 段落與圖（v1 段落數字未改）。
+- Core 結案：decision 014；`failure_analysis.py`（只讀已 commit 結果 + 開發資料平手分析）、`docs/failure-analysis.md`、`failure_attribution.png`；
+  `seal.py` + `SEALED.sha256` + `tests/test_seal.py`（正式 runner 對封存資料只允許 `--reproduce`）；Advanced B 評估（唯讀容器檢查 Nav2 套件）。

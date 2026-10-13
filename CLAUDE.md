@@ -4,15 +4,18 @@
 
 ## 狀態
 
-**Core v1 完成（decision 010）＋ v2 完成（decision 011–013，2026-10-13）。**
+**Core 結案（decision 014，2026-10-13）：v1（decision 010）＋ v2（decision 011–013）。**
 
 - v1：正式 test 一次；Rule 穩定勝過 Single / Random。holdout 上「接近 Oracle」未重現（decision 013）。
 - v2：看過 v1 test 後提出；只用 core train / val 開發，在新的 `holdout` split 一次性與 v1 分開比較；
-  所有方法 false-absent = 0，Rule budget 2 0.683 → 0.957；改善主要來自 `decision-v2`。
-- **原 `core` test 與 `holdout` 都已用過，不可再用於任何新版本的開發或正式驗證**；新版本需要新的、未參與開發的資料。
-- v1 / v2 的程式、結果、失敗紀錄都保留（`frozen.py` / `frozen_v2.py`、`results/test-v1/`、`results/holdout/`）。
+  所有方法 false-absent = 0，Rule budget 2 0.683 → 0.957。**改善主要來自 absent 判定規則（`decision-v2`），不是 NBV 策略**（不得描述成策略改善）。
+- Gate 未通過：v1 Gate 4（holdout）、v2 Gate 4（budget 2）。見 decision 014 §2。
+- **原 `core` test 與 `holdout` 都已封存**（`activeperception/seal.py`、`SEALED.sha256`、`tests/test_seal.py`）：不得用於任何新版本的開發、調參或正式驗證，不得合併；
+  不得根據 holdout 結果調整模型或規則。新版本需要新 namespace、未參與開發的資料。
+- v1 / v2 的程式、結果、失敗紀錄都保留（`frozen.py` / `frozen_v2.py`、`results/test-v1/`、`results/holdout/`、`docs/failure-analysis.md`）。
+- **Advanced C（RL）**：使用者決定暫不進行。**Advanced B（Nav2）**：只完成評估（`docs/advanced-b-nav2-evaluation.md`），未經使用者決定不得啟動。
 
-下一步（Advanced C / B 等）需要使用者決定，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
+下一步需要使用者決定，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
 
 ## 每個 session 的第一步
 

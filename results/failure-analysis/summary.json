@@ -1,0 +1,1371 @@
+{
+ "budgets": [
+  2,
+  3
+ ],
+ "datasets": {
+  "holdout/ablation": {
+   "config": "ablation",
+   "errors": {
+    "2": {
+     "rule": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 279,
+        "inconclusive": 21
+       },
+       "unobservable": {
+        "inconclusive": 17,
+        "present": 161
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 38,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     }
+    },
+    "3": {
+     "rule": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 298,
+        "inconclusive": 2
+       },
+       "unobservable": {
+        "inconclusive": 2,
+        "present": 176
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 4,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     }
+    }
+   },
+   "false_absent_cases": [],
+   "rule": {
+    "2": {
+     "attribution": {
+      "n_episodes": 600,
+      "policy_gap": 38,
+      "policy_gap_by_state": {
+       "absent": 21,
+       "unobservable": 17
+      },
+      "policy_gap_episodes": [
+       "holdout-g0001-v0",
+       "holdout-g0001-v1",
+       "holdout-g0001-v2",
+       "holdout-g0001-v3",
+       "holdout-g0009-v0",
+       "holdout-g0009-v1",
+       "holdout-g0009-v2",
+       "holdout-g0009-v3",
+       "holdout-g0023-v0",
+       "holdout-g0023-v1",
+       "holdout-g0023-v2",
+       "holdout-g0023-v3",
+       "holdout-g0060-v1",
+       "holdout-g0060-v3",
+       "holdout-g0082-v0",
+       "holdout-g0082-v1",
+       "holdout-g0082-v2",
+       "holdout-g0082-v3",
+       "holdout-g0126-v0",
+       "holdout-g0126-v1",
+       "holdout-g0126-v2",
+       "holdout-g0126-v3",
+       "holdout-g0131-v3",
+       "holdout-g0135-v0",
+       "holdout-g0135-v1",
+       "holdout-g0135-v3",
+       "holdout-g0141-v0",
+       "holdout-g0141-v1",
+       "holdout-g0141-v2",
+       "holdout-g0141-v3",
+       "holdout-g0143-v0",
+       "holdout-g0143-v1",
+       "holdout-g0143-v2",
+       "holdout-g0143-v3",
+       "holdout-g0144-v0",
+       "holdout-g0144-v1",
+       "holdout-g0144-v2",
+       "holdout-g0144-v3"
+      ],
+      "policy_gap_wrong_definitive": 0,
+      "rule_failures": 38,
+      "structural": 0,
+      "structural_by_state": {}
+     },
+     "slices": {
+      "initial_zone_blocked": {
+       "false": {
+        "failures": 0,
+        "n": 254,
+        "rate": 0.0
+       },
+       "true": {
+        "failures": 38,
+        "n": 346,
+        "rate": 0.1098
+       }
+      },
+      "n_occluders": {
+       "1": {
+        "failures": 0,
+        "n": 168,
+        "rate": 0.0
+       },
+       "2": {
+        "failures": 9,
+        "n": 200,
+        "rate": 0.045
+       },
+       "3": {
+        "failures": 29,
+        "n": 232,
+        "rate": 0.125
+       }
+      }
+     }
+    },
+    "3": {
+     "attribution": {
+      "n_episodes": 600,
+      "policy_gap": 4,
+      "policy_gap_by_state": {
+       "absent": 2,
+       "unobservable": 2
+      },
+      "policy_gap_episodes": [
+       "holdout-g0009-v0",
+       "holdout-g0009-v1",
+       "holdout-g0009-v2",
+       "holdout-g0009-v3"
+      ],
+      "policy_gap_wrong_definitive": 0,
+      "rule_failures": 4,
+      "structural": 0,
+      "structural_by_state": {}
+     },
+     "slices": {
+      "initial_zone_blocked": {
+       "false": {
+        "failures": 0,
+        "n": 254,
+        "rate": 0.0
+       },
+       "true": {
+        "failures": 4,
+        "n": 346,
+        "rate": 0.0116
+       }
+      },
+      "n_occluders": {
+       "1": {
+        "failures": 0,
+        "n": 168,
+        "rate": 0.0
+       },
+       "2": {
+        "failures": 0,
+        "n": 200,
+        "rate": 0.0
+       },
+       "3": {
+        "failures": 4,
+        "n": 232,
+        "rate": 0.0172
+       }
+      }
+     }
+    }
+   },
+   "source": "results/holdout/outcomes.jsonl"
+  },
+  "holdout/v1": {
+   "config": "v1",
+   "errors": {
+    "2": {
+     "oracle": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 127,
+        "inconclusive": 173
+       },
+       "unobservable": {
+        "present": 178
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 173,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "random": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 481,
+        "inconclusive": 1019
+       },
+       "unobservable": {
+        "absent": 1,
+        "inconclusive": 155,
+        "present": 734
+       },
+       "visible": {
+        "present": 610
+       }
+      },
+      "false_absent": 1,
+      "false_present": 0,
+      "inconclusive": 1174,
+      "n": 600,
+      "n_seeds": 5,
+      "wrong_definitive": 1
+     },
+     "rule": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 127,
+        "inconclusive": 173
+       },
+       "unobservable": {
+        "inconclusive": 17,
+        "present": 161
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 190,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "single": {
+      "decisions_by_state": {
+       "absent": {
+        "inconclusive": 300
+       },
+       "unobservable": {
+        "inconclusive": 174,
+        "present": 4
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 474,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     }
+    },
+    "3": {
+     "oracle": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 300
+       },
+       "unobservable": {
+        "present": 178
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 0,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "random": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 1219,
+        "inconclusive": 281
+       },
+       "unobservable": {
+        "absent": 1,
+        "inconclusive": 24,
+        "present": 865
+       },
+       "visible": {
+        "present": 610
+       }
+      },
+      "false_absent": 1,
+      "false_present": 0,
+      "inconclusive": 305,
+      "n": 600,
+      "n_seeds": 5,
+      "wrong_definitive": 1
+     },
+     "rule": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 283,
+        "inconclusive": 17
+       },
+       "unobservable": {
+        "inconclusive": 2,
+        "present": 176
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 19,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "single": {
+      "decisions_by_state": {
+       "absent": {
+        "inconclusive": 300
+       },
+       "unobservable": {
+        "inconclusive": 174,
+        "present": 4
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 474,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     }
+    }
+   },
+   "false_absent_cases": [
+    {
+     "budget": 2,
+     "config": "v1",
+     "episode_id": "holdout-g0046-v2",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 3,
+     "config": "v1",
+     "episode_id": "holdout-g0046-v2",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 4,
+     "config": "v1",
+     "episode_id": "holdout-g0046-v2",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 5,
+     "config": "v1",
+     "episode_id": "holdout-g0046-v2",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 6,
+     "config": "v1",
+     "episode_id": "holdout-g0046-v2",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 7,
+     "config": "v1",
+     "episode_id": "holdout-g0046-v2",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 8,
+     "config": "v1",
+     "episode_id": "holdout-g0046-v2",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    }
+   ],
+   "rule": {
+    "2": {
+     "attribution": {
+      "n_episodes": 600,
+      "policy_gap": 17,
+      "policy_gap_by_state": {
+       "unobservable": 17
+      },
+      "policy_gap_episodes": [
+       "holdout-g0001-v0",
+       "holdout-g0001-v2",
+       "holdout-g0009-v0",
+       "holdout-g0009-v2",
+       "holdout-g0023-v0",
+       "holdout-g0023-v2",
+       "holdout-g0082-v0",
+       "holdout-g0082-v2",
+       "holdout-g0126-v0",
+       "holdout-g0126-v2",
+       "holdout-g0135-v0",
+       "holdout-g0141-v0",
+       "holdout-g0141-v2",
+       "holdout-g0143-v0",
+       "holdout-g0143-v2",
+       "holdout-g0144-v0",
+       "holdout-g0144-v2"
+      ],
+      "policy_gap_wrong_definitive": 0,
+      "rule_failures": 190,
+      "structural": 173,
+      "structural_by_state": {
+       "absent": 173
+      }
+     },
+     "slices": {
+      "initial_zone_blocked": {
+       "false": {
+        "failures": 0,
+        "n": 254,
+        "rate": 0.0
+       },
+       "true": {
+        "failures": 190,
+        "n": 346,
+        "rate": 0.5491
+       }
+      },
+      "n_occluders": {
+       "1": {
+        "failures": 51,
+        "n": 168,
+        "rate": 0.3036
+       },
+       "2": {
+        "failures": 60,
+        "n": 200,
+        "rate": 0.3
+       },
+       "3": {
+        "failures": 79,
+        "n": 232,
+        "rate": 0.3405
+       }
+      }
+     }
+    },
+    "3": {
+     "attribution": {
+      "n_episodes": 600,
+      "policy_gap": 19,
+      "policy_gap_by_state": {
+       "absent": 17,
+       "unobservable": 2
+      },
+      "policy_gap_episodes": [
+       "holdout-g0001-v1",
+       "holdout-g0001-v3",
+       "holdout-g0009-v0",
+       "holdout-g0009-v1",
+       "holdout-g0009-v2",
+       "holdout-g0009-v3",
+       "holdout-g0023-v1",
+       "holdout-g0023-v3",
+       "holdout-g0082-v1",
+       "holdout-g0082-v3",
+       "holdout-g0126-v1",
+       "holdout-g0126-v3",
+       "holdout-g0131-v3",
+       "holdout-g0141-v1",
+       "holdout-g0141-v3",
+       "holdout-g0143-v1",
+       "holdout-g0143-v3",
+       "holdout-g0144-v1",
+       "holdout-g0144-v3"
+      ],
+      "policy_gap_wrong_definitive": 0,
+      "rule_failures": 19,
+      "structural": 0,
+      "structural_by_state": {}
+     },
+     "slices": {
+      "initial_zone_blocked": {
+       "false": {
+        "failures": 0,
+        "n": 254,
+        "rate": 0.0
+       },
+       "true": {
+        "failures": 19,
+        "n": 346,
+        "rate": 0.0549
+       }
+      },
+      "n_occluders": {
+       "1": {
+        "failures": 0,
+        "n": 168,
+        "rate": 0.0
+       },
+       "2": {
+        "failures": 2,
+        "n": 200,
+        "rate": 0.01
+       },
+       "3": {
+        "failures": 17,
+        "n": 232,
+        "rate": 0.0733
+       }
+      }
+     }
+    }
+   },
+   "source": "results/holdout/outcomes.jsonl"
+  },
+  "holdout/v2": {
+   "config": "v2",
+   "errors": {
+    "2": {
+     "oracle": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 300
+       },
+       "unobservable": {
+        "present": 178
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 0,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "random": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 1260,
+        "inconclusive": 240
+       },
+       "unobservable": {
+        "inconclusive": 156,
+        "present": 734
+       },
+       "visible": {
+        "present": 610
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 396,
+      "n": 600,
+      "n_seeds": 5,
+      "wrong_definitive": 0
+     },
+     "rule": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 283,
+        "inconclusive": 17
+       },
+       "unobservable": {
+        "inconclusive": 9,
+        "present": 169
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 26,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "single": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 109,
+        "inconclusive": 191
+       },
+       "unobservable": {
+        "inconclusive": 174,
+        "present": 4
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 365,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     }
+    },
+    "3": {
+     "oracle": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 300
+       },
+       "unobservable": {
+        "present": 178
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 0,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "random": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 1450,
+        "inconclusive": 50
+       },
+       "unobservable": {
+        "inconclusive": 24,
+        "present": 866
+       },
+       "visible": {
+        "present": 610
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 74,
+      "n": 600,
+      "n_seeds": 5,
+      "wrong_definitive": 0
+     },
+     "rule": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 299,
+        "inconclusive": 1
+       },
+       "unobservable": {
+        "present": 178
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 1,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "single": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 109,
+        "inconclusive": 191
+       },
+       "unobservable": {
+        "inconclusive": 174,
+        "present": 4
+       },
+       "visible": {
+        "present": 122
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 365,
+      "n": 600,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     }
+    }
+   },
+   "false_absent_cases": [],
+   "rule": {
+    "2": {
+     "attribution": {
+      "n_episodes": 600,
+      "policy_gap": 26,
+      "policy_gap_by_state": {
+       "absent": 17,
+       "unobservable": 9
+      },
+      "policy_gap_episodes": [
+       "holdout-g0009-v1",
+       "holdout-g0009-v3",
+       "holdout-g0019-v1",
+       "holdout-g0019-v2",
+       "holdout-g0019-v3",
+       "holdout-g0058-v0",
+       "holdout-g0058-v1",
+       "holdout-g0067-v1",
+       "holdout-g0067-v3",
+       "holdout-g0078-v1",
+       "holdout-g0088-v2",
+       "holdout-g0088-v3",
+       "holdout-g0105-v1",
+       "holdout-g0105-v2",
+       "holdout-g0105-v3",
+       "holdout-g0113-v0",
+       "holdout-g0113-v1",
+       "holdout-g0113-v2",
+       "holdout-g0113-v3",
+       "holdout-g0126-v0",
+       "holdout-g0126-v1",
+       "holdout-g0126-v3",
+       "holdout-g0133-v0",
+       "holdout-g0133-v1",
+       "holdout-g0141-v2",
+       "holdout-g0141-v3"
+      ],
+      "policy_gap_wrong_definitive": 0,
+      "rule_failures": 26,
+      "structural": 0,
+      "structural_by_state": {}
+     },
+     "slices": {
+      "initial_zone_blocked": {
+       "false": {
+        "failures": 0,
+        "n": 254,
+        "rate": 0.0
+       },
+       "true": {
+        "failures": 26,
+        "n": 346,
+        "rate": 0.0751
+       }
+      },
+      "n_occluders": {
+       "1": {
+        "failures": 4,
+        "n": 168,
+        "rate": 0.0238
+       },
+       "2": {
+        "failures": 3,
+        "n": 200,
+        "rate": 0.015
+       },
+       "3": {
+        "failures": 19,
+        "n": 232,
+        "rate": 0.0819
+       }
+      }
+     }
+    },
+    "3": {
+     "attribution": {
+      "n_episodes": 600,
+      "policy_gap": 1,
+      "policy_gap_by_state": {
+       "absent": 1
+      },
+      "policy_gap_episodes": [
+       "holdout-g0058-v1"
+      ],
+      "policy_gap_wrong_definitive": 0,
+      "rule_failures": 1,
+      "structural": 0,
+      "structural_by_state": {}
+     },
+     "slices": {
+      "initial_zone_blocked": {
+       "false": {
+        "failures": 0,
+        "n": 254,
+        "rate": 0.0
+       },
+       "true": {
+        "failures": 1,
+        "n": 346,
+        "rate": 0.0029
+       }
+      },
+      "n_occluders": {
+       "1": {
+        "failures": 0,
+        "n": 168,
+        "rate": 0.0
+       },
+       "2": {
+        "failures": 0,
+        "n": 200,
+        "rate": 0.0
+       },
+       "3": {
+        "failures": 1,
+        "n": 232,
+        "rate": 0.0043
+       }
+      }
+     }
+    }
+   },
+   "source": "results/holdout/outcomes.jsonl"
+  },
+  "test/v1": {
+   "config": "v1",
+   "errors": {
+    "2": {
+     "oracle": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 110,
+        "inconclusive": 152
+       },
+       "unobservable": {
+        "present": 157
+       },
+       "visible": {
+        "present": 105
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 152,
+      "n": 524,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "random": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 431,
+        "inconclusive": 879
+       },
+       "unobservable": {
+        "absent": 2,
+        "inconclusive": 115,
+        "present": 668
+       },
+       "visible": {
+        "present": 525
+       }
+      },
+      "false_absent": 2,
+      "false_present": 0,
+      "inconclusive": 994,
+      "n": 524,
+      "n_seeds": 5,
+      "wrong_definitive": 2
+     },
+     "rule": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 110,
+        "inconclusive": 152
+       },
+       "unobservable": {
+        "inconclusive": 2,
+        "present": 155
+       },
+       "visible": {
+        "present": 105
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 154,
+      "n": 524,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "single": {
+      "decisions_by_state": {
+       "absent": {
+        "inconclusive": 262
+       },
+       "unobservable": {
+        "inconclusive": 156,
+        "present": 1
+       },
+       "visible": {
+        "present": 105
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 418,
+      "n": 524,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     }
+    },
+    "3": {
+     "oracle": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 262
+       },
+       "unobservable": {
+        "present": 157
+       },
+       "visible": {
+        "present": 105
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 0,
+      "n": 524,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "random": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 1084,
+        "inconclusive": 226
+       },
+       "unobservable": {
+        "absent": 2,
+        "inconclusive": 15,
+        "present": 768
+       },
+       "visible": {
+        "present": 525
+       }
+      },
+      "false_absent": 2,
+      "false_present": 0,
+      "inconclusive": 241,
+      "n": 524,
+      "n_seeds": 5,
+      "wrong_definitive": 2
+     },
+     "rule": {
+      "decisions_by_state": {
+       "absent": {
+        "absent": 260,
+        "inconclusive": 2
+       },
+       "unobservable": {
+        "present": 157
+       },
+       "visible": {
+        "present": 105
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 2,
+      "n": 524,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     },
+     "single": {
+      "decisions_by_state": {
+       "absent": {
+        "inconclusive": 262
+       },
+       "unobservable": {
+        "inconclusive": 156,
+        "present": 1
+       },
+       "visible": {
+        "present": 105
+       }
+      },
+      "false_absent": 0,
+      "false_present": 0,
+      "inconclusive": 418,
+      "n": 524,
+      "n_seeds": 1,
+      "wrong_definitive": 0
+     }
+    }
+   },
+   "false_absent_cases": [
+    {
+     "budget": 2,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 2,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 4
+    },
+    {
+     "budget": 3,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 3,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 4
+    },
+    {
+     "budget": 4,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 4,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 4
+    },
+    {
+     "budget": 5,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 5,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 4
+    },
+    {
+     "budget": 6,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 6,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 4
+    },
+    {
+     "budget": 7,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 7,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 4
+    },
+    {
+     "budget": 8,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 3
+    },
+    {
+     "budget": 8,
+     "config": "v1",
+     "episode_id": "core-g0103-v0",
+     "gt_state": "unobservable",
+     "method": "random",
+     "seed": 4
+    }
+   ],
+   "rule": {
+    "2": {
+     "attribution": {
+      "n_episodes": 524,
+      "policy_gap": 2,
+      "policy_gap_by_state": {
+       "unobservable": 2
+      },
+      "policy_gap_episodes": [
+       "core-g0298-v0",
+       "core-g0298-v2"
+      ],
+      "policy_gap_wrong_definitive": 0,
+      "rule_failures": 154,
+      "structural": 152,
+      "structural_by_state": {
+       "absent": 152
+      }
+     },
+     "slices": {
+      "initial_zone_blocked": {
+       "false": {
+        "failures": 0,
+        "n": 220,
+        "rate": 0.0
+       },
+       "true": {
+        "failures": 154,
+        "n": 304,
+        "rate": 0.5066
+       }
+      },
+      "n_occluders": {
+       "1": {
+        "failures": 53,
+        "n": 196,
+        "rate": 0.2704
+       },
+       "2": {
+        "failures": 54,
+        "n": 168,
+        "rate": 0.3214
+       },
+       "3": {
+        "failures": 47,
+        "n": 160,
+        "rate": 0.2938
+       }
+      }
+     }
+    },
+    "3": {
+     "attribution": {
+      "n_episodes": 524,
+      "policy_gap": 2,
+      "policy_gap_by_state": {
+       "absent": 2
+      },
+      "policy_gap_episodes": [
+       "core-g0298-v1",
+       "core-g0298-v3"
+      ],
+      "policy_gap_wrong_definitive": 0,
+      "rule_failures": 2,
+      "structural": 0,
+      "structural_by_state": {}
+     },
+     "slices": {
+      "initial_zone_blocked": {
+       "false": {
+        "failures": 0,
+        "n": 220,
+        "rate": 0.0
+       },
+       "true": {
+        "failures": 2,
+        "n": 304,
+        "rate": 0.0066
+       }
+      },
+      "n_occluders": {
+       "1": {
+        "failures": 0,
+        "n": 196,
+        "rate": 0.0
+       },
+       "2": {
+        "failures": 2,
+        "n": 168,
+        "rate": 0.0119
+       },
+       "3": {
+        "failures": 0,
+        "n": 160,
+        "rate": 0.0
+       }
+      }
+     }
+    }
+   },
+   "source": "results/test-v1/outcomes.jsonl"
+  }
+ },
+ "dev_rule_nbv_v2_ties": {
+  "train": {
+   "initial_zone_blocked=false": {
+    "all_tied": 0,
+    "budget2_correct": 10,
+    "budget2_correct_when_tied": 2,
+    "decision_points": 10,
+    "n_candidates_sum": 120,
+    "n_tied_sum": 12,
+    "tied": 2
+   },
+   "initial_zone_blocked=true": {
+    "all_tied": 2,
+    "budget2_correct": 272,
+    "budget2_correct_when_tied": 217,
+    "decision_points": 285,
+    "n_candidates_sum": 3420,
+    "n_tied_sum": 2279,
+    "tied": 230
+   }
+  },
+  "val": {
+   "initial_zone_blocked=false": {
+    "all_tied": 0,
+    "budget2_correct": 11,
+    "budget2_correct_when_tied": 5,
+    "decision_points": 11,
+    "n_candidates_sum": 132,
+    "n_tied_sum": 17,
+    "tied": 5
+   },
+   "initial_zone_blocked=true": {
+    "all_tied": 2,
+    "budget2_correct": 95,
+    "budget2_correct_when_tied": 71,
+    "decision_points": 96,
+    "n_candidates_sum": 1152,
+    "n_tied_sum": 730,
+    "tied": 72
+   }
+  }
+ },
+ "holdout_paired": {
+  "2": {
+   "decision_effect_v1_rule_to_ablation": {
+    "both_correct": 410,
+    "both_wrong": 38,
+    "broken": 0,
+    "broken_episodes": [],
+    "fixed": 152
+   },
+   "policy_effect_ablation_to_v2_rule": {
+    "both_correct": 543,
+    "both_wrong": 7,
+    "broken": 19,
+    "broken_episodes": [
+     "holdout-g0019-v1",
+     "holdout-g0019-v2",
+     "holdout-g0019-v3",
+     "holdout-g0058-v0",
+     "holdout-g0058-v1",
+     "holdout-g0067-v1",
+     "holdout-g0067-v3",
+     "holdout-g0078-v1",
+     "holdout-g0088-v2",
+     "holdout-g0088-v3",
+     "holdout-g0105-v1",
+     "holdout-g0105-v2",
+     "holdout-g0105-v3",
+     "holdout-g0113-v0",
+     "holdout-g0113-v1",
+     "holdout-g0113-v2",
+     "holdout-g0113-v3",
+     "holdout-g0133-v0",
+     "holdout-g0133-v1"
+    ],
+    "fixed": 31
+   },
+   "v1_rule_to_v2_rule": {
+    "both_correct": 403,
+    "both_wrong": 19,
+    "broken": 7,
+    "broken_episodes": [
+     "holdout-g0019-v2",
+     "holdout-g0058-v0",
+     "holdout-g0088-v2",
+     "holdout-g0105-v2",
+     "holdout-g0113-v0",
+     "holdout-g0113-v2",
+     "holdout-g0133-v0"
+    ],
+    "fixed": 171
+   }
+  },
+  "3": {
+   "decision_effect_v1_rule_to_ablation": {
+    "both_correct": 581,
+    "both_wrong": 4,
+    "broken": 0,
+    "broken_episodes": [],
+    "fixed": 15
+   },
+   "policy_effect_ablation_to_v2_rule": {
+    "both_correct": 595,
+    "both_wrong": 0,
+    "broken": 1,
+    "broken_episodes": [
+     "holdout-g0058-v1"
+    ],
+    "fixed": 4
+   },
+   "v1_rule_to_v2_rule": {
+    "both_correct": 580,
+    "both_wrong": 0,
+    "broken": 1,
+    "broken_episodes": [
+     "holdout-g0058-v1"
+    ],
+    "fixed": 19
+   }
+  }
+ }
+}

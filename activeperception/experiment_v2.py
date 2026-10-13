@@ -18,7 +18,7 @@ from pathlib import Path
 
 import numpy as np
 
-from . import experiment, frozen, frozen_v2
+from . import experiment, frozen, frozen_v2, seal
 from .detector.cache import DetectionCache
 from .framestore import FrameStore
 from .grader import grade
@@ -244,11 +244,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--renders")
     ap.add_argument("--out", required=True)
     ap.add_argument("--n-boot", type=int, default=frozen.N_BOOT)
+    ap.add_argument("--reproduce", action="store_true", help="re-check a sealed run (decision 014)")
     args = ap.parse_args(argv)
     out = Path(args.out)
+    split = Split.HOLDOUT if args.stage == "holdout" else Split.VAL
+    sealed = seal.guard_formal_run(args.episodes, split, out, args.reproduce)
     if out.exists():
         raise SystemExit(f"{out} exists: the holdout comparison runs once (decision 011)")
-    split = Split.HOLDOUT if args.stage == "holdout" else Split.VAL
     specs, gts, meta = load_episode_set(args.episodes)
     specs = [s for s in specs if s.split == split]
     if not specs:
@@ -325,6 +327,8 @@ def main(argv: list[str] | None = None) -> int:
             default=str,
         )[:6000]
     )
+    if sealed is not None:
+        return 0 if seal.compare_reproduction(sealed, out) else 1
     return 0
 
 

@@ -5,6 +5,8 @@
 > - **v2（看過 v1 test 後的改進）**：只用開發資料設計與調參，在全新的 holdout 上與 v1 分開比較（[decision 011–013](docs/decisions/013-holdout-v1-v2-result.md)）——
 >   absent 改成需要「看穿每個可能位置」的空間證據：所有方法 false-absent = 0、Rule 在 budget 2 從 0.683 → 0.957。
 >   holdout 也顯示 v1 在原 test 上「接近 Oracle」的結論**沒有重現**，而 v2 在 budget 2 與 Oracle 仍差 4.3 點（見下方 v2 段落）。
+> - **Core 已結案**（[decision 014](docs/decisions/014-core-closure.md)）：v2 的改善主要來自 absent 判定規則，**不是**選視角策略；
+>   Gate 未通過的項目、失敗分析與資料封存見下方「Core 結案」。Advanced C（RL）暫不進行；Advanced B（Nav2）已完成評估，待決定。
 > - 正式數字只來自 ROS 2 Jazzy + Gazebo Harmonic；synthetic world 只用於 correctness tests。
 
 ## 一句話問題
@@ -113,6 +115,43 @@ v1 判定 absent 的依據是「≥ 2 個方位扇區有 zone 大致可見的視
 
 ROS 2 線上執行 v2：pilot 上 168 / 168 與 replay 相同（[`results/pilot-v2/`](results/pilot-v2/)）。
 
+## Core 結案：Gate、失敗分析、資料封存
+
+### Gate 總表（decision 009 §4 判準原樣套用）
+
+| Gate | v1 @ 原 test | v1 @ holdout | v2 @ holdout |
+|---|---|---|---|
+| 1. Rule 穩定勝過 Random / Single | 通過 | 通過 | 通過 |
+| 2. 非 leakage | 通過 | 通過 | 通過 |
+| 3. 可重現的殘餘失敗 | 通過（156） | 通過（209） | 通過（27，全部 `inconclusive`） |
+| 4. Rule 接近 Oracle | 是（0.004） | **未通過**（0.028 / 0.032） | **budget 2 未通過**（0.043 [0.020, 0.070]）；budget 3 通過 |
+
+**未通過 / 未成立的項目**：v1「接近 Oracle」在 holdout 未重現；v2 在 budget 2 未接近 Oracle（依 SPEC，RL 的停止條件不成立，但使用者決定暫不做 Advanced C）；
+rule-nbv-v2 相對 rule-nbv-v1 沒有顯著改善；v2 相對 v1 有 7 件（budget 2）與 1 件（budget 3）退步，全部變成 `inconclusive`。
+
+### 改善來自判定規則，不是選視角策略
+
+![Rule 失敗歸因](docs/figures/failure_attribution.png)
+
+- v1 在 budget 2 的失敗約 90% 是**結構性**的（Oracle 也答不出來）：decision-v1 要兩個有效扇區，初始視角被擋時 budget 2 不可能湊齊。
+  decision-v2 只要一個視角看穿全部候選位置就夠，**結構性失敗 173 → 0**。
+- 只換判定規則：修好 152 件、弄壞 0 件；只換策略：修好 31 件、弄壞 19 件（淨 +0.020，不顯著）。
+- 原因（開發資料上確認）：初始視角被擋時，rule-nbv-v2 有 75–81% 的第二視角決策是分數平手，由候選編號決定。
+  這是凍結 v2 的已知限制，不在 Core 修正；修正屬於 v3，需要新的資料。
+
+完整分析：[docs/failure-analysis.md](docs/failure-analysis.md)（只讀已 commit 的結果，四組資料分開報告）。
+
+### 資料封存
+
+- 原 `core` test（v1 用過一次）與 `holdout`（v1 / v2 用過一次）都已封存：不再用於任何設計、調參或選擇，兩者不合併。
+- 程式強制：調參拒絕 test / holdout；正式 runner 對封存資料只允許 `--reproduce`（輸出不得寫進 `results/`，只比對是否逐位元相同）；
+  [`SEALED.sha256`](SEALED.sha256) 釘住所有已 commit 的結果、凍結的 episode sets 與 `frozen.py` / `frozen_v2.py`，`tests/test_seal.py` 檢查。
+
+### 下一步：Advanced B（Nav2）評估
+
+Nav2 與 TurtleBot 4 / 3 的 Gazebo Harmonic 模擬套件在 Jazzy arm64 都有現成 binary，可以只在 Mac 上完成，不需要 GPU 或採購。
+方案、風險（CPU 渲染速度、定位誤差對 v2 安全性的影響）與環境需求見 [docs/advanced-b-nav2-evaluation.md](docs/advanced-b-nav2-evaluation.md)；**尚未啟動，待使用者決定**。
+
 ## 方法（v1；v2 的差異見上一段）
 
 | Policy | 可用資訊 | 角色 |
@@ -159,7 +198,14 @@ uv run python tools/make_figures.py
 uv run python -m activeperception.tune decision2 --episodes data/episodes/gazebo-core.json --detections runs/core/detector-v1.jsonl --out results/tuning-v2
 uv run python -m activeperception.experiment_v2 holdout --episodes data/episodes/gazebo-holdout.json \
     --detections runs/holdout/detector-v1.jsonl --renders renders/holdout --out results/holdout
+# Core 結案（decision 014）
+uv run python -m activeperception.failure_analysis --out results/failure-analysis \
+    --dev-episodes data/episodes/gazebo-core.json --dev-detections results/core/detector-v1.jsonl --dev-renders renders/core
+uv run python -m activeperception.seal verify             # 封存的結果與凍結設定是否未被改動
 ```
+
+原 test 與 holdout 已封存：上面兩個正式指令現在會拒絕執行；要檢查可重現性，加上 `--reproduce` 並把 `--out` 指到 `results/` 以外，
+程式只比對 `outcomes.jsonl` 是否與已 commit 的版本逐位元相同。
 
 平台版本（image digest、套件版本）見 [`docs/platform/versions.md`](docs/platform/versions.md)；
 GPU 工作（detector 推論）在 RTX 5070 Ti 上以共享 GPU lock 執行（[MACHINE_POLICY.md](MACHINE_POLICY.md)）。
@@ -173,8 +219,11 @@ ros_ws/src/inspection_ap_ros/   ROS 2 package（inspector node、launch）
 docker/                  Jazzy + Harmonic 映像、render / smoke / ROS 線上執行腳本
 gazebo/models/           vendored Fuel 模型（fire_hydrant，CC0）
 data/episodes/           frozen spec / episode sets（含 GT）：core、pilot、detsel、holdout
-results/                 detector 選型、pilot（v1 / v2）、調參（v1 / v2）、v1 正式 test、holdout v1 vs v2
-docs/decisions/          decision logs 001–013
+results/                 detector 選型、pilot（v1 / v2）、調參（v1 / v2）、v1 正式 test、holdout v1 vs v2、failure analysis
+docs/decisions/          decision logs 001–014
+docs/failure-analysis.md 跨 v1 / v2 的失敗分析（Core 結案）
+docs/advanced-b-nav2-evaluation.md   Advanced B（Nav2）可行性評估（待決定）
+SEALED.sha256            封存檔案的 sha256（tests/test_seal.py 檢查）
 ```
 
 ## 限制
@@ -182,5 +231,7 @@ docs/decisions/          decision logs 001–013
 - 場景刻意簡化（方柱遮擋、固定光照、單一目標類別）；detector 在此 world 幾乎不誤報，perception 偏容易。
 - `decision-v1` 的 absent 規則較寬；test 上 Random 出現一例 false absent，Rule / Oracle 沒有。
 - 多視角方法的 definitive decision confidence 校準不佳（ECE 0.21–0.38；Single 0.016）：absent 的 confidence = coverage × (1 − c_max)，公式在 v1 凍結未改。
-- Core 只用 teleport；Nav2（Advanced B）依使用者決定暫不進行。
+- Core 只用 teleport；Nav2（Advanced B）已完成可行性評估，尚未啟動。
 - v2 是看過 v1 test 後提出的改進；它的所有宣稱只來自 holdout，原 test 不用於 v2。
+- rule-nbv-v2 在初始視角被擋時常常分數平手、按候選編號選（failure analysis §4）；v2 的改善不應被理解為選視角策略的進步。
+- holdout 與原 test 都已用過；任何新版本都需要新的、未參與開發的資料。

@@ -5,6 +5,8 @@
 1. docs/figures/accuracy_vs_budget.png - test accuracy vs viewpoint budget, 4 methods
 2. docs/figures/three_states.png       - visible / unobservable (+ revealing view) / absent
 3. docs/figures/failure_case.png       - a residual Rule-NBV failure from the test report
+4. docs/figures/holdout_v1_v2.png      - v1 vs v2 accuracy on the holdout (decision 013)
+5. docs/figures/failure_attribution.png - Rule failures: structural vs viewpoint choice (dec. 014)
 """
 
 from __future__ import annotations
@@ -273,6 +275,79 @@ def holdout_v1_v2(report: dict) -> None:
     plt.close(fig)
 
 
+def failure_attribution(summary: dict) -> None:
+    """Rule failures split by whether the oracle (same decision rule) answers the episode.
+
+    Two categories, not methods, so they take palette slots 7 / 5 (violet, magenta) and
+    never the method colours; validated light: all hard checks pass, magenta contrast WARN
+    -> every segment is direct-labelled and docs/failure-analysis.md has the table.
+    """
+    rows = [
+        ("test/v1", "v1  (core test, 524)"),
+        ("holdout/v1", "v1  (holdout, 600)"),
+        ("holdout/ablation", "decision-v2 + rule-nbv-v1  (holdout)"),
+        ("holdout/v2", "v2  (holdout, 600)"),
+    ]
+    cats = (
+        ("structural", "Oracle also fails (budget / decision-rule limit)", "#e87ba4"),
+        ("policy_gap", "Oracle succeeds (viewpoint choice)", "#4a3aa7"),
+    )
+    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.3), dpi=200, sharex=True, sharey=True)
+    fig.patch.set_facecolor(SURFACE)
+    for ax, b in zip(axes, ("2", "3"), strict=True):
+        ax.set_facecolor(SURFACE)
+        for i, (key, _) in enumerate(rows):
+            a = summary["datasets"][key]["rule"][b]["attribution"]
+            n, left = a["n_episodes"], 0.0
+            y = len(rows) - 1 - i
+            for cat, _, colour in cats:
+                w = 100.0 * a[cat] / n
+                if w > 0:
+                    ax.barh(y, w, left=left, height=0.62, color=colour, ec=SURFACE, lw=2)
+                left += w
+            ax.text(
+                left + 0.8,
+                y,
+                f"{a['structural']} + {a['policy_gap']}",
+                va="center",
+                fontsize=7.5,
+                color=INK2,
+            )
+        ax.set_title(f"budget {b}", fontsize=9, color=INK, loc="left")
+        ax.set_yticks(range(len(rows)))
+        ax.set_yticklabels([label for _, label in reversed(rows)], fontsize=7.5, color=INK2)
+        ax.set_xlim(0, 40)
+        ax.xaxis.grid(True, color=GRID, lw=0.7)
+        ax.set_axisbelow(True)
+        ax.tick_params(colors=MUTED, labelsize=7.5, length=0)
+        for side in ("top", "right", "left"):
+            ax.spines[side].set_visible(False)
+        ax.spines["bottom"].set_color(BASE)
+        ax.set_xlabel("Rule-NBV failures, % of episodes", fontsize=8, color=INK2)
+    handles = [plt.Rectangle((0, 0), 1, 1, color=c) for _, _, c in cats]
+    fig.legend(
+        handles,
+        [label for _, label, _ in cats],
+        loc="upper left",
+        bbox_to_anchor=(0.005, 0.915),
+        ncol=2,
+        frameon=False,
+        fontsize=7.5,
+        labelcolor=INK2,
+    )
+    fig.suptitle(
+        "Where Rule-NBV failures come from (labels: structural + viewpoint choice)",
+        x=0.01,
+        ha="left",
+        y=0.995,
+        fontsize=9.5,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.27, right=0.98, top=0.72, bottom=0.15, wspace=0.08)
+    fig.savefig(OUT / "failure_attribution.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
@@ -282,4 +357,7 @@ if __name__ == "__main__":
     holdout = ROOT / "results/holdout/report.json"
     if holdout.exists():
         holdout_v1_v2(json.loads(holdout.read_text()))
+    fa = ROOT / "results/failure-analysis/summary.json"
+    if fa.exists():
+        failure_attribution(json.loads(fa.read_text()))
     print("wrote", sorted(p.name for p in OUT.glob("*.png")))
