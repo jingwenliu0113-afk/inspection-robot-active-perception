@@ -146,5 +146,6 @@ def write_proxy_frames(spec: EpisodeSpec, out_dir, proxy_radius: float) -> None:
         "generator_version": spec.generator_version,
         "renderer": "raycast-proxy",
         "depth_kind": "planar",
+        "settle_ns": 50_000_000,  # stamps are written 50 ms after t_ref
     }
     write_episode_frames(Path(out_dir) / f"{spec.episode_id}.npz", arrays, meta)
