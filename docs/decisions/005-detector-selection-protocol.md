@@ -1,7 +1,7 @@
 # 005 — Core detector 選型協定（預先登錄）
 
 - **日期**：2026-10-13
-- **狀態**：**協定凍結，選型結果待填**（結果另以附錄記錄於本檔，並在選定後凍結為 `detector-v1`）
+- **狀態**：**已凍結 `detector-v1` = torchvision Faster R-CNN MobileNetV3-Large FPN（`frcnn-mnv3`）**（2026-10-13，見附錄 B）
 - **是否在看過正式結果後才新增 / 修改**：否。本協定寫於任何 detector 執行之前。
 
 ## 問題
@@ -69,3 +69,73 @@ Core 不做 fine-tuning（那是 Advanced A）。
 - 權重檔手動下載到 `models/`（不進 git），sha256 記錄在選型結果附錄：
   - `yolov8m.pt`、`yolo11m.pt`：`https://github.com/ultralytics/assets/releases/download/v8.4.0/`
   - `fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth`：`https://download.pytorch.org/models/`（torchvision `COCO_V1`）
+
+## 附錄 B（2026-10-13）：選型結果與凍結 `detector-v1`
+
+### 執行
+
+- 資料：`data/episodes/gazebo-detsel.json`（split = `detsel`，40 scene groups、160 episodes、2080 張 frame；present 1040 / absent 1040），frame store `renders/detsel`（image `sha256:49d6e69b…`）。
+- 準確率與 GPU 延遲：`gpu-server` RTX 5070 Ti，torch 2.13.0+cu130、torchvision 0.28.0、ultralytics 8.4.176，在 `/tmp/ai-portfolio-gpu.lock`（`flock -n`）下執行，lock 檢查時為空閒。
+- Mac 延遲：M4 Pro，torch 2.14.1、torchvision 0.29.1（`--bench-only`）。
+- 原始輸出：`results/detector-selection/selection.json`；表格：`results/detector-selection/table.md`。
+- 權重 sha256（皆與官方來源一致；YOLO 以 GitHub release asset digest 核對）：
+  - `yolov8m.pt` `5d4a90cdc7a21786cc59cd19778e9eafff836df9e2da32524737c7ee6efe4fe5`
+  - `yolo11m.pt` `d5ffc1a674953a08e11a8d21e022781b1b23a19b730afc309290bd9fb5305b95`
+  - `fasterrcnn_mobilenet_v3_large_fpn-fb6a3cc7.pth` `fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533`
+
+### 結果
+
+| 指標 | yolov8m | yolo11m | frcnn-mnv3 |
+|---|---|---|---|
+| **P** image AUROC [95% CI] | 1.0000 [1.000, 1.000] | 1.0000 [1.000, 1.000] | 1.0000 [1.000, 1.000] |
+| **S1** 遮擋 recall @ FPR 5% [95% CI] | 1.000 [1.00, 1.00] | 1.000 [1.00, 1.00] | 1.000 [1.00, 1.00] |
+| S1 使用的門檻 τ（absent FPR 5%） | 0.0000 | 0.0000 | 0.0031 |
+| **S2** AP50（可見部分 bbox） | 0.995 | 0.995 | 0.996 |
+| **S3** absent 誤報率 @0.3 / @0.5 | 0.000 / 0.000 | 0.000 / 0.000 | 0.000 / 0.000 |
+| S3 absent 最高 conf（p99 / max） | 0.000 / 0.000 | 0.000 / 0.000 | 0.013 / 0.023 |
+| **S4** vis_fraction [0.0, 0.25)（n=176）recall@0.5 / 平均 conf | 0.074 / 0.071 | 0.057 / 0.052 | 0.006 / 0.019 |
+| **S4** vis_fraction [0.25, 0.5)（n=24）recall@0.5 / 平均 conf | 1.000 / 0.927 | 1.000 / 0.899 | 0.625 / 0.554 |
+| **S4** vis_fraction [0.5, 0.75)（n=16）recall@0.5 / 平均 conf | 1.000 / 0.957 | 1.000 / 0.938 | 0.875 / 0.863 |
+| **S4** vis_fraction [0.75, 1.0]（n=824）recall@0.5 / 平均 conf | 1.000 / 0.971 | 1.000 / 0.955 | 1.000 / 0.990 |
+| **R1** p50 / p90 延遲 ms，RTX 5070 Ti（CUDA） | 6.6 / 7.1 | 7.4 / 7.8 | 8.7 / 9.5 |
+| **R1** p50 / p90 延遲 ms，Mac M4 Pro MPS | 19.6 / 20.5 | 21.6 / 22.5 | 26.3 / 28.3 |
+| **R1** p50 / p90 延遲 ms，Mac M4 Pro CPU | 49.3 / 49.5 | 52.5 / 52.7 | 144.0 / 146.2 |
+| **R2** 參數量 | 25.9 M | 20.1 M | 19.4 M |
+| R2 峰值 VRAM（CUDA，batch 1） | 145 MB | 169 MB | 242 MB |
+| R2 權重檔大小 | 52.1 MB | 40.7 MB | 77.8 MB |
+| **L** 授權 | AGPL-3.0 | AGPL-3.0 | BSD-3-Clause |
+
+
+### 依預先登錄規則的判定
+
+1. P：三者都是 1.0000（差距 0 ≤ 0.01）→ 三者進入下一步。
+2. S1：三者都是 1.000（差距 0 ≤ 0.02）→ 三者進入下一步。
+3. 授權：BSD-3-Clause 優先於 AGPL-3.0 → **`frcnn-mnv3` 勝出**。
+
+### 必須一併記錄的限制（不改變判定）
+
+- **主指標與 S1 在這個 world 飽和**：absent frame 幾乎沒有 fire hydrant 候選（YOLO 在 conf 0.001 下為 0；FRCNN 最高 0.023），
+  5% 誤報率門檻因此趨近 0，S1 只要「有任何偵測」就算命中。三個模型在「物件看得到時能否分辨有無」上沒有差別；
+  這表示在本 world，**可見時的 perception 不是瓶頸，遮擋（viewpoint）才是**，正符合 Core 要隔離的研究變因。
+- **部分遮擋時的 confidence 行為不同**（S4，資訊性）：YOLO 在 vis_fraction 0.25–0.75 仍給 0.90–0.96；
+  FRCNN 隨遮擋下降（0.55 / 0.86），在 0.5 門檻下 [0.25, 0.5) 的 recall 為 0.625。shared decision rule 的 τ_present 之後會在 train / val 上依 FRCNN 調整（decision 004 程序）。
+  FRCNN 的 confidence 與可見程度較相關，也讓 rule-NBV 的「弱偵測吸引」特徵有訊號可用；這是觀察，不是選型理由。
+- **速度**：YOLO 較快（CUDA 6.6 vs 8.7 ms；Mac CPU 49 vs 144 ms）。Core 採 render-then-replay，每張 frame 只推論一次，延遲不影響實驗。
+- 部分遮擋分箱樣本少（24 + 16 張），因為方柱多半完全擋住或完全沒擋到。
+
+### 跨裝置一致性
+
+同一批 104 張 frame，FRCNN 在 Mac CPU / MPS 與 CUDA 的每張最高 confidence 差距：中位數 2.1e-5、最大 5.3e-4。
+正式 detection 快取統一在 CUDA 產生；ROS 2 線上 node 在 Mac 推論時只有極小差異（pilot 的線上 / replay 一致性檢查會量化）。
+
+### 凍結：`detector-v1`
+
+| 項目 | 值 |
+|---|---|
+| 模型 | torchvision `fasterrcnn_mobilenet_v3_large_fpn`，`COCO_V1` 權重 |
+| 權重 sha256 | `fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533` |
+| 目標類別 | COCO `fire hydrant`（torchvision index 11，以名稱比對） |
+| 推論參數 | `box_score_thresh=0.001`、`box_detections_per_img=1000` → 保留前 100 個 fire hydrant；預設前處理（min_size 800） |
+| 正式快取產生環境 | `gpu-server` RTX 5070 Ti，torch 2.13.0+cu130 / torchvision 0.28.0，GPU lock 下 |
+
+之後若要換 detector，只能以新版本（`detector-v2`）另開 decision log，並在新一輪 test 報告，保留舊結果。

@@ -1,0 +1,353 @@
+{
+ "winner": "frcnn-mnv3",
+ "reasons": [
+  "P (AUROC) best 1.0000; within 0.01: ['frcnn-mnv3', 'yolo11m', 'yolov8m']",
+  "S1 best 1.0000; within 0.02: ['frcnn-mnv3', 'yolo11m', 'yolov8m']",
+  "license tie-break (BSD over AGPL): ['frcnn-mnv3']"
+ ],
+ "results": {
+  "yolov8m": {
+   "n_frames": 2080,
+   "n_present": 1040,
+   "n_absent": 1040,
+   "P_auroc": 1.0,
+   "tau_fpr5": 0.0,
+   "absent_fp_rate": {
+    "0.3": 0.0,
+    "0.5": 0.0
+   },
+   "absent_fp_rate_at_tau_fpr5": 0.0,
+   "absent_max_conf_quantiles": {
+    "0.5": 0.0,
+    "0.9": 0.0,
+    "0.99": 0.0,
+    "1.0": 0.0
+   },
+   "bins": [
+    {
+     "vis_fraction": [
+      0.0,
+      0.25
+     ],
+     "n": 176,
+     "recall_at_0.3": 0.09090909090909091,
+     "recall_at_0.5": 0.07386363636363637,
+     "recall_at_tau_fpr5": 0.11363636363636363,
+     "mean_max_conf": 0.07127871212486009
+    },
+    {
+     "vis_fraction": [
+      0.25,
+      0.5
+     ],
+     "n": 24,
+     "recall_at_0.3": 1.0,
+     "recall_at_0.5": 1.0,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.9265788669387499
+    },
+    {
+     "vis_fraction": [
+      0.5,
+      0.75
+     ],
+     "n": 16,
+     "recall_at_0.3": 1.0,
+     "recall_at_0.5": 1.0,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.9567732438445091
+    },
+    {
+     "vis_fraction": [
+      0.75,
+      1.0
+     ],
+     "n": 824,
+     "recall_at_0.3": 1.0,
+     "recall_at_0.5": 1.0,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.9714760528606119
+    }
+   ],
+   "S1_occlusion_recall": 1.0,
+   "S2_ap50": 0.9954519715578698,
+   "P_auroc_ci95": [
+    1.0,
+    1.0
+   ],
+   "S1_ci95": [
+    1.0,
+    1.0
+   ],
+   "license": "AGPL-3.0 (code and weights; Ultralytics Enterprise License as alternative)",
+   "n_params": 25902640,
+   "weights_sha256": "5d4a90cdc7a21786cc59cd19778e9eafff836df9e2da32524737c7ee6efe4fe5",
+   "versions": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cu130",
+    "torchvision": "0.28.0+cu130",
+    "ultralytics": "8.4.176"
+   }
+  },
+  "yolo11m": {
+   "n_frames": 2080,
+   "n_present": 1040,
+   "n_absent": 1040,
+   "P_auroc": 1.0,
+   "tau_fpr5": 0.0,
+   "absent_fp_rate": {
+    "0.3": 0.0,
+    "0.5": 0.0
+   },
+   "absent_fp_rate_at_tau_fpr5": 0.0,
+   "absent_max_conf_quantiles": {
+    "0.5": 0.0,
+    "0.9": 0.0,
+    "0.99": 0.0,
+    "1.0": 0.0
+   },
+   "bins": [
+    {
+     "vis_fraction": [
+      0.0,
+      0.25
+     ],
+     "n": 176,
+     "recall_at_0.3": 0.0625,
+     "recall_at_0.5": 0.056818181818181816,
+     "recall_at_tau_fpr5": 0.125,
+     "mean_max_conf": 0.05217917333687761
+    },
+    {
+     "vis_fraction": [
+      0.25,
+      0.5
+     ],
+     "n": 24,
+     "recall_at_0.3": 1.0,
+     "recall_at_0.5": 1.0,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.8989392047127088
+    },
+    {
+     "vis_fraction": [
+      0.5,
+      0.75
+     ],
+     "n": 16,
+     "recall_at_0.3": 1.0,
+     "recall_at_0.5": 1.0,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.9381040409207344
+    },
+    {
+     "vis_fraction": [
+      0.75,
+      1.0
+     ],
+     "n": 824,
+     "recall_at_0.3": 1.0,
+     "recall_at_0.5": 1.0,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.9548594035859247
+    }
+   ],
+   "S1_occlusion_recall": 1.0,
+   "S2_ap50": 0.9954597004835563,
+   "P_auroc_ci95": [
+    1.0,
+    1.0
+   ],
+   "S1_ci95": [
+    1.0,
+    1.0
+   ],
+   "license": "AGPL-3.0 (code and weights; Ultralytics Enterprise License as alternative)",
+   "n_params": 20114688,
+   "weights_sha256": "d5ffc1a674953a08e11a8d21e022781b1b23a19b730afc309290bd9fb5305b95",
+   "versions": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cu130",
+    "torchvision": "0.28.0+cu130",
+    "ultralytics": "8.4.176"
+   }
+  },
+  "frcnn-mnv3": {
+   "n_frames": 2080,
+   "n_present": 1040,
+   "n_absent": 1040,
+   "P_auroc": 1.0,
+   "tau_fpr5": 0.0030871087219566107,
+   "absent_fp_rate": {
+    "0.3": 0.0,
+    "0.5": 0.0
+   },
+   "absent_fp_rate_at_tau_fpr5": 0.05,
+   "absent_max_conf_quantiles": {
+    "0.5": 0.0,
+    "0.9": 0.001665268221404404,
+    "0.99": 0.01262984476052216,
+    "1.0": 0.023151325061917305
+   },
+   "bins": [
+    {
+     "vis_fraction": [
+      0.0,
+      0.25
+     ],
+     "n": 176,
+     "recall_at_0.3": 0.011363636363636364,
+     "recall_at_0.5": 0.005681818181818182,
+     "recall_at_tau_fpr5": 0.35795454545454547,
+     "mean_max_conf": 0.01854834174314006
+    },
+    {
+     "vis_fraction": [
+      0.25,
+      0.5
+     ],
+     "n": 24,
+     "recall_at_0.3": 0.7916666666666666,
+     "recall_at_0.5": 0.625,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.5538558869933089
+    },
+    {
+     "vis_fraction": [
+      0.5,
+      0.75
+     ],
+     "n": 16,
+     "recall_at_0.3": 0.9375,
+     "recall_at_0.5": 0.875,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.8631490003317595
+    },
+    {
+     "vis_fraction": [
+      0.75,
+      1.0
+     ],
+     "n": 824,
+     "recall_at_0.3": 1.0,
+     "recall_at_0.5": 1.0,
+     "recall_at_tau_fpr5": 1.0,
+     "mean_max_conf": 0.9898370167294752
+    }
+   ],
+   "S1_occlusion_recall": 1.0,
+   "S2_ap50": 0.9964178265113054,
+   "P_auroc_ci95": [
+    1.0,
+    1.0
+   ],
+   "S1_ci95": [
+    1.0,
+    1.0
+   ],
+   "license": "BSD-3-Clause (torchvision code); pretrained weights: COCO-derived, no extra terms",
+   "n_params": 19410754,
+   "weights_sha256": "fb6a3cc702b1df54c18a44b26708cd083614211062d0c36d2ca7bf9270df3533",
+   "versions": {
+    "python": "3.12.13",
+    "torch": "2.13.0+cu130",
+    "torchvision": "0.28.0+cu130"
+   }
+  }
+ },
+ "benchmarks": {
+  "yolov8m": {
+   "cuda": {
+    "batch": 1,
+    "gpu_name": "NVIDIA GeForce RTX 5070 Ti",
+    "latency_ms_mean": 6.717996714994001,
+    "latency_ms_p50": 6.599234000020715,
+    "latency_ms_p90": 7.076836600003844,
+    "peak_rss_mb": 1937.8828125,
+    "peak_vram_mb": 145.44921875,
+    "repeats": 200,
+    "warmup": 20
+   },
+   "cpu": {
+    "batch": 1,
+    "latency_ms_mean": 49.27547013333727,
+    "latency_ms_p50": 49.278916500043124,
+    "latency_ms_p90": 49.50698720931541,
+    "peak_rss_mb": 781.21875,
+    "repeats": 60,
+    "warmup": 10
+   },
+   "mps": {
+    "batch": 1,
+    "latency_ms_mean": 19.89394996902168,
+    "latency_ms_p50": 19.602395499532577,
+    "latency_ms_p90": 20.530403504380956,
+    "peak_rss_mb": 834.40625,
+    "repeats": 60,
+    "warmup": 10
+   }
+  },
+  "yolo11m": {
+   "cuda": {
+    "batch": 1,
+    "gpu_name": "NVIDIA GeForce RTX 5070 Ti",
+    "latency_ms_mean": 7.472328945000299,
+    "latency_ms_p50": 7.437193500038575,
+    "latency_ms_p90": 7.838289199958126,
+    "peak_rss_mb": 1891.30078125,
+    "peak_vram_mb": 168.74365234375,
+    "repeats": 200,
+    "warmup": 20
+   },
+   "cpu": {
+    "batch": 1,
+    "latency_ms_mean": 52.428928432345856,
+    "latency_ms_p50": 52.47568750928622,
+    "latency_ms_p90": 52.71705409249989,
+    "peak_rss_mb": 780.296875,
+    "repeats": 60,
+    "warmup": 10
+   },
+   "mps": {
+    "batch": 1,
+    "latency_ms_mean": 21.909299967713498,
+    "latency_ms_p50": 21.609541501675267,
+    "latency_ms_p90": 22.53932079911465,
+    "peak_rss_mb": 795.078125,
+    "repeats": 60,
+    "warmup": 10
+   }
+  },
+  "frcnn-mnv3": {
+   "cuda": {
+    "batch": 1,
+    "gpu_name": "NVIDIA GeForce RTX 5070 Ti",
+    "latency_ms_mean": 8.823865919997615,
+    "latency_ms_p50": 8.722405500009245,
+    "latency_ms_p90": 9.501625300072192,
+    "peak_rss_mb": 1805.2109375,
+    "peak_vram_mb": 241.9765625,
+    "repeats": 200,
+    "warmup": 20
+   },
+   "cpu": {
+    "batch": 1,
+    "latency_ms_mean": 144.22522021777695,
+    "latency_ms_p50": 143.97925000957912,
+    "latency_ms_p90": 146.24325859476812,
+    "peak_rss_mb": 833.453125,
+    "repeats": 60,
+    "warmup": 10
+   },
+   "mps": {
+    "batch": 1,
+    "latency_ms_mean": 26.772803499625297,
+    "latency_ms_p50": 26.339937503507826,
+    "latency_ms_p90": 28.301912799361162,
+    "peak_rss_mb": 766.59375,
+    "repeats": 60,
+    "warmup": 10
+   }
+  }
+ }
+}
