@@ -47,6 +47,8 @@ FALSE_PRESENT_MAX = 0.01
 def guard_split(split: Split) -> None:
     if split == Split.TEST:
         raise SystemExit("tuning never runs on the test split (decision 008)")
+    if split == Split.HOLDOUT:
+        raise SystemExit("tuning never runs on the holdout split (decision 011)")
 
 
 def load(episodes: str, detections: str, renders: str | None, split: Split):

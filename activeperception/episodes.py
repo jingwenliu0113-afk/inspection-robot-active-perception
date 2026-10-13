@@ -36,6 +36,7 @@ from .types import (
 GENERATOR_VERSION = "gen-v2"  # decision 006
 PILOT_NAMESPACE = "pilot"
 DETSEL_NAMESPACE = "detsel"  # decision 005 / 006
+HOLDOUT_NAMESPACE = "holdout"  # decision 011: v1 vs v2, generated after the protocol
 
 
 @dataclass(frozen=True)
@@ -95,6 +96,8 @@ def split_for_group(namespace: str, scene_group: int, config: GeneratorConfig) -
         return Split.PILOT
     if namespace == DETSEL_NAMESPACE:
         return Split.DETSEL
+    if namespace == HOLDOUT_NAMESPACE:
+        return Split.HOLDOUT
     bucket = stable_seed("split", namespace, GENERATOR_VERSION, scene_group) % 1000
     train_end = int(round(config.split_fractions[0] * 1000))
     val_end = train_end + int(round(config.split_fractions[1] * 1000))

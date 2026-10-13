@@ -19,6 +19,8 @@ from activeperception.types import Split
 def test_guard_refuses_test_split():
     with pytest.raises(SystemExit):
         tune.guard_split(Split.TEST)
+    with pytest.raises(SystemExit):
+        tune.guard_split(Split.HOLDOUT)
     tune.guard_split(Split.TRAIN)
     tune.guard_split(Split.VAL)
 

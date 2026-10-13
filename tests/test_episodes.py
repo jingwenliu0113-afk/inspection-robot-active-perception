@@ -138,3 +138,12 @@ def test_detsel_namespace_is_its_own_split():
 
     specs = build_episode_set(DETSEL_NAMESPACE, 20)
     assert {s.split for s in specs} == {Split.DETSEL}
+
+
+def test_holdout_namespace_is_its_own_split():
+    from activeperception.episodes import HOLDOUT_NAMESPACE
+
+    specs = build_episode_set(HOLDOUT_NAMESPACE, 20)
+    assert {s.split for s in specs} == {Split.HOLDOUT}
+    core = build_episode_set("core", 20)
+    assert {s.seed for s in specs}.isdisjoint({s.seed for s in core})
