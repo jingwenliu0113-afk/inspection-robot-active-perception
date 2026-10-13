@@ -493,6 +493,12 @@ def main(argv: list[str] | None = None) -> int:
     cache = detect_all(runs, eps, runs / "detector-v1.jsonl")
     report = analyze(runs, cache)
     report["pose_sensitivity"] = pose_sensitivity(runs)
+    import subprocess
+
+    report["git_commit"] = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=False
+    ).stdout.strip()
+    report["runs"] = str(runs)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "b0_report.json").write_text(json.dumps(report, indent=1, default=float) + "\n")
