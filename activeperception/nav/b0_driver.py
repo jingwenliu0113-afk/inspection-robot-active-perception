@@ -43,6 +43,11 @@ XY_GOAL_TOLERANCE = 0.07
 YAW_GOAL_TOLERANCE = 0.05
 AMCL_UPDATE_MIN_D = 0.1
 AMCL_UPDATE_MIN_A = 0.1
+# nav-relocalize-v1 (decision 016 appendix C): at each candidate, depth-to-map refinement ->
+# /initialpose for AMCL -> re-send the goal while outside the Nav2 tolerance (at most twice)
+MAX_CORRECTIONS = 2
+RELOCALIZE_SIGMA = (0.02, 0.01)  # m, rad
+CORRECTION_TIMEOUT_S = 30.0
 
 
 def plan(spec: EpisodeSpec) -> list[dict]:
@@ -126,7 +131,7 @@ def _rpy(q) -> tuple[float, float, float]:
 
 
 class Driver:
-    def __init__(self, spec: EpisodeSpec, out: Path):
+    def __init__(self, spec: EpisodeSpec, out: Path, relocalize: bool = False):
         import rclpy
         from geometry_msgs.msg import PoseWithCovarianceStamped
         from nav2_simple_commander.robot_navigator import BasicNavigator
@@ -149,6 +154,8 @@ class Driver:
         self.nav.create_subscription(PoseWithCovarianceStamped, "/amcl_pose", self._amcl_cb, 10)
         self.gz = GzClient()
         self.n_caps = 0
+        self.relocalize_enabled = relocalize
+        self._initial_pub = self.nav.create_publisher(PoseWithCovarianceStamped, "/initialpose", 10)
 
     # -- callbacks (scoring vs deployable kept in separate fields) --
     def _gt_cb(self, msg) -> None:
@@ -237,6 +244,64 @@ class Driver:
             "scoring": {"gt_base": dict(self.gt) if self.gt else None},
         }
 
+    def publish_initial_pose(self, x: float, y: float, yaw: float) -> None:
+        from geometry_msgs.msg import PoseWithCovarianceStamped
+
+        msg = PoseWithCovarianceStamped()
+        msg.header.frame_id = "map"
+        msg.header.stamp = self.nav.get_clock().now().to_msg()
+        msg.pose.pose = self.pose_msg(x, y, yaw).pose
+        sxy, syaw = RELOCALIZE_SIGMA
+        cov = [0.0] * 36
+        cov[0] = cov[7] = sxy * sxy
+        cov[35] = syaw * syaw
+        msg.pose.covariance = cov
+        self._initial_pub.publish(msg)
+
+    def relocalize(self, vp) -> dict:
+        """nav-relocalize-v1: deployable only (AMCL estimate, onboard depth, facility map)."""
+        from ..types import Pose
+        from .localize import map_outlines, refine_pose
+        from .robot import BASE_REST_Z, CAMERA_ABOVE_BASE
+
+        steps, corrections = [], 0
+        for k in range(MAX_CORRECTIONS + 1):
+            self.spin_sim(SETTLE_S)
+            frames = self.gz.grab(after_ns=self.nav.get_clock().now().nanoseconds, timeout=60.0)
+            est = self.estimate()
+            cam = Pose(
+                est["x"], est["y"], BASE_REST_Z + CAMERA_ABOVE_BASE, est["yaw"], scene.MAST_PITCH
+            )
+            ref = refine_pose(
+                frames["depth"].array,
+                self.spec.camera,
+                cam,
+                self.spec.zone,
+                map_outlines(self.spec),
+            )
+            entry = {"refine_ok": ref.ok, "dx": ref.dx, "dy": ref.dy, "dyaw": ref.dyaw}
+            steps.append(entry)
+            if not ref.ok:
+                break
+            self.publish_initial_pose(ref.pose.x, ref.pose.y, ref.pose.yaw)
+            self.spin_sim(0.5)
+            err_xy = math.hypot(ref.pose.x - vp.pose.x, ref.pose.y - vp.pose.y)
+            err_yaw = abs((ref.pose.yaw - vp.pose.yaw + math.pi) % (2 * math.pi) - math.pi)
+            entry.update({"err_xy": err_xy, "err_yaw": err_yaw})
+            if (
+                err_xy <= XY_GOAL_TOLERANCE and err_yaw <= YAW_GOAL_TOLERANCE
+            ) or k == MAX_CORRECTIONS:
+                break
+            corrections += 1
+            s0 = self.sim_now()
+            self.nav.goToPose(self.pose_msg(vp.pose.x, vp.pose.y, vp.pose.yaw))
+            while not self.nav.isTaskComplete():
+                if self.sim_now() - s0 > CORRECTION_TIMEOUT_S:
+                    self.nav.cancelTask()
+                    break
+            entry["correction_result"] = str(self.nav.getResult()).split(".")[-1]
+        return {"corrections": corrections, "steps": steps}
+
     def navigate(self, step: dict) -> dict:
         vp = {v.id: v for v in self.spec.candidate_viewpoints}[step["target"]]
         here = self.estimate()
@@ -259,12 +324,17 @@ class Driver:
             if time.monotonic() - w0 > WALL_TIMEOUT_S:
                 wall_out = True
                 break
+        result = str(self.nav.getResult()).split(".")[-1]
+        reloc = None
+        if self.relocalize_enabled and step["kind"] == "goal" and not wall_out:
+            reloc = self.relocalize(vp)
         sim_s, wall_s = self.sim_now() - s0, time.monotonic() - w0
         trace, self.trace = np.array(self.trace or [], dtype=float), None
         tname = f"trace_{self.n_caps:02d}.npy"
         np.save(self.out / tname, trace)  # scoring only (GT path)
         return {
-            "result": str(self.nav.getResult()).split(".")[-1],
+            "result": result,
+            "relocalize": reloc,
             "canceled": canceled,
             "timed_out": timed_out,
             "wall_timeout": wall_out,
@@ -312,6 +382,7 @@ class Driver:
         return {
             "episode_id": self.spec.episode_id,
             "object_present": self.spec.layout.object_present,  # scoring only
+            "relocalize": self.relocalize_enabled,
             "nav2_active_wall_s": round(active_wall, 1),
             "total_wall_s": round(time.monotonic() - w0, 1),
             "rows": rows,
@@ -323,6 +394,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("action", choices=["prepare", "run"])
     ap.add_argument("--episode", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--relocalize", action="store_true", help="nav-relocalize-v1 at candidates")
     args = ap.parse_args(argv)
     spec = scene.specs_by_id()[args.episode]
     out = Path(args.out) / spec.episode_id
@@ -332,7 +404,7 @@ def main(argv: list[str] | None = None) -> int:
     import rclpy
 
     rclpy.init()
-    driver = Driver(spec, out)
+    driver = Driver(spec, out, relocalize=args.relocalize)
     report = driver.run()
     (out / "episode.json").write_text(json.dumps(report, indent=1))
     rclpy.shutdown()

@@ -23,6 +23,7 @@ from ..types import Box, EpisodeSpec, Split
 GENERATOR_VERSION = "gen-nav-b0"
 NAMESPACE = "nav-b0"  # B0 runs and decision 016 development
 CONFIRM_NAMESPACE = "nav-b0c"  # decision 016 confirmation, generated after its freeze, run once
+RECONFIRM_NAMESPACE = "nav-b0d"  # decision 016 appendix C: second confirmation, run once
 CONFIG = GeneratorConfig(
     ring_radius=2.0,
     ring_radius_jitter=0.0,

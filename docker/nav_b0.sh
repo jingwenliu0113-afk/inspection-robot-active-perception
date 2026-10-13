@@ -4,6 +4,7 @@
 # (an episode with episode.json is skipped; a failed episode is retried once and the
 # attempt is logged in $OUT/attempts.log).
 #   ./docker/nav_b0.sh 2 nav-b0-g0000-v0 nav-b0-g0000-v1 ...
+#   RELOCALIZE=1 OUT=runs/nav-b0d ./docker/nav_b0.sh 3 ...   (decision 016 appendix C)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 WORKERS="$1"; shift
@@ -19,6 +20,7 @@ mkdir -p "$OUT"
 run_episode() {
   local ep="$1"
   docker run --rm -i --name "inspection-ap-nav-b0-$$-$ep" -e OUT="$OUT" -e EP="$ep" \
+    -e RELOCALIZE="${RELOCALIZE:-0}" \
     -e ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST -e ROS_DOMAIN_ID=37 \
     -v "$(pwd)":/work -w /work "$IMAGE" bash -c '
 set -eo pipefail
@@ -33,7 +35,8 @@ ros2 run ros_gz_bridge parameter_bridge "/gt/odom@nav_msgs/msg/Odometry[gz.msgs.
   --ros-args -p use_sim_time:=true > "$D/gt_bridge.log" 2>&1 &
 BRIDGE=$!
 status=0
-timeout 5400 python3 -m activeperception.nav.b0_driver run --episode "$EP" --out "$OUT" > "$D/driver.log" 2>&1 || status=$?
+EXTRA=""; [ "$RELOCALIZE" = 1 ] && EXTRA="--relocalize"
+timeout 5400 python3 -m activeperception.nav.b0_driver run --episode "$EP" --out "$OUT" $EXTRA > "$D/driver.log" 2>&1 || status=$?
 kill -INT $BRIDGE $LAUNCH 2>/dev/null || true
 sleep 5
 exit $status
