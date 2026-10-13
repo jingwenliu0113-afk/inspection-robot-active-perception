@@ -31,7 +31,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
 
-from activeperception.decision import DECISION_RULE_VERSION, DecisionRule
+from activeperception.decision import DecisionRule
 from activeperception.detector import DETECTOR_VERSION, FROZEN_DETECTOR
 from activeperception.detector.cache import make_detection
 from activeperception.detector.models import TARGET_CLASS, load_detector
@@ -66,6 +66,36 @@ def image_to_numpy(msg: Image) -> np.ndarray:
     raise ValueError(f"unsupported encoding {msg.encoding}")
 
 
+def policies_for(config: str, gts):
+    """(policy factories, decision rule) for a configuration; oracles only where offline-free."""
+    if config == "v0":
+        return {
+            "single": SingleViewPolicy,
+            "random": RandomNBVPolicy,
+            "rule": RuleNBVPolicy,
+            "oracle": lambda: OracleNBVPolicy(gts.__getitem__),
+        }, DecisionRule()
+    if config == "v1":
+        from activeperception import frozen
+
+        return {
+            "single": SingleViewPolicy,
+            "random": RandomNBVPolicy,
+            "rule": frozen.rule_nbv,
+            "oracle": lambda: OracleNBVPolicy(gts.__getitem__, frozen.DECISION_V1),
+        }, frozen.decision_rule()
+    if config == "v2":
+        from activeperception import frozen_v2
+
+        # oracle-v2 peeks at unvisited views: an offline upper bound, not run live
+        return {
+            "single": SingleViewPolicy,
+            "random": RandomNBVPolicy,
+            "rule": frozen_v2.rule_nbv,
+        }, frozen_v2.decision_rule()
+    raise ValueError(f"unknown config {config}")
+
+
 class LiveWorld:
     """ObservationSource backed by the running ROS 2 graph."""
 
@@ -93,6 +123,7 @@ class InspectorNode(Node):
             "device": "cpu",
             "settle_s": 2.5 / 30.0,
             "timeout_s": 60.0,
+            "config": "v0",  # v0 (package defaults, pilot check), v1 or v2 (frozen)
         }
         for k, v in p.items():
             self.declare_parameter(k, v)
@@ -207,13 +238,8 @@ class InspectorNode(Node):
         if not self._pose_cli.wait_for_service(timeout_sec=self.prm["timeout_s"]):
             raise TimeoutError("set_pose service not bridged")
         self.grab(-1)  # sensors are publishing
-        policies = {
-            "single": SingleViewPolicy,
-            "random": RandomNBVPolicy,
-            "rule": RuleNBVPolicy,
-            "oracle": lambda: OracleNBVPolicy(gts.__getitem__),
-        }
-        world, rule = LiveWorld(self), DecisionRule()
+        policies, rule = policies_for(self.prm["config"], gts)
+        world = LiveWorld(self)
         runs = []
         for item in self.prm["runs"].split(","):
             name, budget = item.split(":")
@@ -238,7 +264,8 @@ class InspectorNode(Node):
             "episode_id": spec.episode_id,
             "detector": f"{DETECTOR_VERSION}:{FROZEN_DETECTOR}",
             "device": self.detector.device,
-            "decision_rule": DECISION_RULE_VERSION,
+            "decision_rule": rule.version,
+            "config": self.prm["config"],
             "runs": runs,
         }
         path = Path(self.prm["out"]) / f"{spec.episode_id}.json"

@@ -24,7 +24,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .decision import DECISION_RULE_VERSION, DecisionRule
+from .decision import DecisionRule
 from .detector.cache import DetectionCache
 from .detector.evaluate import auroc
 from .framestore import FrameStore
@@ -173,13 +173,27 @@ def check_transform(store: FrameStore, specs, proxy_radius: float, every: int = 
     return out
 
 
-def run_policies(specs, gts, world, rule, budgets, run_seed: int = 0):
-    policies = {
-        "single": SingleViewPolicy(),
-        "random": RandomNBVPolicy(),
-        "rule": RuleNBVPolicy(),
-        "oracle": OracleNBVPolicy(lambda e: gts[e]),
-    }
+def run_policies(specs, gts, world, rule, budgets, run_seed: int = 0, config: str = "v0"):
+    if config == "v2":
+        from . import frozen_v2
+        from .policies import OracleNBVv2Policy
+        from .sim.replay import make_peek
+
+        policies = {
+            "single": SingleViewPolicy(),
+            "random": RandomNBVPolicy(),
+            "rule": frozen_v2.rule_nbv(),
+            "oracle": OracleNBVv2Policy(
+                gts.__getitem__, make_peek(world, specs), frozen_v2.DECISION_V2
+            ),
+        }
+    else:
+        policies = {
+            "single": SingleViewPolicy(),
+            "random": RandomNBVPolicy(),
+            "rule": RuleNBVPolicy(),
+            "oracle": OracleNBVPolicy(lambda e: gts[e]),
+        }
     records = {}
     for b in budgets:
         for name, pol in policies.items():
@@ -273,6 +287,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--detections", required=True)
     ap.add_argument("--rerender", help="independent re-render of the same specs")
     ap.add_argument("--live", help="ROS 2 live-run records (docker/ros_live.sh output)")
+    ap.add_argument("--config", default="v0", choices=["v0", "v2"], help="v2 = frozen v2")
     ap.add_argument("--budgets", default="1,3,5")
     ap.add_argument("--proxy-radius", type=float, default=0.15)
     ap.add_argument("--out", required=True)
@@ -284,13 +299,19 @@ def main(argv: list[str] | None = None) -> int:
     store = FrameStore(args.frames)
     cache = DetectionCache.load(args.detections)
     world = GazeboReplayWorld(store, cache)
-    rule = DecisionRule()
+    if args.config == "v2":
+        from . import frozen_v2
+
+        rule = frozen_v2.decision_rule()
+    else:
+        rule = DecisionRule()
     budgets = [int(b) for b in args.budgets.split(",")]
     report: dict = {
         "episode_set": args.episodes,
         "image_ids": meta.get("image_ids"),
         "detector": cache.detector,
-        "decision_rule": DECISION_RULE_VERSION,
+        "decision_rule": rule.version,
+        "config": args.config,
         "note": "pilot only - not a research result; pilot episodes never enter the final test",
     }
     report["1_states"] = check_states(specs, gts, world)
@@ -299,7 +320,7 @@ def main(argv: list[str] | None = None) -> int:
         report["2_determinism"] = check_determinism(store, FrameStore(args.rerender), ids)
     report["3a_timestamps"] = check_timestamps(store, specs)
     report["3b_transform"] = check_transform(store, specs, args.proxy_radius)
-    records = run_policies(specs, gts, world, rule, budgets)
+    records = run_policies(specs, gts, world, rule, budgets, config=args.config)
     report["4_same_candidates"] = check_same_candidates(specs, records)
     report["5_grader"] = check_grader(specs, gts, records)
     if args.live:

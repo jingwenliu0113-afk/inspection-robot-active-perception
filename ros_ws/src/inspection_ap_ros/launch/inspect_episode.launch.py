@@ -35,6 +35,7 @@ def generate_launch_description():
         "out": "/work/runs/ros",
         "weights_dir": "/work/models",
         "device": "cpu",
+        "config": "v0",
     }
     decl = [DeclareLaunchArgument(k, default_value=v) for k, v in args.items()]
     gz_cmd = ["gz", "sim", "-s", "-r", "--headless-rendering", "-v", "1"]

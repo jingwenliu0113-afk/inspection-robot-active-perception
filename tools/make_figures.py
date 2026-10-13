@@ -201,10 +201,85 @@ def failure_case(report: dict) -> None:
     plt.close(fig)
 
 
+def holdout_v1_v2(report: dict) -> None:
+    """Small multiples, shared y axis: v1 and v2 on the same holdout episodes."""
+    budgets = list(range(1, 9))
+    fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.6), dpi=200, sharey=True)
+    fig.patch.set_facecolor(SURFACE)
+    z = {"oracle": 2, "single": 3, "random": 4, "rule": 5}
+    for ax, cfg, title in (
+        (axes[0], "v1", "v1: decision-v1 + rule-nbv-v1"),
+        (axes[1], "v2", "v2: decision-v2 + rule-nbv-v2"),
+    ):
+        ax.set_facecolor(SURFACE)
+        s = report[cfg]["summary"]
+        for key, (label, colour) in SERIES.items():
+            y = [s[f"{key}@{b}"]["accuracy"] for b in budgets]
+            ax.plot(
+                budgets,
+                y,
+                color=colour,
+                lw=1.5,
+                marker="o",
+                ms=5.0,
+                mfc=colour,
+                mec=SURFACE,
+                mew=1.2,
+                label=label,
+                zorder=z[key],
+                solid_joinstyle="round",
+            )
+        r2, rr2 = s["rule@2"]["accuracy"], s["random@2"]["accuracy"]
+        ax.annotate(
+            f"budget 2: Rule {r2:.3f}\n              Random {rr2:.3f}",
+            xy=(2, r2),
+            xytext=(3.2, 0.62),
+            color=INK2,
+            fontsize=7.5,
+            va="center",
+        )
+        ax.annotate(
+            f"Single {s['single@1']['accuracy']:.3f}",
+            xy=(6, s["single@6"]["accuracy"]),
+            xytext=(5.6, s["single@6"]["accuracy"] + 0.06),
+            color=INK2,
+            fontsize=7.5,
+        )
+        for b in (1, 2, 3, 5):
+            ax.axvline(b, color=GRID, lw=0.7, zorder=0)
+        ax.set_xticks(budgets)
+        ax.set_xticklabels([f"{b}*" if b in (1, 2, 3, 5) else str(b) for b in budgets])
+        ax.set_ylim(0, 1.06)
+        ax.grid(axis="y", color=GRID, lw=0.7)
+        ax.set_axisbelow(True)
+        for side in ("top", "right", "left"):
+            ax.spines[side].set_visible(False)
+        ax.spines["bottom"].set_color(BASE)
+        ax.tick_params(colors=MUTED, length=0)
+        ax.set_title(title, color=INK, fontsize=9, loc="left")
+        ax.set_xlabel("viewpoint budget (* = formal)", color=MUTED)
+    axes[0].set_ylabel("3-class accuracy (holdout)", color=MUTED)
+    axes[1].legend(loc="lower right", frameon=False, fontsize=7.5, labelcolor=INK2)
+    fig.suptitle(
+        f"Same holdout episodes ({report['n_episodes']} episodes, "
+        f"{report['n_groups']} scene groups): v1 vs v2 decision rule and policy",
+        x=0.01,
+        ha="left",
+        fontsize=10,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.07, right=0.99, bottom=0.15, top=0.82, wspace=0.06)
+    fig.savefig(OUT / "holdout_v1_v2.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
     accuracy_vs_budget(rep)
     three_states()
     failure_case(rep)
+    holdout = ROOT / "results/holdout/report.json"
+    if holdout.exists():
+        holdout_v1_v2(json.loads(holdout.read_text()))
     print("wrote", sorted(p.name for p in OUT.glob("*.png")))
