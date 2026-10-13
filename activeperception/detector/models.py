@@ -42,7 +42,7 @@ CANDIDATES: dict[str, Candidate] = {
         "ultralytics",
         "yolov8m.pt",
         "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolov8m.pt",
-        "ce68c170489f791f6b9a33ac0415047d05a950ed529d11c306d5324bd112e107",
+        "5d4a90cdc7a21786cc59cd19778e9eafff836df9e2da32524737c7ee6efe4fe5",
         "AGPL-3.0 (code and weights; Ultralytics Enterprise License as alternative)",
     ),
     "yolo11m": Candidate(
