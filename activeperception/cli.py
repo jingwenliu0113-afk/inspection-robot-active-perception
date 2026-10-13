@@ -1,6 +1,7 @@
 """Command line entry points.
 
 python -m activeperception build-episodes --world synthetic --namespace dev --groups 50
+python -m activeperception make-specs --namespace pilot --groups 6   # Gazebo renderer input
 python -m activeperception states --episodes data/episodes/synthetic-dev.json
 python -m activeperception run   --episodes ... --split val --policy rule --budget 3
 python -m activeperception sweep --episodes ... --split val \\
@@ -17,22 +18,43 @@ from pathlib import Path
 
 from . import __version__
 from .decision import DECISION_RULE_VERSION, DecisionRule
+from .detector.cache import DetectionCache
 from .episodes import GENERATOR_VERSION, GeneratorConfig, build_episode_set
+from .framestore import FrameStore
 from .grader import grade_all
 from .harness import run_episode_set
 from .labeling import LABELING_VERSION
 from .metrics import markdown_table, summarize
 from .policies import OracleNBVPolicy, RandomNBVPolicy, RuleNBVPolicy, SingleViewPolicy
 from .policies.rule_nbv import RULE_NBV_VERSION
-from .serialize import load_episode_set, save_episode_set, write_jsonl
+from .serialize import (
+    load_episode_set,
+    load_spec_set,
+    save_episode_set,
+    save_spec_set,
+    write_jsonl,
+)
 from .sim import SyntheticWorld
+from .sim.replay import GazeboReplayWorld
 from .types import Split
 
 
-def make_world(name: str):
+def make_world(name: str, args=None, meta: dict | None = None):
+    """synthetic, or the Gazebo replay world (frame store + detection cache)."""
     if name == "synthetic":
         return SyntheticWorld()
-    raise SystemExit(f"unknown world '{name}' (gazebo world is a later milestone)")
+    if name == "gazebo":
+        renders = getattr(args, "renders", None) or (meta or {}).get("renders")
+        if not renders:
+            raise SystemExit("gazebo world needs --renders (frame store directory)")
+        dets = getattr(args, "detections", None)
+        cache = (
+            DetectionCache.load(dets, min_confidence=getattr(args, "min_conf", 0.0))
+            if dets
+            else None
+        )
+        return GazeboReplayWorld(FrameStore(renders), cache)
+    raise SystemExit(f"unknown world '{name}'")
 
 
 def make_policy(name: str, gts):
@@ -48,19 +70,42 @@ def make_policy(name: str, gts):
 
 
 def cmd_build(args) -> int:
-    world = make_world(args.world)
-    specs = build_episode_set(args.namespace, args.groups, GeneratorConfig())
+    extra = {"labeling_version": LABELING_VERSION, "package_version": __version__}
+    if args.world == "gazebo":
+        if not (args.specs and args.renders):
+            raise SystemExit("--world gazebo needs --specs and --renders")
+        specs, spec_meta = load_spec_set(args.specs)
+        namespace = spec_meta.get("namespace") or specs[0].namespace
+        world = make_world("gazebo", args)
+        missing = [s.episode_id for s in specs if not world.store.has(s.episode_id)]
+        if missing:
+            raise SystemExit(f"{len(missing)} episodes not rendered, e.g. {missing[:3]}")
+        image_ids = sorted(
+            {str(world.store.episode(s.episode_id).meta.get("image_id")) for s in specs}
+        )
+        extra.update(
+            {"renders": str(args.renders), "specs": str(args.specs), "image_ids": image_ids}
+        )
+    else:
+        if not (args.namespace and args.groups):
+            raise SystemExit("--world synthetic needs --namespace and --groups")
+        namespace = args.namespace
+        world = make_world(args.world)
+        specs = build_episode_set(args.namespace, args.groups, GeneratorConfig())
     gts = {s.episode_id: world.ground_truth(s) for s in specs}
-    out = Path(args.out or f"data/episodes/{args.world}-{args.namespace}.json")
-    save_episode_set(
-        out,
-        specs,
-        gts,
-        world.name,
-        extra={"labeling_version": LABELING_VERSION, "package_version": __version__},
-    )
+    out = Path(args.out or f"data/episodes/{args.world}-{namespace}.json")
+    save_episode_set(out, specs, gts, world.name, extra=extra)
     print(f"wrote {len(specs)} episodes -> {out}")
     return cmd_states(argparse.Namespace(episodes=str(out)))
+
+
+def cmd_make_specs(args) -> int:
+    """Episode specs only (no GT): the frozen input of the Gazebo renderer."""
+    specs = build_episode_set(args.namespace, args.groups, GeneratorConfig())
+    out = Path(args.out or f"data/episodes/specs-{args.namespace}.json")
+    save_spec_set(out, specs, extra={"namespace": args.namespace, "package_version": __version__})
+    print(f"wrote {len(specs)} episode specs ({args.groups} groups) -> {out}")
+    return 0
 
 
 def cmd_states(args) -> int:
@@ -98,7 +143,7 @@ def cmd_run(args) -> int:
     specs = _select(specs, args.split, args.limit)
     if not specs:
         raise SystemExit("no episodes selected")
-    world = make_world(meta.get("world", "synthetic"))
+    world = make_world(meta.get("world", "synthetic"), args, meta)
     rule = DecisionRule()
     policy = make_policy(args.policy, gts)
     records = run_episode_set(specs, world, policy, rule, args.budget, args.run_seed)
@@ -120,7 +165,7 @@ def cmd_sweep(args) -> int:
     specs = _select(specs, args.split, args.limit)
     if not specs:
         raise SystemExit("no episodes selected")
-    world = make_world(meta.get("world", "synthetic"))
+    world = make_world(meta.get("world", "synthetic"), args, meta)
     rule = DecisionRule()
     summaries = {}
     all_records = []
@@ -167,11 +212,19 @@ def main(argv: list[str] | None = None) -> int:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     b = sub.add_parser("build-episodes")
-    b.add_argument("--world", default="synthetic")
-    b.add_argument("--namespace", required=True)
-    b.add_argument("--groups", type=int, required=True)
+    b.add_argument("--world", default="synthetic", choices=["synthetic", "gazebo"])
+    b.add_argument("--namespace", help="synthetic: namespace to generate")
+    b.add_argument("--groups", type=int, help="synthetic: number of scene groups")
+    b.add_argument("--specs", help="gazebo: spec-set JSON the renders were made from")
+    b.add_argument("--renders", help="gazebo: frame store directory")
     b.add_argument("--out")
     b.set_defaults(fn=cmd_build)
+
+    m = sub.add_parser("make-specs")
+    m.add_argument("--namespace", required=True)
+    m.add_argument("--groups", type=int, required=True)
+    m.add_argument("--out")
+    m.set_defaults(fn=cmd_make_specs)
 
     s = sub.add_parser("states")
     s.add_argument("--episodes", required=True)
@@ -185,6 +238,9 @@ def main(argv: list[str] | None = None) -> int:
         r.add_argument("--run-seed", type=int, default=0)
         r.add_argument("--n-boot", type=int, default=0)
         r.add_argument("--out")
+        r.add_argument("--renders", help="gazebo: frame store (default: from the episode set)")
+        r.add_argument("--detections", help="gazebo: detection cache JSONL")
+        r.add_argument("--min-conf", type=float, default=0.0, help="drop detections below this")
         if name == "run":
             r.add_argument("--policy", required=True)
             r.add_argument("--budget", type=int, required=True)

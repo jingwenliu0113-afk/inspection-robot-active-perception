@@ -99,3 +99,52 @@ def render_spec(
     """Depth + labels of the episode proxy scene; ``clear`` drops the pillars (GT pass)."""
     occluders = () if clear else spec.layout.occluders
     return render(spec.camera, pose, occluders, object_proxy(spec, proxy_radius))
+
+
+LABEL_COLOURS = {
+    LABEL_BACKGROUND: (150, 180, 210),
+    LABEL_GROUND: (180, 180, 170),
+    LABEL_PILLAR: (110, 110, 110),
+    LABEL_OBJECT: (200, 20, 20),
+}
+
+
+def write_proxy_frames(spec: EpisodeSpec, out_dir, proxy_radius: float) -> None:
+    """Write a ``render-v1`` frame-store entry from the proxy geometry (tests / dev only)."""
+    from pathlib import Path
+
+    from ..framestore import encode_depth_mm, write_episode_frames
+    from ..serialize import spec_digest
+
+    vps = [spec.initial_viewpoint, *spec.candidate_viewpoints]
+    rgb, depth_mm, labels, clear = [], [], [], []
+    for vp in vps:
+        d, lab = render_spec(spec, vp.pose, proxy_radius)
+        img = np.zeros(lab.shape + (3,), dtype=np.uint8)
+        for value, colour in LABEL_COLOURS.items():
+            img[lab == value] = colour
+        rgb.append(img)
+        depth_mm.append(encode_depth_mm(d))
+        labels.append(lab)
+        if spec.layout.object_present:
+            clear.append(render_spec(spec, vp.pose, proxy_radius, clear=True)[1])
+    stamps = np.arange(1, len(vps) + 1, dtype=np.int64) * 100_000_000
+    arrays = {
+        "vp_ids": np.array([vp.id for vp in vps], dtype=np.int16),
+        "poses": np.array([[v.pose.x, v.pose.y, v.pose.z, v.pose.yaw, v.pose.pitch] for v in vps]),
+        "rgb": np.stack(rgb),
+        "depth_mm": np.stack(depth_mm),
+        "labels": np.stack(labels),
+        "stamps_ns": stamps,
+        "t_ref_ns": stamps - 50_000_000,
+    }
+    if clear:
+        arrays["labels_clear"] = np.stack(clear)
+    meta = {
+        "episode_id": spec.episode_id,
+        "spec_digest": spec_digest(spec),
+        "generator_version": spec.generator_version,
+        "renderer": "raycast-proxy",
+        "depth_kind": "planar",
+    }
+    write_episode_frames(Path(out_dir) / f"{spec.episode_id}.npz", arrays, meta)

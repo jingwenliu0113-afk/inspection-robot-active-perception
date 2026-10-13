@@ -161,3 +161,36 @@ def write_jsonl(path: str | Path, rows: list[Any]) -> None:
 def read_jsonl(path: str | Path) -> list[dict]:
     with open(path) as f:
         return [json.loads(line) for line in f if line.strip()]
+
+
+SPEC_SET_FORMAT = "spec-set-v1"
+
+
+def save_spec_set(path: str | Path, specs: list[EpisodeSpec], extra: dict | None = None) -> None:
+    """Episode specs only (no ground truth): the input of the Gazebo renderer."""
+    payload = {
+        "format": SPEC_SET_FORMAT,
+        "generator_version": specs[0].generator_version if specs else None,
+        "n_episodes": len(specs),
+        "episodes": [to_dict(s) for s in specs],
+    }
+    if extra:
+        payload.update(extra)
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_text(json.dumps(payload, indent=1, sort_keys=True))
+
+
+def load_spec_set(path: str | Path) -> tuple[list[EpisodeSpec], dict]:
+    payload = json.loads(Path(path).read_text())
+    if payload.get("format") != SPEC_SET_FORMAT:
+        raise ValueError(f"{path}: not a {SPEC_SET_FORMAT} file")
+    meta = {k: v for k, v in payload.items() if k != "episodes"}
+    return [spec_from_dict(e) for e in payload["episodes"]], meta
+
+
+def spec_digest(spec: EpisodeSpec) -> str:
+    """Stable content hash of a spec (renders record it; replay checks it)."""
+    import hashlib
+
+    blob = json.dumps(to_dict(spec), sort_keys=True).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()[:16]

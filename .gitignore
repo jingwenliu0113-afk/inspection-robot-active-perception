@@ -59,3 +59,6 @@ data/episodes/synthetic-*.json
 
 # vendored Gazebo model textures (CC0, see gazebo/models/*/SOURCE.md)
 !gazebo/models/**/*.png
+
+# Gazebo frame stores (large; rebuilt from the frozen spec set + image, decision 007)
+renders/

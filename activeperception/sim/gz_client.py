@@ -101,6 +101,11 @@ class GzClient:
 
         return cb
 
+    def reset(self) -> None:
+        """Forget received frames (call after (re)starting a server: sim time restarts)."""
+        with self._cv:
+            self._latest.clear()
+
     def latest_stamp_ns(self) -> int:
         """Newest header stamp among the frames received so far (-1 if none)."""
         with self._cv:
