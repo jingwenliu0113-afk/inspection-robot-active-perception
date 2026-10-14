@@ -92,3 +92,30 @@ def test_real_metrics_and_pairing():
     assert b["neg:verified"]["absent_blocked"]["k"] == 0
     p = evaluate.paired_real(rows, v1, v2)
     assert p["pos:boxed"]["fixed"] == 1 and p["neg:verified"]["fixed"] == 1
+
+
+def test_formal_verdicts_follow_decision_027():
+    from activeperception.detv2 import formal
+
+    def rate(k, n):
+        return {"k": k, "n": n, "rate": k / n}
+
+    real1 = {
+        "neg:verified": {"present": rate(68, 737)},
+        "pos:boxed": {"found": rate(50, 62)},
+        "pos:image-level": {"present": rate(65, 72)},
+    }
+    sim1 = {"visible_present": rate(630, 640), "absent_false_present": rate(0, 1040)}
+    good = {
+        "neg:verified": {"present": rate(7, 737)},
+        "pos:boxed": {"found": rate(48, 62)},  # -0.032 >= -0.05
+        "pos:image-level": {"present": rate(64, 72)},
+    }
+    v = formal.verdicts(real1, good, sim1, sim1, None)
+    assert v["T1"]["pass"] and v["T2"]["pass"] and v["T3"]["pass"]
+    bad = {**good, "neg:verified": {"present": rate(8, 737)}}  # 1.09 % > 1 %
+    assert not formal.verdicts(real1, bad, sim1, sim1, None)["T1"]["pass"]
+    lost = {**good, "pos:boxed": {"found": rate(46, 62)}}  # -0.065
+    assert not formal.verdicts(real1, lost, sim1, sim1, None)["T2"]["pass"]
+    sim2 = {"visible_present": rate(620, 640), "absent_false_present": rate(0, 1040)}
+    assert not formal.verdicts(real1, good, sim1, sim2, None)["T3"]["pass"]

@@ -41,6 +41,7 @@ class Split(StrEnum):
     R0_DEV = "r0-dev"  # R0b development data (decision 022), never formal
     R0_EVAL = "r0-eval"  # R0b formal evaluation (decision 022), run once
     V3_EVAL = "v3-eval"  # v3 formal evaluation (decision 025), run once
+    DETV2_EVAL = "detv2-eval"  # detector-v2 simulator test (decision 027), run once
 
 
 @dataclass(frozen=True)
