@@ -114,3 +114,30 @@ def test_r0b_numbers():
     a_noisy = [r for (d, q, pipe), r in by.items() if pipe == "a" and (d, q) != ("D0", "P0")]
     assert all(r["all_views_geometric_risk"] for r in a_noisy)
     assert all(v["false_absent"] == 0 for r in rep["results"] for v in r["summary"].values())
+
+
+def test_v3_formal_numbers():
+    rep = load("results/v3/report.json")
+    ver, res = rep["verdicts"], rep["results"]
+    assert ver["V1"]["pass"] and ver["V2"]["pass"] and ver["V3"]["pass"] and ver["V5"]["pass"]
+    assert not ver["V4"]["pass"] and "V4 **未通過**" in README  # the failure stays visible
+    typ3, typ2 = res["v3:D1xL1:v3"], res["v3:D1xL1:v2"]
+    acc = " / ".join(f"{typ3['summary'][f'rule@{b}']['accuracy']:.3f}" for b in (2, 3, 5))
+    assert f"**{acc}**" in README
+    a2 = typ2["summary"]["rule@5"]["accuracy_by_state"]["absent"]
+    assert f"absent@5 {a2:.3f} → **1.000**" in README
+    fp = [res[f"v3-dx:{c}:v2"]["false_present"] for c in ("D0xP0", "D1xL1")]
+    assert f"{fp[0]:,} / {fp[1]:,}" in README
+    assert all(res[f"v3-dx:{c}:v3"]["false_present"] == 0 for c in ("D0xP0", "D1xL1"))
+    stress = res["v3:D2xL2:v3"]["occupied_false_clearance"]
+    assert f"{stress['views']} / {stress['present_views']:,}" in README
+    d = rep["v3_minus_v2"]["v3:D1xL1"]["rule@3"]
+    assert ci(d) in README
+    assert all(c["false_absent"] == 0 for c in res.values())  # never "absent" when present
+
+
+def test_b_depth_numbers():
+    cmp = load("results/depthnoise/comparison.json")["cameras"]
+    assert f"{-100 * cmp['D435']['bias']['worst']:.2f}%" in README
+    assert cmp["D435"]["bias"]["sign"].startswith("符號未涵蓋")
+    assert all(c["correlation"]["verdict"] == "相關更長" for c in cmp.values())

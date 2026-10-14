@@ -13,6 +13,7 @@
 9. docs/figures/r0a_real_images.png    - R0a: frozen detector on real photos (decision 021)
 10. docs/figures/r0b_noise.png        - R0b: v2 safety under modelled depth / pose error
 11. docs/figures/v3_dev_ablation.png  - v3 development: geometry ablation, zone gating (dec. 024)
+12. docs/figures/v3_formal.png        - v3 formal test once: v2 vs v3 on new data (decision 026)
 
 The demo / failure-case animations (docs/figures/demo_nav2_*, failure_nav2_margin.*) come from
 tools/make_demo.py on run logs (docs/reproduce.md level B).
@@ -881,6 +882,67 @@ def v3_dev_ablation(rows: list[dict]) -> None:
     plt.close(fig)
 
 
+def v3_formal(report: dict) -> None:
+    """decision 026: v2 vs v3 on the formal sets (two fixed slots; every bar labelled in ink)."""
+    conds = [
+        ("v3:D0xP0", "D0 x P0\nclean"),
+        ("v3:D1xL1", "D1 x L1\ntypical (V1/V2)"),
+        ("v3:D2xL2", "D2 x L2\nstress (V4)"),
+        ("v3:D1xL2-reportsL1", "D1 x L2,\nlocaliser 2x\nover-confident (V5)"),
+        ("v3-dx:D0xP0", "hydrant outside\nzone, D0 x P0 (V3)"),
+        ("v3-dx:D1xL1", "hydrant outside\nzone, D1 x L1 (V3)"),
+    ]
+    res = report["results"]
+    pipes = (
+        ("v2", "v2 (decision 016, no zone gating)", "#a8a69e"),
+        ("v3", "v3 (frozen, decision 025)", "#2a78d6"),
+    )
+    panels = (
+        ("absent", "(a) Rule, budget 5: absent episodes answered 'absent' (of 80)"),
+        ("fp", "(b) false present (4 methods x budgets 1-5)"),
+        ("occ", "(c) views with a place under the hydrant 'seen through' (of 1040)"),
+    )
+    fig, axes = plt.subplots(3, 1, figsize=(10.4, 7.6), dpi=200, sharex=True)
+    fig.patch.set_facecolor(SURFACE)
+    x = np.arange(len(conds))
+
+    def value(c, field):
+        if field == "absent":
+            return round(c["summary"]["rule@5"]["accuracy_by_state"]["absent"] * 80)
+        if field == "fp":
+            return c["false_present"]
+        return c["occupied_false_clearance"]["views"]
+
+    for ax, (field, title) in zip(axes, panels, strict=True):
+        _style(ax)
+        for (pipe, label, colour), off in zip(pipes, (-0.2, 0.2), strict=True):
+            vals = [value(res[f"{k}:{pipe}"], field) for k, _ in conds]
+            ax.bar(x + off, vals, width=0.38, color=colour, ec=SURFACE, lw=1.5, label=label)
+            for xi, v in zip(x + off, vals, strict=True):
+                ax.text(xi, v, f"{v}", ha="center", va="bottom", fontsize=6.3, color=INK2)
+        ax.set_title(title, fontsize=8.5, color=INK, loc="left")
+    axes[0].set_ylim(0, 95)
+    axes[1].legend(loc="upper left", frameon=False, fontsize=7, labelcolor=INK2)
+    axes[1].set_ylim(0, 1450)
+    axes[2].set_ylim(0, 3)
+    axes[2].set_yticks([0, 1, 2, 3])
+    note = "V4 fails: one view, refined pose 34.9 cm off\n(FA / GR stay 0)"
+    axes[2].text(2.2, 1.15, note, fontsize=6.5, color=INK2, va="bottom")
+    axes[2].set_xticks(x)
+    axes[2].set_xticklabels([n for _, n in conds], fontsize=6.8, color=INK2)
+    fig.suptitle(
+        "v3 formal test, run once on new data (decision 026) - simulated depth / pose error, "
+        "not a real robot",
+        x=0.01,
+        ha="left",
+        fontsize=9,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.11, top=0.92, hspace=0.42)
+    fig.savefig(OUT / "v3_formal.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
@@ -921,6 +983,9 @@ if __name__ == "__main__":
     r0b_rep = ROOT / "results/r0b/report.json"
     if r0b_rep.exists():
         r0b_noise(json.loads(r0b_rep.read_text()))
+    v3_rep = ROOT / "results/v3/report.json"
+    if v3_rep.exists():
+        v3_formal(json.loads(v3_rep.read_text()))
     v3_dev = ROOT / "results/v3-dev/ablation.json"
     if v3_dev.exists():
         v3_dev_ablation(json.loads(v3_dev.read_text())["rows"])
