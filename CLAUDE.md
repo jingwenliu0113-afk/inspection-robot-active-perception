@@ -22,7 +22,15 @@
   三種驗證（真實照片 / 模擬雜訊 / 實機）不得混為一談；`r0b` 與 R0a 正式集都已用過。實機仍未做。
   B 的資料只用 `nav-*` namespace（`Split.NAV_DEV`）；GT 位姿 / 標籤只用於評分，判定只用 AMCL 估計位姿 + 機載影像 + detector。
 
-下一步需要使用者決定，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
+- **v3 完成**（decision 024–026）：
+  - 正式資料 `v3` / `v3-dx` 已用過；V1–V3、V5 通過，V4（D2×L2）未通過。
+  - 凍結設定 `activeperception/v3/frozen_v3.py`；開發資料是 `v3-dev`、`v3-dev-dx`。
+- **A detector-v2**（decision 027，使用者 2026-10-15 授權，只限此協定可重新訓練 detector）：
+  - 協定、資料、程式完成；訓練需 RTX 5070 Ti（`tools/detv2_gpu.sh`，GPU lock）。
+  - test（`data/detv2/test.csv`、`detv2-sim`）在正式評測前不得執行任何 detector。
+- **B depth 模型檢查**（decision 028）：真實 D435 / D455 平面資料的量測完成；D3 只做開發檢查，正式結論需新 decision 與新資料。
+
+RTX 恢復後的步驟、以及其餘需要使用者決定的事，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
 
 ## 每個 session 的第一步
 
