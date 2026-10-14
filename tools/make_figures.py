@@ -819,10 +819,11 @@ def v3_dev_ablation(rows: list[dict]) -> None:
         ("m4", "+ margin\n4 cm"),
         ("m4p", "+ prior\ngate"),
         ("m6p", "margin\n6 cm"),
+        ("m6c", "+ conflict\n= frozen v3"),
     ]
     conds = (("D1xL1", "D1 x L1 (typical)", "#4a3aa7"), ("D2xL2", "D2 x L2 (stress)", "#008300"))
     fig, axes = plt.subplots(
-        1, 3, figsize=(10.8, 3.7), dpi=200, gridspec_kw={"width_ratios": [1.25, 1.25, 0.9]}
+        1, 3, figsize=(12.6, 3.9), dpi=200, gridspec_kw={"width_ratios": [1.45, 1.45, 0.8]}
     )
     fig.patch.set_facecolor(SURFACE)
     x = np.arange(len(configs))
@@ -833,13 +834,16 @@ def v3_dev_ablation(rows: list[dict]) -> None:
     for ax, (field, title) in zip(axes[:2], panels, strict=True):
         _style(ax)
         for (c, label, colour), off in zip(conds, (-0.2, 0.2), strict=True):
-            vals = [by[("v3-dev", c, k, False)][field] for k, _ in configs]
+            rows_c = [
+                by.get(("v3-dev", c, k, False)) or by[("v3-dev", c, k, True)] for k, _ in configs
+            ]
+            vals = [r[field] for r in rows_c]
             ax.bar(x + off, vals, width=0.38, color=colour, ec=SURFACE, lw=1.5, label=label)
             for xi, v in zip(x + off, vals, strict=True):
                 txt = f"{v}" if field == "occupied" else f"{v:.2f}"
-                ax.text(xi, v, txt, ha="center", va="bottom", fontsize=5.8, color=INK2)
+                ax.text(xi, v, txt, ha="center", va="bottom", fontsize=5.2, color=INK2)
         ax.set_xticks(x)
-        ax.set_xticklabels([n for _, n in configs], fontsize=6.3, color=INK2)
+        ax.set_xticklabels([n for _, n in configs], fontsize=5.9, color=INK2)
         ax.set_title(title, fontsize=8, color=INK, loc="left")
     axes[0].set_ylabel("views (of 780 with the object present)", fontsize=7, color=MUTED)
     axes[0].set_ylim(0, 6)

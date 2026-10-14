@@ -17,7 +17,14 @@ CONFIG_NAME = "v3"
 # D1xL1. The localiser-prior gate (k = 3) removed the wrong convergences (max error 21 -> 12 cm).
 MARGIN_OK = (0.06, 0.03)
 PRIOR_K = 3.0
-GEOMETRY = g.GeometryConfig(margin_ok=MARGIN_OK, prior_k=PRIOR_K, name=CONFIG_NAME)
+# a well-conditioned fit that contradicts the localiser -> the view clears nothing (m6c). On the
+# development data the localiser-prior gate alone (m6p) let one occupied location through when
+# the localiser was 2x over-confident: it rejected a correct fit and the 10 cm fallback was too
+# small. m6c: 0 in all four conditions, same cost as m6p when the localiser is honest.
+ON_CONFLICT = "blind"
+GEOMETRY = g.GeometryConfig(
+    margin_ok=MARGIN_OK, prior_k=PRIOR_K, on_conflict=ON_CONFLICT, name=CONFIG_NAME
+)
 # rule-nbv-v3 (novelty tie-break) dropped: no gain on the development data (Rule budget 2
 # 0.983 -> 0.975, budget 3 1.000 both) -> the frozen rule-nbv-v2 stays.
 TIE_BREAK = False
@@ -43,6 +50,8 @@ def describe() -> dict:
         "nav_margin_v3": {
             "ok": list(GEOMETRY.margin_ok),
             "fallback": f"max({list(GEOMETRY.margin_fallback)}, {GEOMETRY.prior_k} sigma)",
+            "on_conflict": GEOMETRY.on_conflict,
+            "on_degenerate": GEOMETRY.on_degenerate,
         },
         "rule_nbv_v3_tie_break": TIE_BREAK,
     }

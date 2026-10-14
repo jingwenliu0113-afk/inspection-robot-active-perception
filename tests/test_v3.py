@@ -242,3 +242,21 @@ def test_formal_verdicts_follow_the_preregistered_rules():
     diff = formal.paired(res, groups)
     assert diff["v3:D1xL1"]["rule@2"]["mean"] == 0.0
     assert "V1" in formal.markdown(res, formal.verdicts(res), diff)
+
+
+def test_frozen_v3_is_the_development_choice():
+    from activeperception.v3 import frozen_v3
+
+    assert dataclasses.replace(frozen_v3.GEOMETRY, name="m6c") == v3e.CONFIGS["m6c"]
+    assert frozen_v3.TIE_BREAK is False and v3e.config("v3") is frozen_v3.GEOMETRY
+
+
+def test_conflicting_fit_makes_the_view_blind_only_when_configured():
+    est = Pose(0, 0, 1.1, 0, 0.3)
+    ok = g.RefinementV3(est, True, 0, 0, 0, 1.0, 500, 50.0, 0.0, 0.0)
+    conflict = dataclasses.replace(ok, ok=False, conflict=True)
+    degenerate = dataclasses.replace(ok, ok=False)
+    c = v3e.CONFIGS["m6c"]
+    assert not g.blind(ok, c) and g.blind(conflict, c) and not g.blind(degenerate, c)
+    assert not g.blind(conflict, v3e.CONFIGS["m6p"])
+    assert g.blind(degenerate, v3e.CONFIGS["m6b"])
