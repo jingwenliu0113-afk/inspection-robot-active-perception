@@ -385,7 +385,10 @@ RealSense D435 / D455，平面放在 13 個雷射測距的距離（Rustler et al
 | 平面上的缺值、量化 | 模型保守 / 可忽略 |
 
 - 依此寫出修正模型 D3：在 D2 上加入低估偏差、長相關、固定樣式、單側立體遮蔽帶。
-- D3 下 v3 的開發檢查：（執行中）。正式結論需要另寫 decision 並使用新資料。
+- D3 下 v3 的**開發**檢查（`v3-dev`）：
+  - 仍然安全：佔用看穿 0 / 780，FA / FP / GR 0；
+  - absent 可判率下降：budget 5 時 D3×L1 為 0.817（D1×L1 為 1.000）。原因是偏差加浮動超出比例搜尋的範圍，矛盾的視角不提供看穿。
+  - 正式結論需要另寫 decision 並使用新資料。
 - 見 [docs/depth-noise-check.md](docs/depth-noise-check.md)、[`results/depthnoise/`](results/depthnoise/comparison.json)。
 
 ## 失敗分析（摘要）
