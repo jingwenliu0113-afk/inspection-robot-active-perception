@@ -16,6 +16,8 @@
 | 候選視角（只由 inspection zone 與場景 seed 決定） | ✓ | ✓ | ✓ |
 | 設施地圖（牆、柱子；**不含目標物**） | ✓（只有 B） | ✓ | ✓ |
 | AMCL 估計位姿 → depth 精修（只有 B） | ✓ | — | ✓ |
+| 定位器回報的位姿共變異數（v3 的先驗閘門） | ✓ | — | ✓ |
+| zone 位置（v3 以 depth 定位偵測框，判斷是否在 zone 內） | ✓ | ✓ | ✓ |
 | 模擬器真實位姿 `/gt/odom` | ✗ | ✗ | ✓ |
 | 物件是否存在、位置、每個視角的可見度標籤 | ✗ | ✓ | ✓ |
 
@@ -103,6 +105,10 @@ flowchart TD
 | `activeperception/seal.py`、`SEALED.sha256` | 封存已用過的正式資料與結果 |
 | `activeperception/failure_analysis.py` | Core 失敗分析（只讀已 commit 的結果） |
 | `activeperception/nav/` | Advanced B：場景 / 地圖、TB4 桅桿相機、位姿精修與餘裕、B0 / B1 driver、分析、失敗分析 |
+| `activeperception/r0a.py`、`r0b*.py` | R0：真實照片上的 detector、模擬的 depth / 位姿誤差 |
+| `activeperception/v3/` | v3：`decision-v3`（zone 過濾）、`see-through-v3`、`nav-pose-v3`（先驗閘門、矛盾時不可信）、開發評估、凍結設定、正式 runner |
+| `activeperception/detv2/` | A：detector-v2 的資料、訓練（RTX）、評測、正式 runner |
+| `activeperception/depthnoise/` | B：真實 depth 誤差統計、公開資料下載、D3 修正模型 |
 | `ros_ws/src/inspection_ap_ros/` | ROS 2 inspector node（Core 線上版） |
 | `docker/` | 映像（sim / ros / nav / navdet）、render、smoke、Nav2 批次、Demo |
 | `tools/` | 圖表（`make_figures.py`）、Demo 動畫（`make_demo.py`） |
