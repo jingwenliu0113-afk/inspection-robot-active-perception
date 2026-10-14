@@ -35,6 +35,8 @@ PINNED = (
     "results",
     "data/episodes",
     "data/r0a",  # R0a image selection (decision 020)
+    "data/v3",  # v3 real-image dev / reserve split (decision 024)
+    "data/detv2",  # detector-v2 train / dev / test (decision 027)
     "activeperception/frozen.py",
     "activeperception/frozen_v2.py",
 )

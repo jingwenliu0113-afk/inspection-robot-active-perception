@@ -1,0 +1,91 @@
+{
+ "train": {
+  "n": 1462,
+  "by_kind": {
+   "boxed": 426,
+   "verified-negative": 491,
+   "lookalike:Barrel": 27,
+   "lookalike:Teapot": 37,
+   "lookalike:Fountain": 28,
+   "lookalike:Candle": 32,
+   "lookalike:Doll": 31,
+   "lookalike:Flowerpot": 31,
+   "lookalike:Street light": 40,
+   "lookalike:Traffic sign": 32,
+   "lookalike:Snowman": 21,
+   "lookalike:Bottle": 31,
+   "lookalike:Tap": 40,
+   "lookalike:Sculpture": 32,
+   "lookalike:Kettle": 20,
+   "lookalike:Bust": 28,
+   "lookalike:Waste container": 25,
+   "lookalike:Lantern": 21,
+   "lookalike:Toy": 31,
+   "lookalike:Vase": 33,
+   "lookalike:Parking meter": 5
+  },
+  "by_label": {
+   "pos": 426,
+   "neg": 1036
+  },
+  "licenses": {
+   "https://creativecommons.org/licenses/by-sa/2.0/": 170,
+   "https://creativecommons.org/licenses/by/2.0/": 1290,
+   "no known copyright restrictions": 2
+  }
+ },
+ "dev": {
+  "n": 613,
+  "by_kind": {
+   "boxed": 24,
+   "image-level": 71,
+   "verified-negative": 245,
+   "lookalike:Bottle": 19,
+   "lookalike:Sculpture": 18,
+   "lookalike:Fountain": 8,
+   "lookalike:Traffic sign": 15,
+   "lookalike:Waste container": 17,
+   "lookalike:Toy": 19,
+   "lookalike:Barrel": 23,
+   "lookalike:Vase": 17,
+   "lookalike:Bust": 16,
+   "lookalike:Lantern": 13,
+   "lookalike:Teapot": 13,
+   "lookalike:Doll": 19,
+   "lookalike:Tap": 10,
+   "lookalike:Candle": 18,
+   "lookalike:Parking meter": 3,
+   "lookalike:Kettle": 15,
+   "lookalike:Flowerpot": 19,
+   "lookalike:Street light": 7,
+   "lookalike:Snowman": 4
+  },
+  "by_label": {
+   "pos": 95,
+   "neg": 518
+  },
+  "licenses": {
+   "https://creativecommons.org/licenses/by/2.0/": 605,
+   "https://creativecommons.org/licenses/by-sa/2.0/": 8
+  }
+ },
+ "test": {
+  "n": 871,
+  "by_kind": {
+   "image-level": 72,
+   "verified-negative": 737,
+   "boxed": 62
+  },
+  "by_label": {
+   "pos": 134,
+   "neg": 737
+  },
+  "licenses": {
+   "https://creativecommons.org/licenses/by/2.0/": 809,
+   "http://creativecommons.org/licenses/by-nc/2.0/": 11,
+   "http://creativecommons.org/licenses/by-nc-sa/2.0/": 30,
+   "http://creativecommons.org/licenses/by-nc-nd/2.0/": 17,
+   "http://creativecommons.org/licenses/by-nd/2.0/": 4
+  }
+ }
+}
