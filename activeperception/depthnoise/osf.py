@@ -37,6 +37,7 @@ def _get(url: str) -> dict:
 
 def listing(url: str) -> list[dict]:
     out = []
+    url += ("&" if "?" in url else "?") + "page%5Bsize%5D=100"
     while url:
         d = _get(url)
         out += d["data"]
@@ -44,20 +45,24 @@ def listing(url: str) -> list[dict]:
     return out
 
 
-def walk(url: str, prefix: str = ""):
-    """(relative path, download URL, size) of every file below ``url``."""
+def walk(url: str, prefix: str = "", skip=lambda path: False):
+    """(relative path, download URL, size) of every file below ``url``; folders for which
+    ``skip(path)`` is true are not entered."""
     for x in listing(url):
         a = x["attributes"]
         path = f"{prefix}{a['name']}"
         if a["kind"] == "folder":
-            yield from walk(x["relationships"]["files"]["links"]["related"]["href"], path + "/")
+            if not skip(path):
+                href = x["relationships"]["files"]["links"]["related"]["href"]
+                yield from walk(href, path + "/", skip)
         else:
             yield path, x["links"]["download"], a["size"]
 
 
 def wanted(path: str, cameras: tuple[str, ...]) -> bool:
-    name = path.rsplit("/", 1)[-1]
-    return name.endswith(".png") and "depth" in name and any(f"_{c}_" in name for c in cameras)
+    """planes/<distance cm>/rgbd/<camera>/<date>_<time>_depth_<i>.png"""
+    parts = path.split("/")
+    return parts[-1].endswith(".png") and "_depth_" in parts[-1] and parts[-2] in cameras
 
 
 def fetch(items: list[tuple[str, str, int]], out: Path, workers: int = 6) -> list[dict]:
@@ -91,7 +96,8 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     cams = tuple(args.cameras.split(","))
     out = Path(args.out)
-    items = [i for i in walk(API + PLANES, "planes/") if wanted(i[0], cams)]
+    other_camera = lambda p: p.count("/") == 3 and p.rsplit("/", 1)[-1] not in cams  # noqa: E731
+    items = [i for i in walk(API + PLANES, "planes/", other_camera) if wanted(i[0], cams)]
     items += list(walk(API + INTRINSICS, "intrinsics/"))
     total = sum(s for _, _, s in items) / 1e6
     print(f"{len(items)} files, {total:.0f} MB")
