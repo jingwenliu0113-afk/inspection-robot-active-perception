@@ -40,3 +40,17 @@ def test_clean_depth_has_no_error():
     r = acc.result()
     assert all(b["invalid"] == 0 and abs(b["scale_bias"]) < 1e-9 for b in r["bins"])
     assert r["edges"]["missing"] == 0 and r["edges"]["flying"] == 0
+
+
+def test_d3_adds_what_the_planes_showed():
+    from activeperception.depthnoise import d3
+
+    ref = scene()
+    out = d3.apply_d3(ref, 554.3, np.random.default_rng(0))
+    near = np.isfinite(out) & (ref < 1.2)
+    assert np.median(out[near] / ref[near] - 1) < -0.01  # under-estimates range
+    band = d3.occlusion_band(ref, 554.3)
+    assert band.any() and not np.isfinite(out[band]).any()  # occluded band is missing
+    # the band sits left of the near box only (one-sided)
+    rows, cols = np.nonzero(band)
+    assert cols.max() < 100 and cols.min() < 100

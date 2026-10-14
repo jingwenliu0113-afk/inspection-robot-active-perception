@@ -183,8 +183,13 @@ class V3World:
         self.base.zone_visible_fraction(spec, viewpoint)  # digest + rendered pose checks
         depth = self.base._frames(spec).depth(viewpoint.id)
         view = f"v{viewpoint.id}"
-        dn, pn = DEPTH_LEVELS[self.depth_level], POSE_LEVELS[self.pose_level]
-        if dn is not None:
+        dn, pn = DEPTH_LEVELS.get(self.depth_level), POSE_LEVELS[self.pose_level]
+        if self.depth_level == "D3":  # decision 028 §5, development only
+            from ..depthnoise.d3 import apply_d3
+
+            f = spec.camera.width / 2 / math.tan(spec.camera.hfov / 2)
+            depth = apply_d3(depth, f, rng_for(spec.episode_id, view, "depth", "D3"))
+        elif dn is not None:
             depth = apply_depth_noise(depth, dn, rng_for(spec.episode_id, view, "depth", dn.name))
         est = viewpoint.pose
         if pn is not None:

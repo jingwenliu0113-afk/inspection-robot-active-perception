@@ -1,0 +1,57 @@
+{
+ "decision": "028 §4",
+ "range_m": [
+  1.0,
+  3.0
+ ],
+ "cameras": {
+  "D435": {
+   "random_error": "保守或相近（D2 涵蓋）",
+   "bias": {
+    "worst": -0.024799999999999933,
+    "at_m": 2.5,
+    "verdict": "低估",
+    "sign": "符號未涵蓋（量到低估距離）"
+   },
+   "dropout_roi": {
+    "worst": 0.0,
+    "verdict": "保守或相近"
+   },
+   "quantisation": "可忽略",
+   "correlation": {
+    "worst_1e_sim_px": 17.98976848107967,
+    "model_1e_sim_px": 6.0,
+    "verdict": "相關更長"
+   },
+   "fixed_pattern": {
+    "worst_ratio": 0.5714826799932057,
+    "verdict": "固定樣式顯著"
+   },
+   "frame_offset_rel_sigma_worst": 0.0064245999999999505
+  },
+  "D455": {
+   "random_error": "保守或相近（D2 涵蓋）",
+   "bias": {
+    "worst": 0.008571428571428452,
+    "at_m": 1.75,
+    "verdict": "保守或相近",
+    "sign": "與模型同向"
+   },
+   "dropout_roi": {
+    "worst": 0.008138020833333334,
+    "verdict": "保守或相近"
+   },
+   "quantisation": "可忽略",
+   "correlation": {
+    "worst_1e_sim_px": 15.633666653475991,
+    "model_1e_sim_px": 6.0,
+    "verdict": "相關更長"
+   },
+   "fixed_pattern": {
+    "worst_ratio": 0.4032829049896317,
+    "verdict": "不顯著"
+   },
+   "frame_offset_rel_sigma_worst": 0.01037820000000001
+  }
+ }
+}

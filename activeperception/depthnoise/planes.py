@@ -110,7 +110,9 @@ def analyse(stack: np.ndarray, z_nom: float, fx: float, cx: float, cy: float) ->
     y0, x0 = int(round(cy)), int(round(cx))
     roi = stack[:, max(0, y0 - h) : y0 + h, max(0, x0 - h) : x0 + h]
     res = np.stack([plane_residual(f) for f in roi])
-    mean = np.nanmean(np.where(np.isfinite(roi).all(axis=0), roi, np.nan), axis=0)
+    all_valid = np.isfinite(roi).all(axis=0)
+    mean = np.nanmean(roi, axis=0) if not all_valid.any() else roi.mean(axis=0, where=all_valid)
+    mean = np.where(all_valid, mean, np.nan)
     my, mx = roi.shape[1] // 2, roi.shape[2] // 2
     centre = roi[:, my - 5 : my + 5, mx - 5 : mx + 5]
     cx_lags = [acf_1e(r, 1) for r in res]
@@ -126,6 +128,9 @@ def analyse(stack: np.ndarray, z_nom: float, fx: float, cx: float, cy: float) ->
         "spatial_sigma_m": float(np.nanmedian([robust_sigma(r) for r in res])),
         "temporal_sigma_m": float(np.nanmedian(np.nanstd(roi, axis=0))),
         "fixed_sigma_m": robust_sigma(plane_residual(mean)),
+        # exploratory (decision 028 appendix): per-frame offset of the whole region - the reason
+        # the temporal sigma exceeds the per-frame (plane-fitted) spatial sigma at long range
+        "frame_offset_rel_sigma": robust_sigma(np.nanmedian(roi, axis=(1, 2)) / z_nom),
         "invalid_roi": float(np.mean(~np.isfinite(roi))),
         "invalid_frame": float(np.mean(~np.isfinite(stack))),
         "quant_step_m": quant_step(roi[0]),
@@ -183,7 +188,8 @@ def main(argv: list[str] | None = None) -> int:
                 f"{d['spatial_sigma_m'] * 1000:.1f} mm  temporal {d['temporal_sigma_m'] * 1000:.1f}"
                 f"  fixed {d['fixed_sigma_m'] * 1000:.1f}  invalid {d['invalid_roi']:.3f} / "
                 f"{d['invalid_frame']:.3f}  step {d['quant_step_m'] * 1000:.1f} mm  corr(sim px) "
-                f"{d['corr_1e_sim_px']['x']:.1f} / {d['corr_1e_sim_px']['y']:.1f}"
+                f"{d['corr_1e_sim_px']['x']:.1f} / {d['corr_1e_sim_px']['y']:.1f}  frame offset "
+                f"{d['frame_offset_rel_sigma'] * 100:.2f} %"
             )
     return 0
 
