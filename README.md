@@ -72,7 +72,7 @@ real hardware or real images. Experiments were pre-registered, and every formal 
   - `present`：confidence ≥ 0.7。
   - `absent`：≥ 2 個方位扇區（共 8 個）有「zone 至少 30% 未被擋」的視角，且所有 confidence < 0.05。
 - **`decision-v2`**：
-  - `absent`：zone 內 64 個「物件可能站立的位置」都被某個視角的 depth **看穿**，且所有 confidence < 0.05。
+  - `absent`：zone 內 64 個「物件可能站立的位置」都被某個視角的 depth **看穿**，且所有 confidence < 0.02。
   - 物件真正站的位置不可能被看穿，所以即使 detector 漏看，也不會 false absent。
 - 其餘一律 `inconclusive`。
 

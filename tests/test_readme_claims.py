@@ -70,3 +70,12 @@ def test_failed_gates_stay_reported():
         "**不是**選視角策略",
     ):
         assert phrase in README
+
+
+def test_decision_thresholds_match_the_frozen_configs():
+    from activeperception.frozen import DECISION_V1
+    from activeperception.frozen_v2 import DECISION_V2
+
+    assert f"且所有 confidence < {DECISION_V1.tau_absent}" in README  # decision-v1
+    assert f"**看穿**，且所有 confidence < {DECISION_V2.tau_absent}" in README  # decision-v2
+    assert f"confidence ≥ {DECISION_V2.tau_present}" in README

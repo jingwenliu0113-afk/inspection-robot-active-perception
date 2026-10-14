@@ -30,7 +30,7 @@
 
 | 步驟 | 內容 | 需要採購？ | go / no-go 判準（建議） |
 |---|---|---|---|
-| **R0a 真實影像的 detector 檢查**（Advanced A 的前半） | 用手機或 RGB-D 相機拍實際目標（或替代物）：可見、部分遮擋、不存在；標註後評估 `detector-v1` | 否（或一台相機） | 可見時的偵測率、部分遮擋時的 confidence 分布、absent 時的最高 confidence 是否低於 0.05 |
+| **R0a 真實影像的 detector 檢查**（Advanced A 的前半） | 用手機或 RGB-D 相機拍實際目標（或替代物）：可見、部分遮擋、不存在；標註後評估 `detector-v1` | 否（或一台相機） | 可見時的偵測率、部分遮擋時的 confidence 分布、absent 時的最高 confidence 是否低於 0.02（`decision-v2` 的凍結值） |
 | **R0b depth 雜訊下的安全性**（模擬） | 在 Gazebo depth 上加入實際相機規格的雜訊與缺值模型，於新的開發資料測 v2 的 false absent 與 geometric risk | 否 | geometric risk = 0；若不為 0，先設計新的容忍值 / 餘裕（新版本） |
 | **R0c 方法修正**（模擬，可選） | rule-nbv-v2 平手時的處理、Nav2 到點容忍值與位姿精修一致化 | 否 | 在新的開發資料上改善，且安全指標不退步；最後以新的正式資料驗證 |
 | **R1 硬體與場地** | 機器人（例如 TurtleBot 4）＋桅桿＋校正過的 RGB-D 相機；可建圖的場地；目標物與遮擋物；外部真值（例如 AprilTag 或 motion capture） | **是** | 由使用者決定預算與場地 |

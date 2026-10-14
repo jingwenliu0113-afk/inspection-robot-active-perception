@@ -51,7 +51,7 @@ flowchart TB
 ### 判定規則（`decision-v2`，四個方法共用）
 
 - **present**：任一視角的消防栓 confidence ≥ 0.7。
-- **absent**：inspection zone 內 64 個「物件可能站的位置」，每一個都在某個視角的 depth 中被**看穿**（視線沒被擋），而且所有 confidence < 0.05。
+- **absent**：inspection zone 內 64 個「物件可能站的位置」，每一個都在某個視角的 depth 中被**看穿**（視線沒被擋），而且所有 confidence < 0.02（decision 012 凍結值）。
   物件真正站的位置不可能被看穿（depth 先打到物件），所以 detector 漏看也不會變成 false absent。
 - 其餘都是 **inconclusive**。
 

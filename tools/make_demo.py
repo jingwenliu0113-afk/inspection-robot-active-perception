@@ -47,6 +47,7 @@ CLEARED = "#008300"
 BOX = "#eda100"
 WALL, PILLAR = "#52514e", "#c3c2b7"
 HYDRANT = "#e34948"
+DV2 = frozen_v2.DECISION_V2  # thresholds quoted in the frames come from the frozen config
 POLICY_NAMES = {
     "rule": "Rule-NBV v2",
     "random": "Random NBV",
@@ -226,7 +227,7 @@ def draw_camera(ax, view, k: int, dim: bool = False, note: str | None = None) ->
     ax.imshow(view["rgb"], alpha=0.35 if dim else 1.0)
     if not dim:
         for conf, x1, y1, x2, y2 in view["dets"]:
-            if conf < 0.05:
+            if conf < DV2.tau_absent:  # below it a detection never matters
                 continue
             ax.add_patch(Rectangle((x1, y1), x2 - x1, y2 - y1, fill=False, ec=BOX, lw=1.6))
             ax.text(
@@ -260,8 +261,8 @@ def status(view, k: int) -> str:
     n = int(view["cleared"].sum())
     lines = [
         f"decision after {k + 1} view{'s' if k else ''}: {view['decision'].upper()}",
-        f"max detector confidence {view['max_conf']:.2f}  (present: >= 0.70)",
-        f"seen-through places {n}/64  (absent: 64/64, conf < 0.05)",
+        f"max detector confidence {view['max_conf']:.2f}  (present: >= {DV2.tau_present:.2f})",
+        f"seen-through places {n}/64  (absent: 64/64, conf < {DV2.tau_absent:.2f})",
     ]
     if view["scores"]:
         lines.append(pick_text(view["scores"]))
