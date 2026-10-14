@@ -242,7 +242,7 @@ def load_rgb(path: Path) -> tuple[np.ndarray, int]:
 
     with Image.open(path) as im:
         orient = int(im.getexif().get(0x0112, 1))
-        return np.asarray(im.convert("RGB")), orient
+        return np.array(im.convert("RGB")), orient  # writable copy for torch
 
 
 def camera_equivalent(rgb: np.ndarray) -> np.ndarray:
@@ -254,7 +254,7 @@ def camera_equivalent(rgb: np.ndarray) -> np.ndarray:
         return rgb
     s = math.sqrt(CAMERA_PIXELS / (w * h))
     size = (max(1, round(w * s)), max(1, round(h * s)))
-    return np.asarray(Image.fromarray(rgb).resize(size, Image.Resampling.LANCZOS))
+    return np.array(Image.fromarray(rgb).resize(size, Image.Resampling.LANCZOS))
 
 
 def occlusion_side(image_id: str) -> str:
@@ -429,6 +429,73 @@ def criteria(s: dict) -> dict:
     }
 
 
+def _pct(r: dict) -> str:
+    lo, hi = r["ci95"]
+    return f"{r['k']} / {r['n']} = {100 * r['rate']:.1f}% [{100 * lo:.1f}, {100 * hi:.1f}]"
+
+
+def markdown(report: dict) -> str:
+    """Tables for results/r0a/README.md (Traditional Chinese headers)."""
+    s, out = report["summary"], []
+    for variant, title in (
+        ("camera", "約 640×480 像素數（主要）"),
+        ("original", "原始解析度（參考）"),
+    ):
+        v = s[variant]
+        out += [
+            f"### 含消防栓的影像：{title}",
+            "",
+            "| 層 | localized recall@0.7 | present rate | complete miss（< 0.02） |",
+            "|---|---|---|---|",
+        ]
+        for st in (*MAIN_STRATA, "main"):
+            if st in v["positives"]:
+                r = v["positives"][st]
+                cells = (r["localized_recall_at_present"], r["present_rate"], r["complete_miss"])
+                out.append(f"| {st} | " + " | ".join(_pct(c) for c in cells) + " |")
+        n = v["negatives"]
+        out += [
+            "",
+            f"不含消防栓（人工驗證、偏難的負樣本）：false present {_pct(n['false_present'])}；"
+            f"absent blocked {_pct(n['absent_blocked'])}；AP50 {v['ap50']:.3f}",
+            "",
+        ]
+    occ = sorted((k for k in s if k.startswith("occ")), key=lambda k: int(k[3:]))
+    if occ:
+        clear = s["camera"]["positives"]["clear"]
+        out += [
+            "### 人工遮擋（clear 正樣本，camera 版本）",
+            "",
+            "| 遮住框寬 | present rate | complete miss |",
+            "|---|---|---|",
+            f"| 0% | {_pct(clear['present_rate'])} | {_pct(clear['complete_miss'])} |",
+        ]
+        for k in occ:
+            r = s[k]["positives"]["clear"]
+            out.append(f"| {k[3:]}% | {_pct(r['present_rate'])} | {_pct(r['complete_miss'])} |")
+        out.append("")
+    c = report.get("criteria")
+    if c:
+        a1 = c["A1_clear_localized_recall"]
+        a2, a3 = c["A2_false_present"], c["A3_absent_blocked"]
+        out += [
+            "### 判準（decision 020 §7）",
+            "",
+            "| # | 結果 | 判定 |",
+            "|---|---|---|",
+            f"| A1 clear localized recall@0.7 ≥ 0.90 | {_pct(a1)} | {_verdict(a1['pass'])} |",
+            f"| A2 false present ≤ 0.01 | {_pct(a2)} | {_verdict(a2['pass'])} |",
+            f"| A3 absent blocked（≤ 0.10 視為可用） | {_pct(a3)} "
+            f"| {'可用' if a3['absent_usable'] else '**不可用**'} |",
+            "",
+        ]
+    return "\n".join(out) + "\n"
+
+
+def _verdict(ok: bool) -> str:
+    return "通過" if ok else "**未通過**"
+
+
 def load_detections(path: Path) -> dict[str, dict[str, dict]]:
     out: dict[str, dict[str, dict]] = defaultdict(dict)
     for line in open(path):
@@ -481,6 +548,7 @@ def main(argv: list[str] | None = None) -> int:
             report["criteria"] = criteria(summary)
         Path(args.out).mkdir(parents=True, exist_ok=True)
         (Path(args.out) / "report.json").write_text(json.dumps(report, indent=1) + "\n")
+        (Path(args.out) / "tables.md").write_text(markdown(report))
         print(json.dumps(report.get("criteria", summary["camera"]), indent=1))
     return 0
 

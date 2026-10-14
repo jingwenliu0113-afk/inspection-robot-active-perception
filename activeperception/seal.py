@@ -31,7 +31,13 @@ from .types import Split
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = "SEALED.sha256"
-PINNED = ("results", "data/episodes", "activeperception/frozen.py", "activeperception/frozen_v2.py")
+PINNED = (
+    "results",
+    "data/episodes",
+    "data/r0a",  # R0a image selection (decision 020)
+    "activeperception/frozen.py",
+    "activeperception/frozen_v2.py",
+)
 
 
 @dataclass(frozen=True)

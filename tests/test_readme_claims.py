@@ -79,3 +79,17 @@ def test_decision_thresholds_match_the_frozen_configs():
     assert f"且所有 confidence < {DECISION_V1.tau_absent}" in README  # decision-v1
     assert f"**看穿**，且所有 confidence < {DECISION_V2.tau_absent}" in README  # decision-v2
     assert f"confidence ≥ {DECISION_V2.tau_present}" in README
+
+
+def test_r0a_numbers():
+    from activeperception.r0a import _pct
+
+    rep = load("results/r0a/report.json")
+    c, cam = rep["criteria"], rep["summary"]["camera"]
+    assert _pct(c["A1_clear_localized_recall"]) in README
+    assert c["A1_clear_localized_recall"]["pass"] and not c["A2_false_present"]["pass"]
+    assert _pct(c["A2_false_present"]) in README
+    assert f"{100 * c['A3_absent_blocked']['rate']:.1f}%" in README
+    miss = cam["positives"]["main"]["complete_miss"]
+    assert miss["k"] == 0 and f"0 / {miss['n']}" in README
+    assert "R0a 為真實照片" in README  # never presented as simulation or as a robot result

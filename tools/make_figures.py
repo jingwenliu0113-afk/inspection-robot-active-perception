@@ -10,6 +10,7 @@
 6. docs/figures/nav_teleport_vs_nav2.png - nav-b2: teleport vs Nav2 accuracy (decision 019)
 7. docs/figures/nav_b0_lineage.png     - B0 -> nav-b0c -> nav-b0d: arrival, pose error, safety
 8. docs/figures/nav_cost.png           - nav-b2: path per episode by state, time per goal
+9. docs/figures/r0a_real_images.png    - R0a: frozen detector on real photos (decision 021)
 
 The demo / failure-case animations (docs/figures/demo_nav2_*, failure_nav2_margin.*) come from
 tools/make_demo.py on run logs (docs/reproduce.md level B).
@@ -615,6 +616,106 @@ def nav_cost(fa: dict, states: dict[str, str]) -> None:
     plt.close(fig)
 
 
+def r0a_real_images(report: dict, rows: list[dict], dets: dict) -> None:
+    """R0a (decision 021): recall by stratum, synthetic pillar occlusion, c_max distributions.
+
+    Two non-method categories per panel: slots 7 / 6 (violet / green), validated as a pair
+    (all hard checks pass); every series is direct-labelled or in a legend.
+    """
+    from activeperception import r0a
+
+    cam = report["summary"]["camera"]
+    fig, axes = plt.subplots(
+        1, 3, figsize=(10.4, 3.5), dpi=200, gridspec_kw={"width_ratios": [1.1, 1, 1.2]}
+    )
+    fig.patch.set_facecolor(SURFACE)
+
+    ax = axes[0]
+    _style(ax)
+    strata = [st for st in r0a.MAIN_STRATA if st in cam["positives"]]
+    for i, st in enumerate(strata):
+        r = cam["positives"][st]["localized_recall_at_present"]
+        lo, hi = r["ci95"]
+        ax.bar(i, 100 * r["rate"], width=0.6, color=INK2, ec=SURFACE, lw=2)
+        ax.plot([i, i], [100 * lo, 100 * hi], color=MUTED, lw=1.2)
+        ax.text(i, 100 * hi + 2, f"{r['k']}/{r['n']}", ha="center", fontsize=7, color=INK)
+    ax.axhline(90, color=MUTED, lw=1.0, ls=(0, (4, 3)))
+    ax.set_xticks(range(len(strata)))
+    ax.set_xticklabels(strata, fontsize=7.5, color=INK2)
+    ax.set_ylim(0, 112)
+    ax.set_ylabel("% detected at >= 0.7 on the hydrant", fontsize=7.5, color=MUTED)
+    ax.set_title(
+        "real photos, by annotation (A1: clear >= 90%)", fontsize=8.5, color=INK, loc="left"
+    )
+
+    ax = axes[1]
+    _style(ax)
+    fr = [0, *[int(100 * f) for f in r0a.OCCLUSION_FRACTIONS]]
+    series = (
+        ("present_rate", "detected >= 0.7", "#4a3aa7"),
+        ("complete_miss", "max conf < 0.02", "#008300"),
+    )
+    for key, label, colour in series:
+        rs = [cam["positives"]["clear"][key]] + [
+            report["summary"][f"occ{f}"]["positives"]["clear"][key] for f in fr[1:]
+        ]
+        y = [100 * r["rate"] for r in rs]
+        ax.fill_between(
+            fr,
+            [100 * r["ci95"][0] for r in rs],
+            [100 * r["ci95"][1] for r in rs],
+            color=colour,
+            alpha=0.12,
+            lw=0,
+        )
+        ax.plot(fr, y, color=colour, lw=2, marker="o", ms=5, mec=SURFACE, mew=1.2)
+        ax.text(fr[-1] + 2, y[-1], label, fontsize=7, color=INK2, va="center")
+    ax.set_xticks(fr)
+    ax.set_xticklabels([f"{f}%" for f in fr], fontsize=7.5, color=INK2)
+    ax.set_xlim(-5, 115)
+    ax.set_ylim(0, 105)
+    ax.set_xlabel("hydrant box width covered by a grey 'pillar'", fontsize=7.5, color=MUTED)
+    ax.set_title("clear photos + synthetic occlusion", fontsize=8.5, color=INK, loc="left")
+
+    ax = axes[2]
+    _style(ax)
+    bins = np.logspace(-3, 0, 31)
+    groups = (
+        ("neg", None, "no hydrant (verified, hard)", "#4a3aa7"),
+        ("pos", "clear", "clear hydrant", "#008300"),
+    )
+    for label, st, name, colour in groups:
+        c = [
+            max((d[0] for d in dets[r["image_id"]]["detections"]), default=1e-3)
+            for r in rows
+            if r["label"] == label and (st is None or r["stratum"] == st) and r["image_id"] in dets
+        ]
+        ax.hist(
+            np.clip(c, 1e-3, 1), bins=bins, color=colour, alpha=0.55, label=f"{name} (n={len(c)})"
+        )
+    ax.set_xscale("log")
+    ymax = ax.get_ylim()[1]
+    for t, lab in ((r0a.TAU_ABSENT, "absent needs < 0.02"), (r0a.TAU_PRESENT, "present >= 0.7")):
+        ax.axvline(t, color=MUTED, lw=1.0, ls=(0, (4, 3)))
+        ax.text(
+            t / 1.08, ymax * 0.68, lab, fontsize=6.5, color=MUTED, rotation=90, ha="right", va="top"
+        )
+    ax.set_xlabel("highest hydrant confidence (<= 0.001 incl. none)", fontsize=7.5, color=MUTED)
+    ax.set_ylabel("images", fontsize=7.5, color=MUTED)
+    ax.legend(loc="upper left", frameon=False, fontsize=6.5, labelcolor=INK2)
+    ax.set_title("confidence distribution", fontsize=8.5, color=INK, loc="left")
+    fig.suptitle(
+        "R0a: frozen detector-v1 on real photos (Open Images, ~640x480 px) - not a robot camera",
+        x=0.01,
+        ha="left",
+        fontsize=9.5,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.06, right=0.99, bottom=0.17, top=0.82, wspace=0.3)
+    fig.savefig(OUT / "r0a_real_images.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
@@ -643,4 +744,13 @@ if __name__ == "__main__":
         nav_b0_lineage(fa_nav)
         _, gts, _ = load_episode_set(ROOT / "data/episodes/gazebo-nav-b2.json")
         nav_cost(fa_nav, {e: g.state.value for e, g in gts.items()})
+    r0a_rep = ROOT / "results/r0a/report.json"
+    if r0a_rep.exists():
+        from activeperception import r0a
+
+        r0a_real_images(
+            json.loads(r0a_rep.read_text()),
+            r0a.read_csv(ROOT / "data/r0a/manifest-formal.csv"),
+            r0a.load_detections(ROOT / "results/r0a/detections-formal.jsonl")["camera"],
+        )
     print("wrote", sorted(p.name for p in OUT.glob("*.png")))
