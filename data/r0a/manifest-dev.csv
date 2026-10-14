@@ -1,0 +1,21 @@
+image_id,subset,label,stratum,primary_box,boxes,license,author,original_url
+039f3061d25f699a,validation,pos,clear,"[0.15848215, 0.084671535, 0.86383927, 0.95766425]","[[0.15848215, 0.084671535, 0.86383927, 0.95766425]]",https://creativecommons.org/licenses/by/2.0/,ms.akr,https://www.flickr.com/photos/msakr/7145735053
+360e636ce1754acb,validation,pos,occluded,"[0.2248394, 0.06697108, 0.88008565, 0.977169]","[[0.2248394, 0.06697108, 0.88008565, 0.977169]]",https://creativecommons.org/licenses/by/2.0/,Philip Brewer,https://www.flickr.com/photos/bradipo/5021452946
+440bf7b04db34ea8,validation,pos,clear,"[0.011037528, 0.0014771048, 0.7682119, 1.0]","[[0.011037528, 0.0014771048, 0.7682119, 1.0]]",https://creativecommons.org/licenses/by/2.0/,puffyjet,https://www.flickr.com/photos/puffjet/2995025995
+6fe3458df136170b,validation,pos,truncated,"[0.0, 0.054166667, 1.0, 0.85]","[[0.0, 0.054166667, 1.0, 0.85]]",https://creativecommons.org/licenses/by/2.0/,Katja,https://www.flickr.com/photos/katjato/4103462847
+7cbacf6911368111,validation,pos,clear,"[0.17256637, 0.053097345, 0.83849555, 0.96755165]","[[0.17256637, 0.053097345, 0.83849555, 0.96755165]]",https://creativecommons.org/licenses/by/2.0/,Sankar Sankarshanan,https://www.flickr.com/photos/sankarshanan/2794170274
+960ed942df1f960a,validation,pos,truncated,"[0.26385808, 0.1867647, 1.0, 1.0]","[[0.26385808, 0.1867647, 1.0, 1.0]]",https://creativecommons.org/licenses/by/2.0/,Lordcolus,https://www.flickr.com/photos/lordcolus/2770561599
+9fec987d44dfeddb,validation,pos,clear,"[0.27654868, 0.26509574, 0.7079646, 0.97643596]","[[0.27654868, 0.26509574, 0.7079646, 0.97643596]]",https://creativecommons.org/licenses/by/2.0/,Martin Hedegaard,https://www.flickr.com/photos/martin_hedegaard/4550825408
+bbb06ba600c9b472,validation,pos,clear,"[0.20236337, 0.0397351, 0.55686855, 0.90066224]","[[0.20236337, 0.0397351, 0.55686855, 0.90066224]]",https://creativecommons.org/licenses/by/2.0/,Patrick Lentz,https://www.flickr.com/photos/violentz/1908351694
+ce21c64e03eead46,validation,pos,clear,"[0.2125, 0.0390625, 0.7916667, 0.915625]","[[0.2125, 0.0390625, 0.7916667, 0.915625]]",https://creativecommons.org/licenses/by/2.0/,popstencil,https://www.flickr.com/photos/popstencil/62782943/
+d8f2e0adc7099c1d,validation,pos,clear,"[0.13422818, 0.09620991, 0.78076065, 0.99854225]","[[0.13422818, 0.09620991, 0.78076065, 0.99854225]]",https://creativecommons.org/licenses/by/2.0/,Thomas Geersing,https://www.flickr.com/photos/happy_peanuts/4923318039
+fe01815e982763e4,validation,pos,truncated,"[0.06875, 0.034375, 0.8958333, 1.0]","[[0.06875, 0.034375, 0.8958333, 1.0]]",https://creativecommons.org/licenses/by/2.0/,Robbie T,https://www.flickr.com/photos/rawb/164932949
+fed27050f55c11ef,validation,pos,clear,"[0.18050541, 0.04873646, 0.7599278, 0.86281586]","[[0.18050541, 0.04873646, 0.7599278, 0.86281586]]",https://creativecommons.org/licenses/by/2.0/,Matteo Dalmasso,https://www.flickr.com/photos/mdalmasso/7690877392
+01d5f57f8517c48e,validation,neg,negative,,[],https://creativecommons.org/licenses/by/2.0/,teteria sonnna,https://www.flickr.com/photos/sonnnateteria/19638945535
+18720700d538d724,validation,neg,negative,,[],https://creativecommons.org/licenses/by/2.0/,HoCheol Jeon,https://www.flickr.com/photos/gtcheols/4434784429
+5de462fb191445b6,validation,neg,negative,,[],https://creativecommons.org/licenses/by/2.0/,Signe Karin,https://www.flickr.com/photos/signe_karin/4741792573
+64fcbb0efe958959,validation,neg,negative,,[],https://creativecommons.org/licenses/by/2.0/,Martin Pettitt,https://www.flickr.com/photos/mdpettitt/6823680711
+74fda9f7b64734dd,validation,neg,negative,,[],https://creativecommons.org/licenses/by/2.0/,Brian Mortimer,https://www.flickr.com/photos/47802536@N08/8283558985
+9d3fb51ed24fa935,validation,neg,negative,,[],https://creativecommons.org/licenses/by/2.0/,TuRbO_J,https://www.flickr.com/photos/30474136@N07/14285369303
+9df178eea1e65e91,validation,neg,negative,,[],https://creativecommons.org/licenses/by/2.0/,Karen Roe,https://www.flickr.com/photos/karen_roe/7950632720
+f3053265997a798a,validation,neg,negative,,[],https://creativecommons.org/licenses/by/2.0/,John Lord,https://www.flickr.com/photos/yellowbookltd/9023983907

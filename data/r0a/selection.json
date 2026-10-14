@@ -1,0 +1,50 @@
+{
+ "dev": {
+  "positives": 12,
+  "negatives": 8,
+  "negatives_eligible": 8,
+  "strata": {
+   "clear": 8,
+   "occluded": 1,
+   "truncated": 3
+  },
+  "excluded": {
+   "neg: rotation missing": 2,
+   "pos: also in COCO 2017": 2,
+   "pos: rotation missing": 1,
+   "pos: verified but no box (validation)": 0
+  },
+  "licenses": {
+   "https://creativecommons.org/licenses/by/2.0/": 20
+  }
+ },
+ "formal": {
+  "positives": 383,
+  "negatives": 600,
+  "negatives_eligible": 2073,
+  "strata": {
+   "truncated": 83,
+   "small": 7,
+   "clear": 243,
+   "occluded": 46,
+   "unknown": 2,
+   "depiction": 2
+  },
+  "excluded": {
+   "neg: also in COCO 2017": 5,
+   "neg: rotation 180.0": 2,
+   "neg: rotation 270.0": 8,
+   "neg: rotation 90.0": 3,
+   "neg: rotation missing": 491,
+   "pos: also in COCO 2017": 15,
+   "pos: rotation 270.0": 1,
+   "pos: rotation 90.0": 4,
+   "pos: rotation missing": 65,
+   "pos: verified but no box (test)": 0,
+   "pos: verified but no box (train)": 169
+  },
+  "licenses": {
+   "https://creativecommons.org/licenses/by/2.0/": 983
+  }
+ }
+}
