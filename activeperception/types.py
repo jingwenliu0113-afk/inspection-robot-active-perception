@@ -40,6 +40,7 @@ class Split(StrEnum):
     NAV_EVAL = "nav-eval"  # Advanced B2 formal evaluation (decision 018), run once
     R0_DEV = "r0-dev"  # R0b development data (decision 022), never formal
     R0_EVAL = "r0-eval"  # R0b formal evaluation (decision 022), run once
+    V3_EVAL = "v3-eval"  # v3 formal evaluation (decision 025), run once
 
 
 @dataclass(frozen=True)

@@ -26,7 +26,14 @@ from ..r0b import DEPTH_LEVELS, POSE_LEVELS, occupied_locations
 from ..r0b_noise import apply_depth_noise, perturb_pose, rng_for
 from ..sensing import cleared_locations
 from ..types import Decision, DecisionOutput, Observation
-from .geometry import V2_GEOMETRY, GeometryConfig, margin_for, refine_pose_v3, robust_visibility_v3
+from .geometry import (
+    V2_GEOMETRY,
+    GeometryConfig,
+    blind,
+    margin_for,
+    refine_pose_v3,
+    robust_visibility_v3,
+)
 
 CONFIGS = {
     "v2": V2_GEOMETRY,  # decision 016 exactly
@@ -38,7 +45,26 @@ CONFIGS = {
     "m4-e5": GeometryConfig(min_eigenvalue=5.0, margin_ok=(0.04, 0.02), name="m4-e5"),
     "m4p": GeometryConfig(margin_ok=(0.04, 0.02), prior_k=3.0, name="m4p"),
     "m6p": GeometryConfig(margin_ok=(0.06, 0.03), prior_k=3.0, name="m6p"),
+    # the fit contradicts the localiser -> trust neither (dev: localiser over-confident 2x)
+    "m6c": GeometryConfig(margin_ok=(0.06, 0.03), prior_k=3.0, on_conflict="blind", name="m6c"),
+    "m6b": GeometryConfig(  # ... and any failed fit
+        margin_ok=(0.06, 0.03),
+        prior_k=3.0,
+        on_conflict="blind",
+        on_degenerate="blind",
+        name="m6b",
+    ),
 }
+
+
+def config(name: str) -> GeometryConfig:
+    if name == "v3":  # the frozen one (decision 025)
+        from .frozen_v3 import GEOMETRY
+
+        return GEOMETRY
+    return CONFIGS[name]
+
+
 PRIOR_FLOOR = (0.01, 0.005)  # the covariance a localiser reports even when it is exact
 
 
@@ -50,6 +76,7 @@ def reported_prior(pose_level: str) -> tuple[float, float]:
     return max(pn.sigma_xy, PRIOR_FLOOR[0]), max(pn.sigma_yaw, PRIOR_FLOOR[1])
 
 
+DEV_NAMESPACES = ("v3-dev", "v3-dev-dx", "r0b-dev", "nav-b1")  # decision 024 §3
 ZONE_SLACK_M = 0.25  # a detection counts as in the zone up to this far outside its rim
 GATE_MIN_VALID = 0.3
 
@@ -137,9 +164,12 @@ def rule_nbv_v3(tie_break: bool):
 class V3World:
     name = "gazebo-v3"
 
-    def __init__(self, base, depth_level, pose_level, cfg: GeometryConfig, gated: bool):
+    def __init__(
+        self, base, depth_level, pose_level, cfg: GeometryConfig, gated: bool, prior_level=None
+    ):
         self.base, self.cfg, self.gated = base, cfg, gated
         self.depth_level, self.pose_level = depth_level, pose_level
+        self.prior_level = prior_level or pose_level  # what the localiser claims its error is
         self._cache: dict = {}
         self.diag: dict = {}
 
@@ -161,11 +191,12 @@ class V3World:
             est = perturb_pose(viewpoint.pose, pn, rng_for(spec.episode_id, view, "pose", pn.name))
         dets = self.base.detections.get(spec.episode_id, viewpoint.id)
         spread = (math.nan, math.nan)
+        conflict = blinded = False
         if self.cfg == V2_GEOMETRY:  # exactly decision 016 (R0b pipeline b)
             obs, ref = observation_d016(spec, viewpoint.id, depth, dets, est)
             ok, margin = ref.ok, (None, None)
         else:
-            prior = reported_prior(self.pose_level)
+            prior = reported_prior(self.prior_level)
             ref = refine_pose_v3(
                 depth, spec.camera, est, spec.zone, map_outlines(spec), self.cfg, prior=prior
             )
@@ -173,6 +204,9 @@ class V3World:
             vis = robust_visibility_v3(
                 depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_v3
             )
+            conflict, blinded = ref.conflict, blind(ref, self.cfg)
+            if blinded:
+                vis = (0.0,) * len(vis)
             obs = dataclasses.replace(
                 observation(spec, viewpoint.id, depth, dets, ref.pose), location_visibility=vis
             )
@@ -190,6 +224,8 @@ class V3World:
             "err_xy": math.hypot(used.x - true.x, used.y - true.y),
             "err_yaw": abs((used.yaw - true.yaw + math.pi) % (2 * math.pi) - math.pi),
             "refine_ok": bool(ok),
+            "conflict": conflict,
+            "blind": blinded,
             "spread_xy": spread[0],
             "spread_yaw": spread[1],
             "margin_xy": margin[0],
@@ -240,7 +276,8 @@ def outcomes(specs, gts, world, rule, tie_break: bool) -> dict:
 
 
 def run(job: tuple) -> dict:
-    ns, depth_level, pose_level, cfg_name, gated, tie_break = job
+    ns, depth_level, pose_level, cfg_name, gated, tie_break, *rest = job
+    prior_level = rest[0] if rest else None
     from ..detector.cache import DetectionCache
     from ..framestore import FrameStore
     from ..nav.b1_analysis import summarize
@@ -251,7 +288,7 @@ def run(job: tuple) -> dict:
     base = GazeboReplayWorld(
         FrameStore(f"renders/{ns}"), DetectionCache.load(f"runs/{ns}/detector-v1.jsonl")
     )
-    world = V3World(base, depth_level, pose_level, CONFIGS[cfg_name], gated)
+    world = V3World(base, depth_level, pose_level, config(cfg_name), gated, prior_level)
     rule = DecisionRuleV3(frozen_v2.DECISION_V2, version="decision-v3-dev")
     res = outcomes(specs, gts, world, rule, tie_break)
     all_views = []
@@ -269,6 +306,8 @@ def run(job: tuple) -> dict:
         for s in specs
     }
     job = {"depth": depth_level, "pose": pose_level, "config": cfg_name}
+    if prior_level:
+        job["prior"] = prior_level
     occ = {"views": sum(v["occupied_cleared"] for v in present), "present_views": len(present)}
     return {
         "job": job | {"gated": gated, "tie_break": tie_break},
@@ -289,9 +328,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--tie-break", default="0")
     ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=10)
+    ap.add_argument("--prior", default="", help="pose level the localiser reports (mismatch)")
     args = ap.parse_args(argv)
+    if args.ns not in DEV_NAMESPACES:  # formal sets run only through v3.formal (decision 025)
+        raise SystemExit(f"{args.ns}: not development data (allowed: {DEV_NAMESPACES})")
     jobs = [
-        (args.ns, *c.split("x"), cfg, g == "1", t == "1")
+        (args.ns, *c.split("x"), cfg, g == "1", t == "1", args.prior or None)
         for c in args.conditions.split(",")
         for cfg in args.configs.split(",")
         for g in args.gated.split(",")
@@ -304,7 +346,7 @@ def main(argv: list[str] | None = None) -> int:
             j = r["job"]
             name = (
                 f"{j['depth']}x{j['pose']}-{j['config']}-g{int(j['gated'])}-t{int(j['tie_break'])}"
-            )
+            ) + (f"-pr{j['prior']}" if j.get("prior") else "")
             (out / f"{name}.json").write_text(json.dumps(r) + "\n")
             s, occ = r["summary"], r["occupied_false_clearance"]
             fa = sum(v["false_absent"] for v in s.values())

@@ -18,7 +18,8 @@ def row(r: dict) -> dict:
     err = np.array([v["err_xy"] for v in views])
     ok = [v["refine_ok"] for v in views]
     return {
-        "condition": f"{j['depth']}x{j['pose']}",
+        "ns": views[0]["episode"].rsplit("-g", 1)[0],  # episode ids are <ns>-g<group>-v<variant>
+        "condition": f"{j['depth']}x{j['pose']}" + (f" 回報{j['prior']}" if j.get("prior") else ""),
         "config": j["config"],
         "gated": j["gated"],
         "tie_break": j["tie_break"],

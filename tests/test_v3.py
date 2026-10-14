@@ -148,3 +148,97 @@ def test_margin_falls_back_to_k_sigma_of_the_localiser():
 def test_reported_prior_has_a_floor():
     assert v3e.reported_prior("P0") == v3e.PRIOR_FLOOR
     assert v3e.reported_prior("L2") == (0.06, 0.04)
+
+
+def test_formal_distractor_set_has_its_own_seed_and_split():
+    from activeperception.types import Split
+
+    dev = scenes.distractor_specs(scenes.DEV_NAMESPACE, 2)
+    formal = scenes.distractor_specs(scenes.FORMAL_NAMESPACE, 2)
+    assert {s.split for s in dev} == {Split.R0_DEV}
+    assert {s.split for s in formal} == {Split.V3_EVAL}
+    assert {s.generator_version for s in formal} == {scenes.GENERATOR_VERSION_FORMAL}
+    assert not {s.episode_id for s in dev} & {s.episode_id for s in formal}
+    assert dev[0].layout.distractors != formal[0].layout.distractors
+
+
+def test_dev_eval_refuses_formal_data():
+    for ns in ("v3", "v3-dx", "r0b", "nav-b2", "core"):
+        with pytest.raises(SystemExit):
+            v3e.main(["--ns", ns, "--out", "/nonexistent"])
+
+
+def test_report_counts_decisions_per_state():
+    from activeperception.v3 import report
+
+    r = {
+        "rule_per_episode": {
+            "a": {"state": "absent", "b2": "inconclusive", "b3": "absent", "b5": "absent"},
+            "b": {"state": "unobservable", "b2": "inconclusive", "b3": "present", "b5": "present"},
+            "c": {"state": "absent", "b2": "inconclusive", "b3": "inconclusive", "b5": "absent"},
+        }
+    }
+    assert report.by_state(r, 5) == {
+        "absent": {"present": 0, "absent": 2, "inconclusive": 0},
+        "unobservable": {"present": 1, "absent": 0, "inconclusive": 0},
+    }
+    assert report.by_state(r, 2)["absent"]["inconclusive"] == 2
+    assert report.by_state({}, 5) == {}
+
+
+def _fake(fa=0, fp=0, occ=0, absent=1.0, ok=True):
+    states = {"e1": "absent", "e2": "visible", "e3": "absent", "e4": "visible"}
+    right = {"absent": "absent", "visible": "present"}
+    per = {e: {"state": st, **{f"b{b}": right[st] for b in (2, 3, 5)}} for e, st in states.items()}
+    summary = {
+        f"{m}@{b}": {
+            "accuracy": 1.0,
+            "false_absent": fa if (m, b) == ("rule", 2) else 0,
+            "false_present": fp if (m, b) == ("rule", 2) else 0,
+            "geometric_risk": 0,
+            "accuracy_by_state": {"absent": absent, "visible": 1.0},
+        }
+        for m in ("single", "random", "rule", "oracle")
+        for b in range(1, 6)
+    }
+    return {
+        "job": {"config": "v3", "gated": True},
+        "summary": summary,
+        "false_absent": fa,
+        "false_present": fp,
+        "geometric_risk": 0,
+        "all_views_geometric_risk": [],
+        "occupied_false_clearance": {"views": occ, "present_views": 10},
+        "rule_per_episode": per,
+        "pose_error_m": {"p50": 0.0, "p95": 0.0, "max": 0.0},
+        "refine_ok": 1.0,
+    }
+
+
+def test_formal_verdicts_follow_the_preregistered_rules():
+    from activeperception.v3 import formal
+
+    assert len(formal.jobs()) == 12 and formal.PIPELINES["v3"][1] is True  # zone gating on
+    res = {}
+    for ns, d, p, prior in formal.CONDITIONS:
+        for pipe in formal.PIPELINES:
+            res[formal.key(ns, d, p, prior, pipe)] = _fake()
+    ver = formal.verdicts(res)
+    assert all(ver[k]["pass"] for k in ("V1", "V2", "V3", "V4", "V5"))
+    typical = formal.key("v3", "D1", "L1", None, "v3")
+    for bad, failed in (
+        (_fake(occ=1), "V1"),
+        (_fake(fp=1), "V1"),
+        (_fake(absent=0.89), "V2"),
+    ):
+        ver = formal.verdicts({**res, typical: bad})
+        assert not ver[failed]["pass"]
+    dx = formal.key("v3-dx", "D1", "L1", None, "v3")
+    assert not formal.verdicts({**res, dx: _fake(fp=3)})["V3"]["pass"]
+    assert formal.verdicts({**res, formal.key("v3", "D1", "L1", None, "v2"): _fake(fp=3)})["V1"][
+        "pass"
+    ]  # v2 is the comparison, never judged
+    groups = {e: i for i, e in enumerate(("e1", "e2", "e3", "e4"))}
+    diff = formal.paired(res, groups)
+    assert diff["v3:D1xL1"]["rule@2"]["mean"] == 0.0
+    assert "V1" in formal.markdown(res, formal.verdicts(res), diff)

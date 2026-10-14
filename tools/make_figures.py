@@ -12,6 +12,7 @@
 8. docs/figures/nav_cost.png           - nav-b2: path per episode by state, time per goal
 9. docs/figures/r0a_real_images.png    - R0a: frozen detector on real photos (decision 021)
 10. docs/figures/r0b_noise.png        - R0b: v2 safety under modelled depth / pose error
+11. docs/figures/v3_dev_ablation.png  - v3 development: geometry ablation, zone gating (dec. 024)
 
 The demo / failure-case animations (docs/figures/demo_nav2_*, failure_nav2_margin.*) come from
 tools/make_demo.py on run logs (docs/reproduce.md level B).
@@ -806,6 +807,76 @@ def r0b_noise(report: dict) -> None:
     plt.close(fig)
 
 
+def v3_dev_ablation(rows: list[dict]) -> None:
+    """v3 development data (decision 024): unsafe views per geometry config (count, labelled),
+    absent reachability, and zone gating on the distractor scenes. Two conditions = two fixed
+    categorical slots; every bar carries its value in ink."""
+    by = {(r["ns"], r["condition"], r["config"], r["gated"]): r for r in rows}
+    configs = [
+        ("v2", "v2\n(dec. 016)"),
+        ("see", "+ see-\nthrough-v3"),
+        ("pose", "+ nav-\npose-v3"),
+        ("m4", "+ margin\n4 cm"),
+        ("m4p", "+ prior\ngate"),
+        ("m6p", "margin\n6 cm"),
+    ]
+    conds = (("D1xL1", "D1 x L1 (typical)", "#4a3aa7"), ("D2xL2", "D2 x L2 (stress)", "#008300"))
+    fig, axes = plt.subplots(
+        1, 3, figsize=(10.8, 3.7), dpi=200, gridspec_kw={"width_ratios": [1.25, 1.25, 0.9]}
+    )
+    fig.patch.set_facecolor(SURFACE)
+    x = np.arange(len(configs))
+    panels = (
+        ("occupied", "(a) views where a place under the hydrant\n     counts as seen through"),
+        ("absent_b5", "(b) Rule, budget 5: absent episodes\n     answered 'absent'"),
+    )
+    for ax, (field, title) in zip(axes[:2], panels, strict=True):
+        _style(ax)
+        for (c, label, colour), off in zip(conds, (-0.2, 0.2), strict=True):
+            vals = [by[("v3-dev", c, k, False)][field] for k, _ in configs]
+            ax.bar(x + off, vals, width=0.38, color=colour, ec=SURFACE, lw=1.5, label=label)
+            for xi, v in zip(x + off, vals, strict=True):
+                txt = f"{v}" if field == "occupied" else f"{v:.2f}"
+                ax.text(xi, v, txt, ha="center", va="bottom", fontsize=5.8, color=INK2)
+        ax.set_xticks(x)
+        ax.set_xticklabels([n for _, n in configs], fontsize=6.3, color=INK2)
+        ax.set_title(title, fontsize=8, color=INK, loc="left")
+    axes[0].set_ylabel("views (of 780 with the object present)", fontsize=7, color=MUTED)
+    axes[0].set_ylim(0, 6)
+    axes[1].set_ylim(0, 1.12)
+    axes[0].legend(loc="upper right", frameon=False, fontsize=6.5, labelcolor=INK2)
+
+    ax = axes[2]
+    _style(ax)
+    gx = np.arange(2)
+    for gated, colour, off, label in (
+        (False, "#c3c2b7", -0.2, "v2: best detection anywhere"),
+        (True, "#2a78d6", 0.2, "decision-v3: in-zone only"),
+    ):
+        vals = [by[("v3-dev-dx", c, "v2", gated)]["false_present"] for c in ("D0xP0", "D1xL1")]
+        ax.bar(gx + off, vals, width=0.38, color=colour, ec=SURFACE, lw=1.5, label=label)
+        for xi, v in zip(gx + off, vals, strict=True):
+            ax.text(xi, v, f"{v}", ha="center", va="bottom", fontsize=6.3, color=INK2)
+    ax.set_xticks(gx)
+    ax.set_xticklabels(["D0 x P0", "D1 x L1"], fontsize=7, color=INK2)
+    ax.set_ylim(0, 980)
+    ax.set_ylabel("false present (4 methods x budgets 1-5)", fontsize=7, color=MUTED)
+    ax.legend(loc="upper left", frameon=False, fontsize=6.3, labelcolor=INK2)
+    title = "(c) hydrant outside the zone\n     (v3-dev-dx)"
+    ax.set_title(title, fontsize=8, color=INK, loc="left")
+    fig.suptitle(
+        "v3 development data (not a formal result): what each component fixes "
+        "- simulated depth / pose error",
+        x=0.01,
+        ha="left",
+        fontsize=9,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.06, right=0.99, bottom=0.17, top=0.8, wspace=0.3)
+    fig.savefig(OUT / "v3_dev_ablation.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
@@ -846,4 +917,7 @@ if __name__ == "__main__":
     r0b_rep = ROOT / "results/r0b/report.json"
     if r0b_rep.exists():
         r0b_noise(json.loads(r0b_rep.read_text()))
+    v3_dev = ROOT / "results/v3-dev/ablation.json"
+    if v3_dev.exists():
+        v3_dev_ablation(json.loads(v3_dev.read_text())["rows"])
     print("wrote", sorted(p.name for p in OUT.glob("*.png")))

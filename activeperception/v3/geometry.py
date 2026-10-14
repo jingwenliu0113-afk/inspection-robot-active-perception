@@ -69,6 +69,11 @@ class GeometryConfig:
     margin_k: float = 0.0  # not because of the error (corr 0.04-0.22) -> off
     prior_k: float = 0.0  # > 0: reject a fit that moves the estimate > k sigma (localiser's own
     #                       covariance) - a wrong convergence; and fall back with >= k sigma margin
+    # a well-conditioned fit that contradicts the localiser (beyond k sigma or at the search edge):
+    # "fallback" = treat as a failed fit (margin above); "blind" = trust neither, the view clears
+    # nothing (its detections still count). "blind" on degenerate fits too: on_degenerate.
+    on_conflict: str = "fallback"
+    on_degenerate: str = "fallback"
     name: str = "v3"
 
 
@@ -122,6 +127,7 @@ class RefinementV3:
     min_eigenvalue: float
     spread_xy: float  # split-half disagreement (0 if not computed)
     spread_yaw: float
+    conflict: bool = False  # well-conditioned, but the fit and the localiser disagree
 
 
 def _points(depth, camera, pose, zone, max_range) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -222,11 +228,13 @@ def refine_pose_v3(
         eig = float(np.linalg.eigvalsh(j.T @ j)[0])
     in_window = abs(dx) < SEARCH_XY_M - 1e-6 and abs(dy) < SEARCH_XY_M - 1e-6
     in_window &= abs(dyaw) < SEARCH_YAW - 1e-6
-    ok = bool(eig >= cfg.min_eigenvalue and in_window)
+    conditioned = eig >= cfg.min_eigenvalue
+    ok = bool(conditioned and in_window)
     if ok and cfg.prior_k > 0 and prior is not None:
         sxy, syaw = prior
         ok = abs(dx) <= cfg.prior_k * sxy and abs(dy) <= cfg.prior_k * sxy
         ok = bool(ok and abs(dyaw) <= cfg.prior_k * syaw)
+    conflict = bool(conditioned and not ok)
     spread_xy = spread_yaw = 0.0
     if ok and cfg.split_half:
         mid = camera.width / 2
@@ -249,7 +257,7 @@ def refine_pose_v3(
     )
     return RefinementV3(
         pose if ok else estimate, ok, float(dx), float(dy), float(dyaw), float(s), len(pts), eig,
-        spread_xy, spread_yaw,
+        spread_xy, spread_yaw, conflict,
     )  # fmt: skip
 
 
@@ -266,6 +274,13 @@ def margin_for(
         return fx, fyaw
     fx, fyaw = cfg.margin_ok
     return max(fx, cfg.margin_k * ref.spread_xy), max(fyaw, cfg.margin_k * ref.spread_yaw)
+
+
+def blind(ref: RefinementV3, cfg: GeometryConfig) -> bool:
+    """True when the view's pose is not trusted at all: it then clears no location."""
+    if ref.ok:
+        return False
+    return (cfg.on_conflict if ref.conflict else cfg.on_degenerate) == "blind"
 
 
 def robust_visibility_v3(depth, camera, pose, zone, dxy, dyaw, see_v3: bool) -> tuple[float, ...]:

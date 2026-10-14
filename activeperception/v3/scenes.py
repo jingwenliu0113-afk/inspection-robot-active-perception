@@ -3,11 +3,14 @@ outside the inspection zone, so that "is the detection in the zone?" matters.
 
     uv run python -m activeperception.v3.scenes --namespace v3-dev-dx --groups 30 \\
         --out data/episodes/specs-v3-dev-dx.json
+    uv run python -m activeperception.v3.scenes --namespace v3-dx --groups 40 \\
+        --out data/episodes/specs-v3-dx.json      # formal (decision 025), generated once
 
 Each scene group gets one distractor (the same for all its variants), either "near" (between
 the zone and the viewpoint ring) or "far" (behind the ring, in the background of views across
-the zone). It keeps clear of the pillars, the zone, every viewpoint and the walls. Development
-only: these scenes are never a formal evaluation set.
+the zone). It keeps clear of the pillars, the zone, every viewpoint and the walls.
+``v3-dev-dx`` is development data; ``v3-dx`` is the formal set of decision 025 (own seed, split
+``v3-eval``).
 """
 
 from __future__ import annotations
@@ -18,11 +21,14 @@ import math
 
 import numpy as np
 
+from ..episodes import stable_seed
 from ..nav import scene
 from ..serialize import save_spec_set
 from ..types import Pose, Split
 
-GENERATOR_VERSION = "gen-nav-v1+dx-dev"
+DEV_NAMESPACE, FORMAL_NAMESPACE = "v3-dev-dx", "v3-dx"
+GENERATOR_VERSION = "gen-nav-v1+dx-dev"  # development set (decision 024)
+GENERATOR_VERSION_FORMAL = "gen-nav-v1+dx"  # same placement rule, formal set (decision 025)
 NEAR_R = (0.95, 1.45)  # from the zone centre (zone radius 0.5; viewpoint ring 2.0)
 FAR_R = (2.45, 3.3)
 CLEAR_PILLAR_M = 0.45
@@ -53,20 +59,23 @@ def place_distractor(spec, rng: np.random.Generator) -> Pose:
     raise RuntimeError(f"{spec.episode_id}: no place for a distractor")
 
 
+def _rng(namespace: str, group: int) -> np.random.Generator:
+    if namespace == FORMAL_NAMESPACE:
+        return np.random.default_rng(stable_seed("distractor", namespace, group))
+    return np.random.default_rng([20261015, group])  # as v3-dev-dx was generated
+
+
 def distractor_specs(namespace: str, n_groups: int) -> list:
+    formal = namespace == FORMAL_NAMESPACE
+    version = GENERATOR_VERSION_FORMAL if formal else GENERATOR_VERSION
+    split = Split.V3_EVAL if formal else Split.R0_DEV
     base = scene.nav_specs(namespace, n_groups)
     out, placed = [], {}
     for s in base:
         if s.scene_group not in placed:
-            placed[s.scene_group] = place_distractor(
-                s, np.random.default_rng([20261015, s.scene_group])
-            )
+            placed[s.scene_group] = place_distractor(s, _rng(namespace, s.scene_group))
         lay = dataclasses.replace(s.layout, distractors=(placed[s.scene_group],))
-        out.append(
-            dataclasses.replace(
-                s, layout=lay, generator_version=GENERATOR_VERSION, split=Split.R0_DEV
-            )
-        )
+        out.append(dataclasses.replace(s, layout=lay, generator_version=version, split=split))
     return out
 
 
@@ -78,7 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     specs = distractor_specs(args.namespace, args.groups)
     save_spec_set(args.out, specs, extra={"namespace": args.namespace})
-    print(f"wrote {len(specs)} {GENERATOR_VERSION} specs -> {args.out}")
+    print(f"wrote {len(specs)} {specs[0].generator_version} specs -> {args.out}")
     return 0
 
 
