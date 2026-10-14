@@ -95,4 +95,3 @@ def _distractor(i: int, pose, model: str) -> str:
         </visual>
       </link>
     </model>"""
-

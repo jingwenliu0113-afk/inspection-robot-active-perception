@@ -2,7 +2,23 @@
 
 ## 目前位置（2026-10-14）
 
-**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 真實環境適應研究完成（decision 020–023）。目前沒有進行中的工作；下一步需要使用者決定。不採購、不進 RL、不指定場地。**
+**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）。
+進行中：v3 可靠性改善（decision 024，使用者 2026-10-14 核准自主開發；開發資料先行，正式測試需先凍結規格並用新資料）。不換 detector、不進 RL、不採購。**
+
+### v3（decision 024）進度
+
+| 項目 | 狀態 |
+|---|---|
+| 開發資料 | `v3-dev`（120 集）、`v3-dev-dx`（120 集，區域外干擾消防栓）、真實照片 dev 807 張（reserve 809 張未跑 detector） |
+| 幾何消融（R0b 誤差 D1×L1、D2×L2） | 執行中：`runs/v3-dev/geometry`，`python -m activeperception.v3.report runs/v3-dev/geometry` |
+| zone 過濾（decision-v3） | 程式完成（`v3/eval.py`），待在 `v3-dev-dx` 上評估 |
+| 平手處理（rule-nbv v3） | 程式完成，待評估 |
+| 真實照片門檻 / 框形狀分析 | 執行中：`runs/v3-realimg/analysis.json` |
+
+中間發現（開發資料）：
+- `see-through-v3`（容忍缺值）單獨使用：D1×L1 下 absent 重新可判（budget 5 下 100%），但 5 / 780 個視角把消防栓底下的位置算成看穿 → 不安全，必須搭配更準的位姿 / 足夠餘裕。
+- 左右半邊精修的差異與實際誤差幾乎無關（相關 0.04–0.22），不能當不確定性 → 關閉。
+- v3 精修（加權、5 m 截斷、比例搜尋）：成功時誤差 p95 約 4 cm（v2 約 9 cm），但退化檢查判失敗的比例上升（0.93 → 0.65）。
 
 ### R0（decision 020–）
 

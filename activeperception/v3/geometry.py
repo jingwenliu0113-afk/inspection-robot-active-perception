@@ -67,6 +67,8 @@ class GeometryConfig:
     margin_fallback: tuple[float, float] = MARGIN_FALLBACK  # ... when it failed
     split_half: bool = False  # dev finding: half-image fits disagree for geometric reasons,
     margin_k: float = 0.0  # not because of the error (corr 0.04-0.22) -> off
+    prior_k: float = 0.0  # > 0: reject a fit that moves the estimate > k sigma (localiser's own
+    #                       covariance) - a wrong convergence; and fall back with >= k sigma margin
     name: str = "v3"
 
 
@@ -197,7 +199,9 @@ def refine_pose_v3(
     outlines,
     cfg: GeometryConfig,
     min_points: int = 50,
+    prior: tuple[float, float] | None = None,
 ) -> RefinementV3:
+    """``prior`` = (sigma_xy per axis, sigma_yaw) the localiser reports for ``estimate``."""
     pts, rng, cols = _points(depth, camera, estimate, zone, cfg.max_range)
     c = np.array([estimate.x, estimate.y])
     fail = RefinementV3(estimate, False, 0.0, 0.0, 0.0, 1.0, len(pts), 0.0, math.inf, math.inf)
@@ -219,6 +223,10 @@ def refine_pose_v3(
     in_window = abs(dx) < SEARCH_XY_M - 1e-6 and abs(dy) < SEARCH_XY_M - 1e-6
     in_window &= abs(dyaw) < SEARCH_YAW - 1e-6
     ok = bool(eig >= cfg.min_eigenvalue and in_window)
+    if ok and cfg.prior_k > 0 and prior is not None:
+        sxy, syaw = prior
+        ok = abs(dx) <= cfg.prior_k * sxy and abs(dy) <= cfg.prior_k * sxy
+        ok = bool(ok and abs(dyaw) <= cfg.prior_k * syaw)
     spread_xy = spread_yaw = 0.0
     if ok and cfg.split_half:
         mid = camera.width / 2
@@ -245,11 +253,17 @@ def refine_pose_v3(
     )  # fmt: skip
 
 
-def margin_for(ref: RefinementV3, cfg: GeometryConfig) -> tuple[float, float]:
-    """Pose spread of the 27-pose set: fallback when the fit failed, else the configured margin
-    (widened to k * split-half disagreement only when that check is on)."""
+def margin_for(
+    ref: RefinementV3, cfg: GeometryConfig, prior: tuple[float, float] | None = None
+) -> tuple[float, float]:
+    """Pose spread of the 27-pose set: fallback when the fit failed (at least k sigma of the
+    localiser's covariance when ``prior_k`` is on), else the configured margin (widened to
+    k * split-half disagreement only when that check is on)."""
     if not ref.ok or not math.isfinite(ref.spread_xy):
-        return cfg.margin_fallback
+        fx, fyaw = cfg.margin_fallback
+        if cfg.prior_k > 0 and prior is not None:
+            return max(fx, cfg.prior_k * prior[0]), max(fyaw, cfg.prior_k * prior[1])
+        return fx, fyaw
     fx, fyaw = cfg.margin_ok
     return max(fx, cfg.margin_k * ref.spread_xy), max(fyaw, cfg.margin_k * ref.spread_yaw)
 

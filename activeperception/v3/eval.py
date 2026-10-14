@@ -36,7 +36,20 @@ CONFIGS = {
     "m4": GeometryConfig(margin_ok=(0.04, 0.02), name="m4"),
     "m8": GeometryConfig(margin_ok=(0.08, 0.04), name="m8"),
     "m4-e5": GeometryConfig(min_eigenvalue=5.0, margin_ok=(0.04, 0.02), name="m4-e5"),
+    "m4p": GeometryConfig(margin_ok=(0.04, 0.02), prior_k=3.0, name="m4p"),
+    "m6p": GeometryConfig(margin_ok=(0.06, 0.03), prior_k=3.0, name="m6p"),
 }
+PRIOR_FLOOR = (0.01, 0.005)  # the covariance a localiser reports even when it is exact
+
+
+def reported_prior(pose_level: str) -> tuple[float, float]:
+    """The localiser's own covariance (AMCL publishes it): here the error model's sigma."""
+    pn = POSE_LEVELS[pose_level]
+    if pn is None:
+        return PRIOR_FLOOR
+    return max(pn.sigma_xy, PRIOR_FLOOR[0]), max(pn.sigma_yaw, PRIOR_FLOOR[1])
+
+
 ZONE_SLACK_M = 0.25  # a detection counts as in the zone up to this far outside its rim
 GATE_MIN_VALID = 0.3
 
@@ -152,8 +165,11 @@ class V3World:
             obs, ref = observation_d016(spec, viewpoint.id, depth, dets, est)
             ok, margin = ref.ok, (None, None)
         else:
-            ref = refine_pose_v3(depth, spec.camera, est, spec.zone, map_outlines(spec), self.cfg)
-            margin = margin_for(ref, self.cfg)
+            prior = reported_prior(self.pose_level)
+            ref = refine_pose_v3(
+                depth, spec.camera, est, spec.zone, map_outlines(spec), self.cfg, prior=prior
+            )
+            margin = margin_for(ref, self.cfg, prior)
             vis = robust_visibility_v3(
                 depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_v3
             )
@@ -245,6 +261,13 @@ def run(job: tuple) -> dict:
             all_views.append(s.episode_id)
     d = world.diag
     present = [v for (e, _), v in d.items() if gts[e].object_present]
+    per_episode = {  # Rule's decision per budget, for the failure / occlusion analysis
+        s.episode_id: {
+            "state": gts[s.episode_id].state.value,
+            **{f"b{b}": res[("rule", 0, b, s.episode_id)]["decision"] for b in (2, 3, 5)},
+        }
+        for s in specs
+    }
     job = {"depth": depth_level, "pose": pose_level, "config": cfg_name}
     occ = {"views": sum(v["occupied_cleared"] for v in present), "present_views": len(present)}
     return {
@@ -253,6 +276,7 @@ def run(job: tuple) -> dict:
         "all_views_geometric_risk": all_views,
         "occupied_false_clearance": occ,
         "views": [dict(x) | {"episode": e, "vp": i} for (e, i), x in d.items()],
+        "rule_per_episode": per_episode,
     }
 
 

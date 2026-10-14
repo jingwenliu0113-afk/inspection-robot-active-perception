@@ -132,3 +132,19 @@ def test_v2_geometry_config_is_decision_016():
     assert v3e.CONFIGS["v2"] is g.V2_GEOMETRY
     assert not g.V2_GEOMETRY.see_v3 and not g.V2_GEOMETRY.scale and not g.V2_GEOMETRY.weights
     assert g.V2_GEOMETRY.margin_ok == (0.015, 0.005)
+
+
+def test_margin_falls_back_to_k_sigma_of_the_localiser():
+    est = Pose(0, 0, 1.1, 0, 0.3)
+    good = g.RefinementV3(est, True, 0, 0, 0, 1.0, 500, 50.0, 0.0, 0.0)
+    bad = dataclasses.replace(good, ok=False)
+    cfg = g.GeometryConfig(margin_ok=(0.04, 0.02), prior_k=3.0)
+    assert g.margin_for(good, cfg, (0.06, 0.04)) == (0.04, 0.02)
+    assert g.margin_for(bad, cfg, (0.06, 0.04)) == pytest.approx((0.18, 0.12))
+    assert g.margin_for(bad, cfg, (0.01, 0.005)) == g.MARGIN_FALLBACK  # never below the v2 floor
+    assert g.margin_for(bad, g.GeometryConfig(), (0.06, 0.04)) == g.MARGIN_FALLBACK  # gate off
+
+
+def test_reported_prior_has_a_floor():
+    assert v3e.reported_prior("P0") == v3e.PRIOR_FLOOR
+    assert v3e.reported_prior("L2") == (0.06, 0.04)
