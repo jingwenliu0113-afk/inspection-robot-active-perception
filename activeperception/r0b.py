@@ -44,7 +44,7 @@ POSE_LEVELS: dict[str, PoseNoise | None] = {
     "L2": PoseNoise("L2", sigma_xy=0.06, sigma_yaw=0.04, sigma_z=0.02, sigma_pitch=0.010),
 }
 PIPELINES = ("a", "b")
-OCCUPIED_RADIUS_M = 0.10
+OCCUPIED_RADIUS_M = 0.06  # inside the hydrant body (decision 022 appendix A; 0.10 m was too wide)
 PRIMARY = ("D1", "L1", "b")  # R1
 STRESS = ("D2", "L2", "b")  # R2
 EVAL_NAMESPACES = ("r0b",)
@@ -172,6 +172,53 @@ def criteria(results: list[dict]) -> dict:
     }
 
 
+LEGEND = (
+    "FA = false absent（四個方法、budget 1–5 合計）；GR = 策略所選視角的 geometric risk；"
+    "全視角 = 13 個視角聯集後仍全部看穿的物件存在 episode 數；"
+    "佔用看穿 = 物件中心 0.06 m 內的位置被判為看穿的視角數 / 物件存在的視角數。"
+)
+
+
+def _cell(r: dict) -> str:
+    sm, occ = r["summary"], r["occupied_false_clearance"]
+    fa = sum(v["false_absent"] for v in sm.values())
+    gr = sum(v["geometric_risk"] for v in sm.values())
+    av = len(r["all_views_geometric_risk"])
+    mark = "安全" if safe(r) else "**不安全**"
+    return (
+        f"{mark}：FA {fa}、GR {gr}、全視角 {av}；佔用看穿 {occ['views']}/{occ['present_views']}；"
+        f"Rule b2 {sm['rule@2']['accuracy']:.3f}"
+    )
+
+
+def markdown(report: dict) -> str:
+    """Grids for results/r0b/README.md: depth level x pose level, one per pipeline."""
+    by = {tuple(r["condition"].values()): r for r in report["results"]}
+    names = {"a": "(a) v2 直接用估計位姿", "b": "(b) v2 + decision 016（精修 + 餘裕）"}
+    out = []
+    for pipe in PIPELINES:
+        head = "| depth \\ 位姿 | " + " | ".join(POSE_LEVELS) + " |"
+        out += [f"### {names[pipe]}", "", head, "|---|" + "---|" * len(POSE_LEVELS)]
+        for d in DEPTH_LEVELS:
+            out.append(
+                f"| {d} | " + " | ".join(_cell(by[(d, p, pipe)]) for p in POSE_LEVELS) + " |"
+            )
+        out.append("")
+    c = report["criteria"]
+    r1 = "**通過**" if c["R1_primary_D1_L1_b"]["pass"] else "**未通過**"
+    r2 = "通過" if c["R2_stress_D2_L2_b"]["pass"] else "**未通過**"
+    out += [
+        LEGEND,
+        "",
+        "### 判準（decision 022 §6）",
+        "",
+        f"- R1（主要，管線 b、D1 × L1）：{r1}",
+        f"- R2（壓力，管線 b、D2 × L2）：{r2}",
+        "",
+    ]
+    return "\n".join(out) + "\n"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="activeperception.r0b")
     ap.add_argument("--ns", required=True)
@@ -187,6 +234,7 @@ def main(argv: list[str] | None = None) -> int:
     report = {"namespace": args.ns, "results": results, "criteria": criteria(results)}
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.json").write_text(json.dumps(report, indent=1) + "\n")
+    (out / "tables.md").write_text(markdown(report))
     for r in results:
         c = r["condition"]
         rule2, occ = r["summary"]["rule@2"], r["occupied_false_clearance"]
