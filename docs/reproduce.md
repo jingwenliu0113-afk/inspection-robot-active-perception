@@ -142,6 +142,24 @@ uv run python -m activeperception.nav.failure_analysis --out /tmp/nav-failure-an
   誤差以 (episode, 視角, 等級) 固定 seed 抽樣，重跑會得到相同的誤差。
 - 兩者的正式資料都已用過；重跑時把輸出指到 `results/` 以外（程式在正式結果已存在時拒絕覆寫）。
 
+## F. v3、A、B
+
+- **v3（模擬誤差，decision 024–026）**：
+  - 開發：`python -m activeperception.v3.eval --ns v3-dev ...`。只接受開發 namespace，指令與所有開發結果見 [docs/v3-development.md](v3-development.md)。
+  - 正式：
+    1. 產生資料：`python -m activeperception.nav.scene --namespace v3 --groups 40` 與 `python -m activeperception.v3.scenes --namespace v3-dx --groups 40`；
+    2. `./docker/render.sh` 渲染，`build-episodes` 建 GT，`detector.run` 跑偵測；
+    3. 執行 `python -m activeperception.v3.formal --out results/v3 --raw runs/v3-formal`。`results/v3` 已存在時會拒絕重跑。
+  - 12 個 job，Mac 12 核約 1 小時。
+- **A（detector-v2，decision 027）**：
+  - 資料：`python -m activeperception.detv2.data split / download`，test 清單不允許提早下載。
+  - 訓練：`tools/detv2_gpu.sh`（RTX 5070 Ti，GPU lock）。
+  - 選擇與正式評測：`python -m activeperception.detv2.formal dev / select / test`。
+- **B（depth 模型檢查，decision 028）**：
+  1. `python -m activeperception.depthnoise.osf`：OSF 公開資料，186 MB，CC BY 4.0；
+  2. `python -m activeperception.depthnoise.planes --out results/depthnoise/planes.json`：約 10 秒；
+  3. `python -m activeperception.depthnoise.compare results/depthnoise/planes.json`。
+
 ## 資源與隔離
 
 - 所有容器都叫 `inspection-ap-*`，各自有獨立的 network namespace，ROS 2 discovery 限制在 localhost。不碰其他專案的容器、網路與 volume，也不做全域的 Docker prune。
