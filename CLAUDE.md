@@ -4,7 +4,7 @@
 
 ## 狀態
 
-**Core 結案（decision 014，2026-10-13）：v1（decision 010）＋ v2（decision 011–013）。Advanced B 完成（decision 019）。**
+**Core 結案（decision 014，2026-10-13）：v1（decision 010）＋ v2（decision 011–013）。Advanced B 完成（decision 019）。作品集整理完成（2026-10-14）。**
 
 - v1：正式 test 一次；Rule 穩定勝過 Single / Random。holdout 上「接近 Oracle」未重現（decision 013）。
 - v2：看過 v1 test 後提出；只用 core train / val 開發，在新的 `holdout` split 一次性與 v1 分開比較；
@@ -15,7 +15,9 @@
 - v1 / v2 的程式、結果、失敗紀錄都保留（`frozen.py` / `frozen_v2.py`、`results/test-v1/`、`results/holdout/`、`docs/failure-analysis.md`）。
 - **Advanced C（RL）**：使用者決定暫不進行。
 - **Advanced B（Nav2）完成**（decision 015–019）：B0 → decision 016（位姿精修 + 看穿餘裕 + 停點重定位）→ B1 → B2 正式評估 `nav-b2`
-  Q1–Q4 全部成立。`nav-b2` 已用過，不得再用於開發。下一步（實機 / Advanced C / 收尾）需要使用者決定。
+  Q1–Q4 全部成立。`nav-b2` 已用過，不得再用於開發。
+- **使用者決定（2026-10-14）**：暫不購買實體機器人、不進 Advanced C。後續建議見 `docs/roadmap-real-inspection.md`（未啟動，需使用者決定）。
+- README 的主要數字由 `tests/test_readme_claims.py` 對照已 commit 的結果；改 README 時不得與結果檔不一致。
   B 的資料只用 `nav-*` namespace（`Split.NAV_DEV`）；GT 位姿 / 標籤只用於評分，判定只用 AMCL 估計位姿 + 機載影像 + detector。
 
 下一步需要使用者決定，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。

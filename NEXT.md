@@ -2,7 +2,7 @@
 
 ## 目前位置（2026-10-14）
 
-**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）。Advanced C 暫不進行。目前沒有進行中的工作；下一步需要使用者決定。**
+**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理完成（2026-10-14）。Advanced C 不做、暫不採購實機。目前沒有進行中的工作；下一步需要使用者決定。**
 
 GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private，不加 LICENSE）。每個 milestone commit 後 push。
 
@@ -12,6 +12,7 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 | B0 | Nav2 + TB4 可行性；C6 未過 → decision 016（位姿精修 + 餘裕 + 停點重定位）→ `nav-b0d` 全部通過 | 完成 |
 | B1 | 閉迴路整合（`nav-b1` 開發資料） | 完成（decision 017） |
 | B2 | 正式評估 `nav-b2`（160 集、960 次閉迴路），Q1–Q4 全部成立 | **完成（decision 019、`results/nav-b2/`）** |
+| 作品集整理 | README 改寫、架構圖、Demo、重現指南、Nav2 失敗分析、後續建議 | **完成**（不改任何封存結果或結論） |
 
 ### Advanced B 結論（decision 019）
 
@@ -33,9 +34,24 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 
 ## 待使用者決定
 
-1. **下一步方向**：Advanced B 已完成。往實體機器人巡檢（SPEC Optional：硬體採購、真實影像的 detector 驗證 / Advanced A）、
-   或 Advanced C（RL，先前決定暫不進行）、或在此收尾整理作品集。
+1. **下一步方向**（[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)，尚未啟動）：
+   - R0a 真實影像的 detector 檢查、R0b depth 雜訊下 v2 的安全性（兩者不需採購，建議先做）；
+   - R0c 方法修正（rule-nbv-v2 平手、到點容忍值）；R1 之後需要採購硬體。
+   - 使用者已決定：暫不購買實體機器人、不做 Advanced C。
 2. 任何新版本都需要新的 namespace 與未參與開發的資料；`core` test、`holdout`、`nav-b2` 都已使用過。
+
+## 作品集整理（2026-10-14）完成的事
+
+- README 改寫：重點結果、**驗證範圍（模擬已驗證 / 實機未驗證）**、Demo、架構圖、研究紀律、重現；原有結果、Gate、未通過項目全部保留。
+- `docs/architecture.md`（Mermaid 圖、資訊邊界、模組對照）、`docs/reproduce.md`（四個層級）、`docs/roadmap-real-inspection.md`。
+- Demo：`docker/demo.sh`（一集 nav-b1 Nav2 閉迴路，約 1–1.5 分鐘）＋ `tools/make_demo.py`（GIF / 分鏡，重建判定輸入並與 `run.json` 比對）。
+- 失敗分析 Part B：`activeperception/nav/failure_analysis.py` → `results/nav-failure-analysis/summary.json`（事後、唯讀）；
+  新發現：起點位姿精修在 3 / 40 個場景一律退化（72 / 960 次起點拍攝），decision 019 的「精修失敗 5 / 440」只算停點；
+  停點重定位 92.5% 用滿 2 次修正，最終朝向誤差中位 0.046 rad 貼近 0.05 容忍值。
+- 新圖：`nav_b0_lineage.png`、`nav_cost.png`、`demo_nav2_*`、`failure_nav2_margin.*`；既有圖逐位元未變。
+- 重新確認：spec 全部逐位元重新產生；封存的 test / holdout 以 `--reproduce` 逐位元相同。
+- 測試 188（新增 `test_nav_failure_analysis.py`、`test_readme_claims.py`：README 主要數字必須等於已 commit 的結果）。
+- Nav2 重跑不是逐位元可重現：`nav-b1-g0001-v3` 原本 3 個視角，Demo 重跑 4 個（判定相同）。
 
 ## 已驗證的事實（不要重做）
 
