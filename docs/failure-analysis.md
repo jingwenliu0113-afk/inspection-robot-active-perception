@@ -1,6 +1,13 @@
-# Failure analysis（Core 結案，decision 014）
+# Failure analysis
 
-本文件**只讀已 commit 的正式結果**，沒有在 `core` test 或 `holdout` 上重跑任何方法，也**不回饋到任何凍結參數**（decision 014）。
+- **Part A — Core**（§1–7，decision 014 結案時寫成）：teleport 設定下 v1 / v2 的失敗。
+- **Part B — Advanced B（Nav2）**（§8–12，作品集整理時補充）：B0 的兩次未通過、`nav-b2` 中 teleport 與 Nav2 不一致的每一件、重定位的代價、執行層面的失敗。
+
+兩部分都是事後、唯讀的分析：不重跑正式評估，不改任何凍結值，結論不回饋到已封存的版本。
+
+# Part A — Core（decision 014）
+
+本文件 Part A **只讀已 commit 的正式結果**，沒有在 `core` test 或 `holdout` 上重跑任何方法，也**不回饋到任何凍結參數**（decision 014）。
 四組資料**分開報告，不合併**：
 
 | 名稱 | 來源 | 設定 | 用途 |
@@ -10,7 +17,7 @@
 | `holdout/v2` | `results/holdout/` | decision-v2 + rule-nbv-v2 + oracle-v2 | v2 正式評估（decision 013） |
 | `holdout/ablation` | `results/holdout/` | decision-v2 + rule-nbv-v1（只有 Rule） | 區分改善來源 |
 
-§5 的平手分析例外：它用**開發資料**（core train / val）重跑凍結的 v2 策略，程式拒絕 test 與 holdout。
+§4 的平手分析例外：它用**開發資料**（core train / val）重跑凍結的 v2 策略，程式拒絕 test 與 holdout。
 
 重現：
 
@@ -128,3 +135,107 @@ holdout 上 v1 的 budget 3 差距來自 19 件視角選擇失敗（17 absent、
 - 不改任何凍結參數、判準、split 或 metric；不在 test / holdout 上重跑任何方法。
 - §4 的平手現象只記錄為限制，不據此調整 v2。
 - 任何由本分析得到的改進想法，都必須先寫 decision log，並在新的 namespace 產生的新資料上驗證。
+
+# Part B — Advanced B（Nav2）
+
+作品集整理時補充（decision 019 之後），同樣是**事後、唯讀**：讀已 commit 的 B0 報告（`results/nav-b0*/b0_report.json`）與 `nav-b2` 的原始執行紀錄（`runs/nav-b2`，也就是 `b1_analysis` 評分用的同一批檔案）。
+沒有重跑任何正式評估，沒有修改任何凍結值；`nav-b2` 已用過，本分析只解釋已報告的數字。
+
+```bash
+uv run python -m activeperception.nav.failure_analysis --out results/nav-failure-analysis
+```
+
+完整數字：[`results/nav-failure-analysis/summary.json`](../results/nav-failure-analysis/summary.json)。
+執行需要本機的 `runs/nav-b2`（約 285 MB，不進 repo）與 `renders/nav-b2`；沒有這些檔案時，直接讀已 commit 的 `summary.json`。
+
+## 8. B0 的兩次未通過與修正
+
+![B0 lineage](figures/nav_b0_lineage.png)
+
+| | `nav-b0`（只用 AMCL） | `nav-b0c`（+ 位姿精修、看穿餘裕） | `nav-b0d`（+ 停點重定位） |
+|---|---|---|---|
+| 準確到點（預先登錄 ≥ 90%） | 91.7% | **86.1%（未過）** | 100% |
+| 判定用位姿的誤差 p95 | AMCL 7.6 cm / 0.039 rad | 精修 0.32 cm / 0.0005 rad（AMCL 7.2 cm / 0.037 rad） | 精修 0.31 cm；重定位後 AMCL 0.42 cm / 0.0021 rad |
+| 物件存在，所有停點聯集卻被算成全部看穿 | **2 / 6（未過）** | AMCL 位姿 3 / 6 → 判定用位姿 0 / 6 | 0 / 6 |
+| 錯誤答案 / geometric risk（168 組判定） | 0 / 1 | 0 / 0 | 0 / 0 |
+| 每個目標的導航時間 p50（模擬） | 12.6 s | 12.9 s | 18.9 s |
+
+**`nav-b0`：安全邊界失效（C6）。** `decision-v2` 把一個位置算成「看穿」的條件是：實測 depth ≥ 該點在影像中的預期深度 − 3 cm。
+AMCL 的位置誤差有數公分、朝向誤差約 0.02–0.04 rad，用錯的位姿投影時，視線可能「穿過」物件真正站的位置。
+2 / 6 個物件存在的 episode 在所有停點聯集後被算成全部看穿；這次答對只是因為 detector 看到了物件（present 優先）。
+也就是說，v2「漏看不會判 absent」的保證**依賴位姿精度**，這是 decision 016 的起點。
+
+**`nav-b0c`：安全修好了，到點率未過（C3）。** 以機載 depth 對設施地圖精修位姿（p95 0.32 cm），看穿判定再對剩餘誤差取最保守值 → 聯集風險 0 / 6。
+但 Nav2 用 AMCL 判斷是否到點：到點當下約 0.05 rad 的朝向誤差，加上 0.05 rad 的容忍值，20 次未準確到點中有 18 次是真實朝向差 0.100–0.116 rad（另 1 次位置差 0.10 m、1 次 Nav2 回報失敗）。
+這不是判定錯誤，但未達預先登錄的門檻 → 停下，由使用者決定再試一次。
+
+**`nav-b0d`：停點重定位後全部通過。** 代價有兩項：
+- 餘裕讓「初始 + 一個停點」組合的 absent → absent 從 54 / 84 降到 47 / 84（7 組變成 `inconclusive`，安全方向）。
+- 每個目標的導航時間 p50 從約 12.6–12.9 s 增加到 18.9 s。這兩個數字來自不同的 episodes，只能作為粗略比較。
+
+## 9. `nav-b2`：teleport 與 Nav2 不一致的每一件（正式 budget 2、3）
+
+同一批 160 集、四個方法（Random 3 seeds），正式 budget 下 teleport 與 Nav2 的對錯不同的只有 5 件。**沒有任何一件變成錯誤的肯定答案。**
+
+| 方法 | budget | episode（GT） | teleport → Nav2 | 原因（兩者選了相同的視角） |
+|---|---|---|---|---|
+| Rule | 2 | `nav-b2-g0009-v1`（absent） | absent → inconclusive | 看穿 63 / 64（Nav2，含餘裕）vs 64 / 64（teleport） |
+| Random s1 | 2 | `nav-b2-g0009-v1`（absent） | absent → inconclusive | 同上 |
+| Random s0 | 2 | `nav-b2-g0026-v2`（unobservable） | present → inconclusive | 消防栓只露出約 22%：confidence 0.71（teleport）vs 0.48（Nav2） |
+| Random s1 | 2 | `nav-b2-g0024-v0`（unobservable） | present → inconclusive | 只露出約 25%：0.76 vs 0.39 |
+| Random s2 | 3 | `nav-b2-g0034-v1`（absent） | inconclusive → **absent（Nav2 才答對）** | Nav2 停點看穿 64 / 64，teleport 63 / 64 |
+
+兩種機制：
+
+1. **看穿餘裕**（安全方向）：decision 016 對剩餘位姿誤差取最保守值，偶爾少算一個位置 → 需要多一個視角。budget 3 時 `g0009-v1` 兩個方法都答對。
+   反方向也會發生：實際停點與理想視角差幾公分，有時反而看到更多（`g0034-v1`）。
+2. **接近門檻的偵測**：消防栓只露出約四分之一時，teleport 的 confidence 剛好超過 0.7。Nav2 停點偏離目標 3–4 cm、約 0.05 rad，confidence 就掉到 0.4–0.5。
+   判定規則把它留在 `inconclusive`，沒有出錯，但這顯示**部分可見時，偵測對公分級的視角變化很敏感**。
+   實機有動態模糊、光照與相機校正誤差，這個敏感度只會更重要，需要另外量測（見 [後續建議](roadmap-real-inspection.md)）。
+
+## 10. 位姿精修退化時的備援
+
+`nav-pose-v1` 在影像中能對齊的牆面 / 柱子輪廓不足時（退化檢查未過），會放棄精修，判定改用較寬的餘裕（0.10 m / 0.06 rad）。
+
+| 拍攝時機 | 精修失敗 | 分布 |
+|---|---|---|
+| 起點（960 次） | 72 | 全部集中在 3 / 40 個 scene groups（`g0013`、`g0021`、`g0032`）：這些場景的起點視角在每一次執行都退化 |
+| 停點（440 次） | 5 | `g0013` 3 次、`g0029`、`g0031` 各 1 次 |
+
+這 12 集在正式 budget 下，四個方法的 Nav2 結果都與 teleport 相同（不在 §9 的清單中），也沒有任何錯誤答案。
+decision 019 報告的「精修失敗 5 / 440」只計算停點；起點的 72 次是本次補充的。
+
+## 11. 停點重定位的代價
+
+![nav cost](figures/nav_cost.png)
+
+| | 結果 |
+|---|---|
+| 修正次數 0 / 1 / 2（上限 2） | 18 / 15 / **407**（92.5% 用滿） |
+| 最後一次精修位姿相對目標的誤差 | p50 3.0 cm / 0.046 rad；p95 5.9 cm / 0.049 rad |
+| 最後落在容忍值（0.07 m / 0.05 rad）內 | 419 / 435（另外 5 次精修失敗） |
+| 每個目標的導航時間 p50（模擬） | 0 次修正 13.4 s；1 次 19.5 s；2 次 22.3 s |
+| 真實到點（評分用，≤ 0.10 m / 0.10 rad） | 440 / 440 |
+
+- **朝向是瓶頸**：最終朝向誤差的中位數 0.046 rad，緊貼 0.05 rad 的容忍值。
+- 推測原因（未驗證）：Nav2 只要 AMCL 認為朝向在 0.05 rad 內就停下，精修位姿與 AMCL 差幾個 0.01 rad，於是又被判定超出容忍值、重送目標。
+- 結果是**正確但慢**：多數目標要多花約 9 秒（模擬時間）。
+- 可能的改進（例如讓 Nav2 的容忍值與精修判準一致、或直接用精修位姿判斷是否到點）屬於新版本：需要新的 decision log 與新資料。本專案不修改。
+
+## 12. 執行層面的失敗（基礎設施）
+
+| 事件 | 處理 | 對結果的影響 |
+|---|---|---|
+| `nav-b0` 第一次批次被 Docker Desktop 更新（29.8.1 → 29.8.2）中斷 | 保存舊 attempts log，整批重跑 | 無（中斷的批次不使用） |
+| `nav-b1` 一次 Gazebo 啟動崩潰，`BasicNavigator` 卡住約 28 分鐘 | 每個工作使用獨立的 world 目錄；加入 Nav2 啟動看門狗（180 s 未就緒就退出重試） | 無 |
+| `nav-b0d` 第一次啟動時 `specs_by_id` 漏了新 namespace | 每集都在 `prepare` 失敗、沒有產生資料；修正後重跑 | 無 |
+| 靜態分配工作，最後只剩一個 worker 在跑 | 改成動態佇列（`mkdir` 原子取號） | 只影響時間 |
+| `nav-b2`：980 次嘗試，20 次被看門狗終止（exit 3） | 18 個工作重試；其中 2 個第一輪兩次都失敗，續跑時成功；0 缺漏 | 無（失敗的工作沒有 `run.json`，從頭重跑） |
+
+`nav-b2` 的 960 次閉迴路在 Apple M4 Pro 上以 4 個容器並行，約 2 小時 17 分鐘（attempts log 17:51–20:08 UTC）。
+
+## 13. Part B 不做的事
+
+- 不重跑 `nav-b2`，不依本分析調整任何參數或判準。
+- 不把 Nav2 的數字與 Core 合併或直接比較（場景不同，見 decision 019）。
+- §9–11 提到的改進想法（餘裕、偵測門檻附近的敏感度、到點容忍值）都只是記錄。若要實作，必須以新版本、新資料驗證。

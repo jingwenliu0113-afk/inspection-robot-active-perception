@@ -8,6 +8,11 @@
 4. docs/figures/holdout_v1_v2.png      - v1 vs v2 accuracy on the holdout (decision 013)
 5. docs/figures/failure_attribution.png - Rule failures: structural vs viewpoint choice (dec. 014)
 6. docs/figures/nav_teleport_vs_nav2.png - nav-b2: teleport vs Nav2 accuracy (decision 019)
+7. docs/figures/nav_b0_lineage.png     - B0 -> nav-b0c -> nav-b0d: arrival, pose error, safety
+8. docs/figures/nav_cost.png           - nav-b2: path per episode by state, time per goal
+
+The demo / failure-case animations (docs/figures/demo_nav2_*, failure_nav2_margin.*) come from
+tools/make_demo.py on run logs (docs/reproduce.md level B).
 """
 
 from __future__ import annotations
@@ -422,12 +427,207 @@ def failure_attribution(summary: dict) -> None:
     plt.close(fig)
 
 
+# two non-method categories (palette slots 7 / 6, violet / green); validated light: all hard
+# checks pass (CVD dE 27.9, normal 34.1, contrast >= 3:1); every bar is direct-labelled
+POSE_SRC = (
+    ("amcl", "AMCL estimate", "#4a3aa7"),
+    ("d016", "decision-016 pose (depth-refined)", "#008300"),
+)
+
+
+def _style(ax) -> None:
+    ax.set_facecolor(SURFACE)
+    ax.tick_params(colors=MUTED, labelsize=7.5, length=0)
+    for side in ("top", "right", "left"):
+        ax.spines[side].set_visible(False)
+    ax.spines["bottom"].set_color(BASE)
+    ax.yaxis.grid(True, color=GRID, lw=0.7)
+    ax.set_axisbelow(True)
+
+
+def nav_b0_lineage(fa: dict) -> None:
+    """B0 feasibility -> decision 016 -> re-check: one panel per question, same three data sets."""
+    rows = {r["namespace"]: r for r in fa["b0_lineage"]}
+    names = ["nav-b0", "nav-b0c", "nav-b0d"]
+    xt = ["nav-b0\nAMCL only", "nav-b0c\n+ refine, margin", "nav-b0d\n+ relocalise"]
+    x = np.arange(3)
+    fig, axes = plt.subplots(1, 3, figsize=(9.6, 3.4), dpi=200)
+    fig.patch.set_facecolor(SURFACE)
+
+    ax = axes[0]
+    _style(ax)
+    v = [100 * rows[n]["arrival_rate"] for n in names]
+    ax.bar(x, v, width=0.55, color=INK2, ec=SURFACE, lw=2)
+    ax.axhline(90, color=MUTED, lw=1.0, ls=(0, (4, 3)))
+    ax.text(
+        -0.42,
+        102.2,
+        "dashed: pre-registered threshold 90 %",
+        fontsize=6.5,
+        color=MUTED,
+        va="bottom",
+    )
+    for i, val in enumerate(v):
+        ax.text(
+            i,
+            val + 0.6,
+            f"{val:.1f} %" + ("  below" if val < 90 else ""),
+            ha="center",
+            fontsize=7.5,
+            color=INK,
+        )
+    ax.set_ylim(70, 104)
+    ax.set_title(
+        "precise arrival at the viewpoint (GT, scoring only)", fontsize=8.5, color=INK, loc="left"
+    )
+
+    ax = axes[1]
+    _style(ax)
+    w = 0.34
+    for k, (key, label, colour) in enumerate(POSE_SRC):
+        for i, n in enumerate(names):
+            raw = rows[n]["loc_xy_p95_m" if key == "amcl" else "refined_xy_p95_m"]
+            xi = i + (k - 0.5) * w
+            if raw is None:
+                ax.text(xi, 0.12, "not\nused", ha="center", fontsize=6.5, color=MUTED)
+                continue
+            val = 100 * raw
+            ax.bar(
+                xi, val, width=w, color=colour, ec=SURFACE, lw=2, label=label if i == 1 else None
+            )
+            ax.text(xi, val * 1.12, f"{val:.2f}", ha="center", fontsize=7, color=INK)
+    ax.set_yscale("log")
+    ax.set_ylim(0.1, 60)
+    ax.yaxis.set_minor_locator(matplotlib.ticker.NullLocator())
+    ax.set_yticks([0.1, 1, 10])
+    ax.set_yticklabels(["0.1", "1", "10"])
+    ax.set_ylabel("xy error p95 (cm, log)", fontsize=7.5, color=MUTED)
+    ax.set_title("pose used for the decision vs ground truth", fontsize=8.5, color=INK, loc="left")
+    ax.legend(loc="upper right", frameon=False, fontsize=6.5, labelcolor=INK2)
+
+    ax = axes[2]
+    _style(ax)
+    for k, (key, _, colour) in enumerate(POSE_SRC):
+        for i, n in enumerate(names):
+            val = rows[n][
+                "amcl_all_views_risk_episodes" if key == "amcl" else "d016_all_views_risk_episodes"
+            ]
+            xi = i + (k - 0.5) * w
+            if val is None:
+                ax.text(xi, 0.08, "not\nused", ha="center", fontsize=6.5, color=MUTED)
+                continue
+            ax.bar(xi, val, width=w, color=colour, ec=SURFACE, lw=2)
+            ax.text(xi, val + 0.08, str(val), ha="center", fontsize=7.5, color=INK)
+    ax.set_ylim(0, 6)
+    ax.set_yticks(range(0, 7, 2))
+    ax.set_title(
+        "object present, yet the zone counts as\nfully seen through (unsafe), of 6",
+        fontsize=8.5,
+        color=INK,
+        loc="left",
+    )
+    for ax in axes:
+        ax.set_xticks(x)
+        ax.set_xticklabels(xt, fontsize=7, color=INK2)
+    fig.suptitle(
+        "Advanced B0: what failed with AMCL poses and what decision 016 changed (simulation)",
+        x=0.01,
+        ha="left",
+        fontsize=9.5,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.2, top=0.76, wspace=0.28)
+    fig.savefig(OUT / "nav_b0_lineage.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
+def nav_cost(fa: dict, states: dict[str, str]) -> None:
+    """nav-b2 cost: path per episode by GT state (Rule vs Random, method colours) and time per
+    goal by relocalisation corrections (one neutral series)."""
+    c = fa["cost_per_episode"]
+    eps = c["episodes"]
+    groups = [
+        ("visible", "visible"),
+        ("unobservable", "unobservable"),
+        ("absent", "absent"),
+        ("all", "all 160"),
+    ]
+    fig, axes = plt.subplots(
+        1, 2, figsize=(9.6, 3.3), dpi=200, gridspec_kw={"width_ratios": [1.5, 1]}
+    )
+    fig.patch.set_facecolor(SURFACE)
+    ax = axes[0]
+    _style(ax)
+    w = 0.36
+    for k, m in enumerate(("rule", "random")):
+        label, colour = SERIES[m]
+        label = label.replace("(5 seeds)", "(3 seeds)")
+        for i, (g, _) in enumerate(groups):
+            idx = [j for j, e in enumerate(eps) if g == "all" or states[e] == g]
+            val = float(np.mean([c[f"{m}_path_m"][j] for j in idx]))
+            xi = i + (k - 0.5) * w
+            ax.bar(
+                xi, val, width=w, color=colour, ec=SURFACE, lw=2, label=label if i == 0 else None
+            )
+            ax.text(xi, val + 0.06, f"{val:.2f}", ha="center", fontsize=7, color=INK)
+    ax.set_xticks(range(len(groups)))
+    ax.set_xticklabels(
+        [f"{t}\n(n={sum(1 for e in eps if g == 'all' or states[e] == g)})" for g, t in groups],
+        fontsize=7,
+        color=INK2,
+    )
+    ax.set_ylabel("metres driven per episode", fontsize=7.5, color=MUTED)
+    ax.set_title(
+        "distance driven (Nav2, budget 5 run; visible = answered at the start)",
+        fontsize=8.5,
+        color=INK,
+        loc="left",
+    )
+    ax.legend(loc="upper left", frameon=False, fontsize=7, labelcolor=INK2)
+    ax.set_ylim(0, 5)
+
+    ax = axes[1]
+    _style(ax)
+    r = fa["relocalization"]
+    ks = [str(k) for k in range(r["max_corrections"] + 1)]
+    vals = [r["sim_s_p50_by_corrections"][k] for k in ks]
+    ax.bar(range(len(ks)), vals, width=0.55, color=INK2, ec=SURFACE, lw=2)
+    for i, val in enumerate(vals):
+        ax.text(i, val + 0.4, f"{val:.1f} s", ha="center", fontsize=7.5, color=INK)
+    ax.set_xticks(range(len(ks)))
+    ax.set_xticklabels(
+        [f"{k} correction{'' if k == '1' else 's'}\n(n={r['corrections_used'][k]})" for k in ks],
+        fontsize=7,
+        color=INK2,
+    )
+    ax.set_ylabel("simulated seconds per goal (p50)", fontsize=7.5, color=MUTED)
+    ax.set_title("time per goal vs stop relocalisation", fontsize=8.5, color=INK, loc="left")
+    ax.set_ylim(0, 27)
+    fig.suptitle(
+        f"Cost of real navigation on nav-b2 ({r['navigations']} navigations, simulation)",
+        x=0.01,
+        ha="left",
+        fontsize=9.5,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.06, right=0.99, bottom=0.2, top=0.8, wspace=0.22)
+    fig.savefig(OUT / "nav_cost.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
     accuracy_vs_budget(rep)
-    three_states()
-    failure_case(rep)
+    # these two read camera frames: renders/ is not in git (rebuild: docs/reproduce.md level C)
+    if (ROOT / "renders/pilot").exists():
+        three_states()
+    else:
+        print("skip three_states.png (no renders/pilot)")
+    if (ROOT / "renders/core").exists():
+        failure_case(rep)
+    else:
+        print("skip failure_case.png (no renders/core)")
     holdout = ROOT / "results/holdout/report.json"
     if holdout.exists():
         holdout_v1_v2(json.loads(holdout.read_text()))
@@ -437,4 +637,10 @@ if __name__ == "__main__":
     b2 = ROOT / "results/nav-b2/b1_report.json"
     if b2.exists():
         nav_teleport_vs_nav2(json.loads(b2.read_text()))
+    nfa = ROOT / "results/nav-failure-analysis/summary.json"
+    if nfa.exists():
+        fa_nav = json.loads(nfa.read_text())
+        nav_b0_lineage(fa_nav)
+        _, gts, _ = load_episode_set(ROOT / "data/episodes/gazebo-nav-b2.json")
+        nav_cost(fa_nav, {e: g.state.value for e, g in gts.items()})
     print("wrote", sorted(p.name for p in OUT.glob("*.png")))
