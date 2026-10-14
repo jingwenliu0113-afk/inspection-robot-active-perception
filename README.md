@@ -40,7 +40,7 @@ real hardware or real images. Experiments were pre-registered, and every formal 
 | **R0a**（真實照片） | Open Images，383 張含消防栓 ＋ 600 張偏難負樣本 | clear 消防栓 localized recall@0.7 97.9%；自然遮擋 / 截斷下完全漏看 0 / 379 | 偏難負樣本 false present 9.2%（判準 ≤ 1% **未通過**）；網路照片不是機器人相機 |
 | **R0b**（模擬誤差） | `r0b`，160 集 × 18 種 depth / 位姿誤差組合 | v2 + decision 016 在全部 9 種誤差組合 false absent 0、geometric risk 0 | depth 有雜訊時 absent 幾乎判不出（budget 5 下 0–1 / 80）；精修後位姿誤差 p95 9–14 cm，安全主要來自「不判 absent」 |
 
-詳細數字、CI 與 Gate 判定在下方[結果](#結果)。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–019）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
+詳細數字、CI 與 Gate 判定在下方[結果](#結果)。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–023）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
 
 ## 驗證範圍：模擬已驗證 / 實機未驗證
 
@@ -339,8 +339,8 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 
 這個專案刻意用「不容易騙自己」的方式進行：
 
-- **先寫判準、再看結果**：19 份 decision log 記錄每個會影響結論的決定，標明是否在看過結果後才寫。調參只用 train，val 只檢查。
-- **正式評估只跑一次**：`core` test、`holdout`、`nav-b2` 都用過一次後封存。
+- **先寫判準、再看結果**：23 份 decision log 記錄每個會影響結論的決定，標明是否在看過結果後才寫。調參只用 train，val 只檢查。
+- **正式評估只跑一次**：`core` test、`holdout`、`nav-b2`、R0a 正式集、`r0b` 都用過一次後封存。
   `SEALED.sha256` 釘住所有已 commit 的結果、凍結的 episode sets 與凍結設定，`tests/test_seal.py` 檢查；正式 runner 對封存資料只允許 `--reproduce`。
 - **v2 是看過 v1 test 後才提出的**：所以它的所有宣稱只來自新的 holdout，原 test 不用於 v2。
 - **未通過的 Gate 照實寫**：v1 的「接近 Oracle」沒有重現，v2 在 budget 2 未接近 Oracle，B0 兩次未通過，全部保留在 README 與 decision log。
