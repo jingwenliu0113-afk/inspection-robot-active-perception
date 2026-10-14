@@ -99,6 +99,7 @@ GENERATOR_VERSION_V1 = "gen-nav-v1"  # = gen-nav-b0 settings, frozen for B1 / B2
 B1_NAMESPACE = "nav-b1"  # B1 integration (dev) data
 B2_NAMESPACE = "nav-b2"  # B2 formal evaluation (decision 018), generated after it, run once
 EVAL_NAMESPACES = (B2_NAMESPACE,)
+R0B_SPLITS = {"r0b-dev": Split.R0_DEV, "r0b": Split.R0_EVAL}  # R0b (decision 022), same generator
 
 
 def nav_specs(
@@ -106,6 +107,7 @@ def nav_specs(
 ) -> list[EpisodeSpec]:
     """B1 / B2 episodes: gen-v2 variants (present / absent x pillar jitter) on gen-nav-v1."""
     split = Split.NAV_EVAL if namespace in EVAL_NAMESPACES else Split.NAV_DEV
+    split = R0B_SPLITS.get(namespace, split)
     return [
         dataclasses.replace(s, generator_version=GENERATOR_VERSION_V1, split=split)
         for s in b0_specs(n_groups, variants, namespace)
