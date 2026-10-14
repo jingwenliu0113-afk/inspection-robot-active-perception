@@ -118,6 +118,26 @@ def verdicts(real1: dict, real2: dict, sim1: dict, sim2: dict, pipeline: dict | 
     }
 
 
+def t4(cache: Path) -> dict:
+    """The frozen v3 pipeline (decision 025) with detector-v2 on the new simulator set."""
+    from concurrent.futures import ProcessPoolExecutor
+
+    from ..v3 import formal as v3f
+    from ..v3 import frozen_v3
+    from ..v3.eval import run
+
+    jobs = [
+        (FORMAL_SIM, d, q, frozen_v3.CONFIG_NAME, True, frozen_v3.TIE_BREAK, None, str(cache))
+        for d, q in (("D0", "P0"), ("D1", "L1"))
+    ]
+    with ProcessPoolExecutor(len(jobs)) as ex:
+        out = list(ex.map(run, jobs))
+    res = {f"{j[1]}x{j[2]}": v3f.compact(r) for j, r in zip(jobs, out, strict=True)}
+    for c in res.values():
+        c.pop("rule_per_episode")
+    return {"pass": all(v3f.safe(c) for c in res.values()), "results": res}
+
+
 def test(out: Path, weights: str) -> int:
     if (out / "report.json").exists():
         sys.exit(
@@ -137,15 +157,14 @@ def test(out: Path, weights: str) -> int:
     c2 = sim_cache(f"renders/{FORMAL_SIM}", weights, raw / f"{FORMAL_SIM}-v2.jsonl")
     real1, real2 = ev.real(rows, v1), ev.real(rows, v2)
     sim1, sim2 = ev.sim(ep, c1), ev.sim(ep, c2)
+    pipeline = t4(c2)
     report = {
         "decision": "027",
         "weights": weights,
         "download": fetched,
         "real": {"v1": real1, "v2": real2, "paired": ev.paired_real(rows, v1, v2)},
         "sim": {"v1": sim1, "v2": sim2},
-        "verdicts": verdicts(real1, real2, sim1, sim2, None),
-        "note": "T4 (full v3 pipeline with detector-v2) is run separately: v3.eval on "
-        f"{FORMAL_SIM} with the v2 cache",
+        "verdicts": verdicts(real1, real2, sim1, sim2, pipeline),
     }
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.json").write_text(json.dumps(report, indent=1) + "\n")

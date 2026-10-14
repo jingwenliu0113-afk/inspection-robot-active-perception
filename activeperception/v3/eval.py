@@ -283,6 +283,7 @@ def outcomes(specs, gts, world, rule, tie_break: bool) -> dict:
 def run(job: tuple) -> dict:
     ns, depth_level, pose_level, cfg_name, gated, tie_break, *rest = job
     prior_level = rest[0] if rest else None
+    detections = rest[1] if len(rest) > 1 else f"runs/{ns}/detector-v1.jsonl"  # detector-v2: T4
     from ..detector.cache import DetectionCache
     from ..framestore import FrameStore
     from ..nav.b1_analysis import summarize
@@ -290,9 +291,7 @@ def run(job: tuple) -> dict:
     from ..sim.replay import GazeboReplayWorld
 
     specs, gts, _ = load_episode_set(f"data/episodes/gazebo-{ns}.json")
-    base = GazeboReplayWorld(
-        FrameStore(f"renders/{ns}"), DetectionCache.load(f"runs/{ns}/detector-v1.jsonl")
-    )
+    base = GazeboReplayWorld(FrameStore(f"renders/{ns}"), DetectionCache.load(detections))
     world = V3World(base, depth_level, pose_level, config(cfg_name), gated, prior_level)
     rule = DecisionRuleV3(frozen_v2.DECISION_V2, version="decision-v3-dev")
     res = outcomes(specs, gts, world, rule, tie_break)

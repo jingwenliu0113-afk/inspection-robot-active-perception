@@ -2,22 +2,58 @@
 
 ## 目前位置（2026-10-15）
 
-**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）。
-進行中：v3 可靠性改善（decision 024，使用者 2026-10-14 核准自主開發；開發資料先行，正式測試需先凍結規格並用新資料）。不換 detector、不進 RL、不採購。**
+**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）
+＋ v3 完成（decision 024–026）。A（detector 微調，decision 027）等 RTX；B（depth 模型檢查，decision 028）完成量測，D3 開發檢查中。**
+不進 RL、不採購、不用付費服務（使用者 2026-10-15 再確認）。
 
-### v3（decision 024）進度
+### 需要 RTX 5070 Ti 的待辦（GPU 恢復後依序做）
 
-| 項目 | 狀態 |
+1. `tools/detv2_gpu.sh check`：GPU 是否空閒、`/tmp/ai-portfolio-gpu.lock` 是否可取。被占用時就停，不搶鎖。
+2. `tools/detv2_gpu.sh sync`：同步程式碼、train / dev 清單與影像到 gpu-server，約 350 MB，0.6 MB/s 約 10 分鐘。test 清單不會被複製。
+3. `tools/detv2_gpu.sh train`：在 `flock -n` 下依序訓練 `base`、`lowlr`、`negheavy`。
+4. `tools/detv2_gpu.sh fetch`：把權重和紀錄取回 `runs/detv2/<config>/`。
+5. Mac 上：
+   - `python -m activeperception.detv2.formal dev`：dev 真實照片與 `v3-dev` 模擬畫面，CPU；
+   - 接著 `... formal select`：依 decision 027 §4 選設定。
+6. 選到設定才做：`... formal test --out results/detv2`，只跑一次。它會：
+   - 下載 test 影像，跑 v1 / v2；
+   - 跑 `detv2-sim`（已封存、未執行）；
+   - 判定 T1–T3。
+   同一個指令也會跑 T4：完整 v3 管線改用 v2 的偵測，在 `detv2-sim` 的 D0×P0 與 D1×L1 上執行。
+7. 寫結果 decision，更新 README 的 A 段落與 `tests/test_readme_claims.py`。
+
+`tools/detv2_gpu.sh` 的遠端指令（ssh + wsl 引號、tar 串流）**今晚無法實測**，第一次使用時先跑 `check`。
+
+### v3（decision 024–026）完成
+
+| 項目 | 結果 |
 |---|---|
-| 開發資料 | `v3-dev`（120 集）、`v3-dev-dx`（120 集，zone 外干擾消防栓）、真實照片 dev 807 張（reserve 809 張未跑 detector） |
-| 真實照片誤報分析（§1） | 完成：門檻 / 框形狀無法在不大幅犧牲 recall 下壓低誤報；67 張困難負樣本分類（`results/v3-dev/hard-negatives-dev.csv`） |
-| zone 過濾（decision-v3） | 完成：`v3-dev-dx` 上 false present 520 / 702 → 0，present 不受影響 |
-| 幾何消融（nav-pose-v3 / see-through-v3 / 餘裕 / 先驗閘門） | 完成：m6p（餘裕 6 cm / 0.03 rad、先驗閘門 k = 3）在 5 種誤差條件下佔用看穿都是 0，absent@5 0.97–1.00 |
-| 平手處理（rule-nbv-v3） | 完成：沒有改善 → 不採用（負面結果） |
-| 完整 v3 的開發確認 | 執行中：`runs/v3-dev/confirm`、`confirm-dx`（含定位器過度自信條件） |
-| decision 025 凍結 → 正式資料 `v3` / `v3-dx` → 一次執行 → decision 026 | 待做；執行器 `python -m activeperception.v3.formal`（已寫，`results/v3` 存在時拒絕重跑） |
+| 開發 | 真實照片誤報分析、zone 過濾、幾何消融、矛盾處理（m6c）、平手處理（不採用）：[docs/v3-development.md](docs/v3-development.md) |
+| 凍結 | decision 025（`b23b6c8`）；正式資料 `v3` / `v3-dx` 在凍結後產生（`3191947`） |
+| 正式（decision 026） | **V1、V2、V3、V5 通過**；**V4（D2×L2）未通過**：1 / 1,040 個視角越過安全餘量（FA / GR 仍 0） |
+| 主要數字 | D1×L1：Rule 0.787 / 0.956 / 1.000（v2 0.487 / 0.500 / 0.506）；zone 外消防栓 FP 1,014 / 1,263 → 0 |
 
-開發紀錄：[docs/v3-development.md](docs/v3-development.md)（全部是開發資料，不是正式結果）。
+### A：detector-v2（decision 027）
+
+- 完成：
+  - 協定（訓練前凍結）；
+  - `data/detv2`（train 1,462 / dev 613 / test 871，test 從未執行）；
+  - 影像下載，0 失敗；
+  - 訓練、評測、正式 runner；
+  - CPU smoke test；
+  - 困難負樣本分析（[docs/detv2-development.md](docs/detv2-development.md)）；
+  - `detv2-sim`（已封存）。
+- 分析發現：真正困難的是人工確認的負樣本（v1 誤報 7–13%）；按類別挑的相似物件幾乎不誤報。
+
+### B：depth 誤差模型檢查（decision 028）
+
+- 資料：Rustler 2025 OSF 平面資料，D435 / D455，CC BY 4.0，186 MB，只存在本機 `data/raw/depthnoise/`。
+- 依事先準則的結果：
+  - 隨機誤差在 D2 範圍內，量化可忽略；
+  - **D435 低估距離最多 2.48%**（模型只假設高估），相關長度長 2.6–3 倍；
+  - D435 在 1 m 有固定樣式。
+- D3 修正模型（`depthnoise/d3.py`）：開發檢查在 `runs/v3-dev/d3`。D3 的正式結論需要另寫 decision 與新資料（使用者決定）。
+- 報告：[docs/depth-noise-check.md](docs/depth-noise-check.md)。
 
 ### R0（decision 020–）
 
