@@ -18,6 +18,8 @@
   Q1–Q4 全部成立。`nav-b2` 已用過，不得再用於開發。
 - **使用者決定（2026-10-14）**：暫不購買實體機器人、不進 Advanced C。後續建議見 `docs/roadmap-real-inspection.md`（未啟動，需使用者決定）。
 - README 的主要數字由 `tests/test_readme_claims.py` 對照已 commit 的結果；改 README 時不得與結果檔不一致。
+- **R0 真實環境適應研究完成**（decision 020–023）：R0a 真實照片（Open Images；A1 通過、A2 未通過）、R0b 模擬的 depth / 位姿誤差（R1 / R2 通過，但 absent 判不出）。
+  三種驗證（真實照片 / 模擬雜訊 / 實機）不得混為一談；`r0b` 與 R0a 正式集都已用過。實機仍未做。
   B 的資料只用 `nav-*` namespace（`Split.NAV_DEV`）；GT 位姿 / 標籤只用於評分，判定只用 AMCL 估計位姿 + 機載影像 + detector。
 
 下一步需要使用者決定，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。

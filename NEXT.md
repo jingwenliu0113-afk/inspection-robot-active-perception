@@ -2,18 +2,21 @@
 
 ## 目前位置（2026-10-14）
 
-**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理完成。進行中：R0 真實環境適應研究（使用者 2026-10-14 核准 R0a、R0b，依序）。不採購、不進 RL、不指定場地。**
+**Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 真實環境適應研究完成（decision 020–023）。目前沒有進行中的工作；下一步需要使用者決定。不採購、不進 RL、不指定場地。**
 
 ### R0（decision 020–）
 
 | 步驟 | 狀態 |
 |---|---|
 | R0a 真實照片上的 detector（decision 020 協定 → 021 結果） | **完成**：A1 通過（clear 97.9%）、A2 未通過（偏難負樣本 false present 9.2%）、A3 不可用（47.8%） |
-| R0b depth 雜訊 + 定位 / 校正誤差（模擬，decision 022） | 下一步：凍結協定 → 產生 `r0b-dev` / `r0b` → render → detector → 18 個條件 |
+| R0b depth 雜訊 + 定位 / 校正誤差（模擬，decision 022 協定 → 023 結果） | **完成**：R1 / R2 通過（管線 b 在 9 種誤差組合都沒有 false absent）；但 depth 有雜訊時 absent 判不出（budget 5 下 0–1 / 80），精修位姿 p95 9–14 cm |
 
 - R0a 資料：Open Images V7（影像只在本機 `data/raw/r0a/`；清單 `data/r0a/`）。train 框標註用排序檔的 Range 索引抓取（decision 020 附錄 A）。
 - R0a 發現的結構弱點：判定取整張影像的最高信心，不檢查偵測框是否在 zone 內 → 修正屬新版本，需使用者決定（R0 範圍內不做）。
 - 三種驗證不得混用：R0a = 真實照片、R0b = 模擬雜訊、實機 = 未做。
+- R0b 的 dev 檢查修正了「佔用位置」半徑（0.10 → 0.06 m，decision 022 附錄 A，正式資料之前）。
+- 下一步候選（都需使用者決定，見 `docs/roadmap-real-inspection.md`「R0 之後的建議」）：zone 內偵測 / detector 微調、depth 比例校正與精修品質檢查、處理缺值的看穿判定。
+- R0a / R0b 都沒有用到 RTX 5070 Ti（CPU 即可）；若做 detector 微調（Advanced A）才需要取 GPU 鎖。
 
 GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（private，不加 LICENSE）。每個 milestone commit 後 push。
 

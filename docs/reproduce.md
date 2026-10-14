@@ -134,6 +134,14 @@ uv run python -m activeperception.nav.failure_analysis --out /tmp/nav-failure-an
 - 對結論的影響：B2 的結論是統計上的（160 集、cluster bootstrap），重跑應得到相近、但不相同的數字。
 - 正式結果：只有 decision 019 記錄的那一次是正式評估。
 
+## E. R0 真實環境適應研究
+
+- **R0a（真實照片）**：Open Images 的 metadata 與影像約 0.6 GB（影像只存在本機）。選樣、下載、偵測、報告的指令見 [`results/r0a/README.md`](../results/r0a/README.md)。
+  train 框標註的取得方式見 decision 020 附錄 A。偵測只需 CPU（983 張、兩種解析度，約 8 分鐘）。
+- **R0b（模擬誤差）**：render 160 集約 4 分鐘、偵測約 5 分鐘，18 個條件約 23 分鐘（10 個行程）。指令見 [`results/r0b/README.md`](../results/r0b/README.md)。
+  誤差以 (episode, 視角, 等級) 固定 seed 抽樣，重跑會得到相同的誤差。
+- 兩者的正式資料都已用過；重跑時把輸出指到 `results/` 以外（程式在正式結果已存在時拒絕覆寫）。
+
 ## 資源與隔離
 
 - 所有容器都叫 `inspection-ap-*`，各自有獨立的 network namespace，ROS 2 discovery 限制在 localhost。不碰其他專案的容器、網路與 volume，也不做全域的 Docker prune。

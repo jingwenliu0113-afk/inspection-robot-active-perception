@@ -11,6 +11,7 @@
 7. docs/figures/nav_b0_lineage.png     - B0 -> nav-b0c -> nav-b0d: arrival, pose error, safety
 8. docs/figures/nav_cost.png           - nav-b2: path per episode by state, time per goal
 9. docs/figures/r0a_real_images.png    - R0a: frozen detector on real photos (decision 021)
+10. docs/figures/r0b_noise.png        - R0b: v2 safety under modelled depth / pose error
 
 The demo / failure-case animations (docs/figures/demo_nav2_*, failure_nav2_margin.*) come from
 tools/make_demo.py on run logs (docs/reproduce.md level B).
@@ -716,6 +717,95 @@ def r0a_real_images(report: dict, rows: list[dict], dets: dict) -> None:
     plt.close(fig)
 
 
+def r0b_noise(report: dict) -> None:
+    """R0b (decision 023): occupied-location false clearance per condition (sequential blue
+    ramp, one hue; every cell is labelled with its count and safe / UNSAFE in ink), and the
+    cost for pipeline (b) as Rule accuracy."""
+    from matplotlib.colors import LinearSegmentedColormap
+
+    from activeperception import r0b
+
+    ramp = LinearSegmentedColormap.from_list(
+        "blue", ["#f4f8fd", "#b7d3f6", "#6da7ec", "#2a78d6", "#1c5cab", "#0d366b"]
+    )
+    by = {tuple(r["condition"].values()): r for r in report["results"]}
+    depths, poses = list(r0b.DEPTH_LEVELS), list(r0b.POSE_LEVELS)
+    rate = {
+        k: v["occupied_false_clearance"]["views"] / v["occupied_false_clearance"]["present_views"]
+        for k, v in by.items()
+    }
+    vmax = max(max(rate.values()), 0.05)
+    fig, axes = plt.subplots(
+        1, 3, figsize=(10.4, 3.6), dpi=200, gridspec_kw={"width_ratios": [1, 1, 1.25]}
+    )
+    fig.patch.set_facecolor(SURFACE)
+    titles = {"a": "(a) estimated pose used directly", "b": "(b) + decision 016 (refine, margin)"}
+    for ax, pipe in zip(axes[:2], r0b.PIPELINES, strict=True):
+        grid = np.array([[rate[(d, q, pipe)] for q in poses] for d in depths])
+        ax.imshow(grid, cmap=ramp, vmin=0, vmax=vmax)
+        for i, d in enumerate(depths):
+            for j, q in enumerate(poses):
+                r = by[(d, q, pipe)]
+                occ = r["occupied_false_clearance"]
+                n_ep = len(r["all_views_geometric_risk"])
+                verdict = "safe" if r0b.safe(r) else f"UNSAFE\n{n_ep} all-view ep"
+                dark = grid[i, j] > 0.55 * vmax
+                ax.text(
+                    j,
+                    i,
+                    f"{occ['views']}/{occ['present_views']}\n{verdict}",
+                    ha="center",
+                    va="center",
+                    fontsize=6.3,
+                    color=SURFACE if dark else INK,
+                )
+        ax.set_xticks(range(len(poses)))
+        ax.set_xticklabels(poses, fontsize=7.5, color=INK2)
+        ax.set_yticks(range(len(depths)))
+        ax.set_yticklabels(depths, fontsize=7.5, color=INK2)
+        ax.set_xlabel("pose error level", fontsize=7.5, color=MUTED)
+        ax.set_title(titles[pipe], fontsize=8.5, color=INK, loc="left")
+        for side in ax.spines.values():
+            side.set_visible(False)
+        ax.tick_params(length=0)
+    axes[0].set_ylabel("depth noise level", fontsize=7.5, color=MUTED)
+
+    ax = axes[2]
+    _style(ax)
+    labels = [f"{d}x{q}" for d in depths for q in poses]
+    x = np.arange(len(labels))
+    for b, colour, off in ((2, "#4a3aa7", -0.2), (3, "#008300", 0.2)):
+        y = [by[(d, q, "b")]["summary"][f"rule@{b}"]["accuracy"] for d in depths for q in poses]
+        ax.bar(
+            x + off,
+            y,
+            width=0.38,
+            color=colour,
+            ec=SURFACE,
+            lw=1.5,
+            label=f"Rule-NBV v2, budget {b}",
+        )
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=6.5, color=INK2, rotation=45, ha="right")
+    ax.set_ylim(0, 1.08)
+    ax.set_ylabel("3-class accuracy, pipeline (b)", fontsize=7.5, color=MUTED)
+    ax.legend(loc="upper right", frameon=False, fontsize=6.5, labelcolor=INK2)
+    ax.set_title(
+        "cost: absent needs all 64 places seen through", fontsize=8.5, color=INK, loc="left"
+    )
+    fig.suptitle(
+        "R0b: views where a place under the hydrant counts as seen through "
+        "(cell: views / present views) - simulated sensor error",
+        x=0.01,
+        ha="left",
+        fontsize=9,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.22, top=0.84, wspace=0.28)
+    fig.savefig(OUT / "r0b_noise.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
@@ -753,4 +843,7 @@ if __name__ == "__main__":
             r0a.read_csv(ROOT / "data/r0a/manifest-formal.csv"),
             r0a.load_detections(ROOT / "results/r0a/detections-formal.jsonl")["camera"],
         )
+    r0b_rep = ROOT / "results/r0b/report.json"
+    if r0b_rep.exists():
+        r0b_noise(json.loads(r0b_rep.read_text()))
     print("wrote", sorted(p.name for p in OUT.glob("*.png")))

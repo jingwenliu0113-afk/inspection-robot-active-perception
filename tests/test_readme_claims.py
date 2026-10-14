@@ -93,3 +93,24 @@ def test_r0a_numbers():
     miss = cam["positives"]["main"]["complete_miss"]
     assert miss["k"] == 0 and f"0 / {miss['n']}" in README
     assert "R0a 為真實照片" in README  # never presented as simulation or as a robot result
+
+
+def test_r0b_numbers():
+    rep = load("results/r0b/report.json")
+    assert (
+        rep["criteria"]["R1_primary_D1_L1_b"]["pass"]
+        and rep["criteria"]["R2_stress_D2_L2_b"]["pass"]
+    )
+    by = {tuple(r["condition"].values()): r for r in rep["results"]}
+    primary = by[("D1", "L1", "b")]
+    occ = primary["occupied_false_clearance"]
+    assert occ["views"] == 0 and f"0 / {occ['present_views']:,}" in README
+    noisy_b = [r for (d, _, pipe), r in by.items() if pipe == "b" and d != "D0"]
+    absent5 = [round(r["summary"]["rule@5"]["accuracy_by_state"]["absent"] * 80) for r in noisy_b]
+    assert f"{min(absent5)}–{max(absent5)} / 80" in README
+    p95 = [r["pose_error_used"]["xy_p95"] * 100 for r in noisy_b]
+    assert f"p95 {int(min(p95))}–{round(max(p95))} cm" in README
+    # pipeline (a) loses the geometric guarantee under every error, but no false absent occurs
+    a_noisy = [r for (d, q, pipe), r in by.items() if pipe == "a" and (d, q) != ("D0", "P0")]
+    assert all(r["all_views_geometric_risk"] for r in a_noisy)
+    assert all(v["false_absent"] == 0 for r in rep["results"] for v in r["summary"].values())

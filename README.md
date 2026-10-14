@@ -6,8 +6,9 @@
 
 > **狀態（2026-10-14）**
 > - Core（v1、v2）已結案；Advanced B（Nav2 實際導航）已完成。Advanced C（RL）由使用者決定不做。
-> - R0 真實環境適應研究（不是實機驗證）：**R0a 真實照片上的 detector 檢查已完成**——清楚可見的消防栓 97.9% 認得出來，
->   但外觀相近的物體有 9.2% 被誤判（判準未通過）；R0b（depth 雜訊與定位誤差的模擬測試）進行中。
+> - R0 真實環境適應研究（不是實機驗證）已完成：
+>   - **R0a 真實照片**：清楚可見的消防栓 97.9% 認得出來，但外觀相近的物體有 9.2% 被誤判（判準未通過）。
+>   - **R0b 模擬的 depth / 定位誤差**：v2 + decision 016 沒有 false absent（判準通過），但 depth 一有雜訊就幾乎判不出 absent。
 > - **所有結果都只在 ROS 2 Jazzy + Gazebo Harmonic 模擬中取得，尚未在實體機器人或真實影像上驗證**（見[驗證範圍](#驗證範圍模擬已驗證--實機未驗證)）。
 > - 未通過的 Gate 與失敗都照實保留：v1「接近 Oracle」在 holdout 沒有重現；v2 在 budget 2 未接近 Oracle；
 >   v2 的改善主要來自 absent 判定規則，**不是**選視角策略。
@@ -37,6 +38,7 @@ real hardware or real images. Experiments were pre-registered, and every formal 
 | **Core v2** | `holdout`，600 集 | 四個方法的 false absent 全部是 0；Rule 在 budget 2 從 0.683 → **0.957** | 改善主要來自 **absent 判定規則**；新策略相對 v1 策略 +0.020，不顯著 |
 | **Advanced B** | `nav-b2`，160 集、960 次 Nav2 閉迴路 | Nav2 與 teleport 的 accuracy 差 ≤ 0.006；Rule − Random +0.079 [0.044, 0.119]；false absent / 碰撞皆 0 | 需要「位姿精修 + 看穿餘裕 + 停點重定位」；只用 AMCL 位姿時安全邊界會失效 |
 | **R0a**（真實照片） | Open Images，383 張含消防栓 ＋ 600 張偏難負樣本 | clear 消防栓 localized recall@0.7 97.9%；自然遮擋 / 截斷下完全漏看 0 / 379 | 偏難負樣本 false present 9.2%（判準 ≤ 1% **未通過**）；網路照片不是機器人相機 |
+| **R0b**（模擬誤差） | `r0b`，160 集 × 18 種 depth / 位姿誤差組合 | v2 + decision 016 在全部 9 種誤差組合 false absent 0、geometric risk 0 | depth 有雜訊時 absent 幾乎判不出（budget 5 下 0–1 / 80）；精修後位姿誤差 p95 9–14 cm，安全主要來自「不判 absent」 |
 
 詳細數字、CI 與 Gate 判定在下方[結果](#結果)。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–019）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
 
@@ -45,7 +47,7 @@ real hardware or real images. Experiments were pre-registered, and every formal 
 | 項目 | 模擬中已驗證 | 實機尚未驗證 |
 |---|---|---|
 | 感知 | Gazebo 的消防栓模型 + `detector-v1`（COCO 預訓練、未微調）；可見像素 ≥ 10k 時偵測率 99.8%。**真實照片（R0a）**：clear 97.9%，但偏難負樣本誤報 9.2% | 機器人相機的影像（俯角、距離、動態模糊、曝光）；真實巡檢現場的誤報率 |
-| Depth | Gazebo planar depth，與解析 ray-cast 的中位誤差 0.25 mm | 真實 RGB-D 的雜訊與缺值；v2 看穿判定的 3 cm 容忍值是否仍安全 |
+| Depth | Gazebo planar depth，與解析 ray-cast 的中位誤差 0.25 mm。**模擬的立體相機誤差（R0b）**：v2 + decision 016 仍安全，但 absent 判不出來 | 真實感測器的雜訊型態（鏡面、黑色材質、陽光、時間閃爍）；R0b 的誤差模型未與真實相機比對 |
 | 定位 | AMCL + 以 depth 對已知設施地圖精修（p95 約 0.3 cm）；起點已知，里程計接近理想 | 里程計漂移、地圖誤差、特徵不足的場地、人員等動態障礙 |
 | 導航 | TurtleBot 4 + Nav2 在 8 m 圍牆、方柱場景：440 / 440 準確到點，碰撞 0 | 真實地面、窄通道、電池與時間限制 |
 | 場景 | 方柱遮擋、固定光照、單一目標類別、固定 2.0 m 的視角環與 1.1 m 桅桿相機 | 真實設施的幾何與目標物 |
@@ -267,14 +269,14 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 - 另外兩件（Random）是**接近門檻的偵測**：消防栓只露出約四分之一，teleport 的 confidence 為 0.71 / 0.76，Nav2 停點偏差幾公分後降到 0.48 / 0.39。
 - 逐件分析：[docs/failure-analysis.md Part B](docs/failure-analysis.md#part-b--advanced-bnav2)。
 
-### R0：真實環境適應研究（decision 020–）
+### R0：真實環境適應研究（decision 020–023）
 
 使用者決定先不買機器人、不做 RL，改用兩個不需要硬體的步驟，回答往實機前最大的兩個風險。三種驗證刻意分開，不混為一談：
 
 | 名稱 | 內容 | 狀態 |
 |---|---|---|
 | **R0a 真實影像驗證** | 網路上的真實照片 ＋ 凍結的 detector 與門檻 | **完成**（decision 021） |
-| R0b 模擬雜訊測試 | Gazebo 影像 ＋ 依感測器規格建模的 depth 雜訊與定位 / 校正誤差 | 進行中（decision 022） |
+| **R0b 模擬雜訊測試** | Gazebo 影像 ＋ 依感測器規格建模的 depth 雜訊與定位 / 校正誤差 | **完成**（decision 023） |
 | 實機驗證 | 實體機器人、實際場地 | **未做** |
 
 ![R0a](docs/figures/r0a_real_images.png)
@@ -295,6 +297,27 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
   實機之前必須先處理，例如只計入落在 zone 內的偵測，或用真實影像微調。兩者都屬新版本，需要使用者決定。
 - 細節：[`results/r0a/`](results/r0a/README.md)、[decision 020](docs/decisions/020-r0-real-world-adaptation-and-r0a-protocol.md) / [021](docs/decisions/021-r0a-result.md)。
 
+![R0b](docs/figures/r0b_noise.png)
+
+**R0b**：判準與誤差模型在產生資料之前凍結。誤差模型參考 TurtleBot 4 的 OAK-D Pro（4 m 內 < 2%）與 RealSense D435（2 m 內 RMS ≤ 2%）的規格書，
+以及 `nav-b0` 實測的 AMCL 誤差。在新的 160 集上，比較兩條管線：直接用估計位姿 (a)，以及 Advanced B 的 decision 016 (b)。
+
+| 判準 | 結果 | 判定 |
+|---|---|---|
+| R1 管線 (b)、典型誤差（D1 × L1） | false absent 0、geometric risk 0、全視角風險 0、消防栓底下的位置被看穿 0 / 1,040 | **通過** |
+| R2 管線 (b)、加倍誤差（D2 × L2） | 同上，全部 0 | **通過** |
+| R3 管線 (a) | 8 個有誤差的組合全部失去幾何安全保證（全視角風險 1–65 集） | 重現 B0 的發現 |
+
+- **代價**：只要 depth 有雜訊，管線 (b) 就幾乎不判 absent：
+  - budget 5 下 absent 的正確率只有 0–1 / 80，Rule 準確率約 0.49。
+  - Oracle 也一樣，所以問題不在選視角。
+- **安全從哪裡來，要說清楚**：
+  - 在有雜訊的 depth 上，精修後的位姿誤差 p95 有 9–14 cm，遠超過餘裕假設的 1.5 cm。
+  - 原因是比例偏差與成片的隨機誤差把對齊拉偏。
+  - 沒有出錯，主要是因為缺值像素讓「64 個位置全部看穿」幾乎不可能成立。
+  - 若未來讓 absent 在雜訊下可判，安全性必須重新驗證。
+- 細節：[`results/r0b/`](results/r0b/README.md)、[decision 022](docs/decisions/022-r0b-depth-and-pose-noise-protocol.md) / [023](docs/decisions/023-r0b-result.md)。
+
 ## 失敗分析（摘要）
 
 完整內容：[docs/failure-analysis.md](docs/failure-analysis.md)。都是事後、唯讀的分析，不重跑正式評估，也不回饋到凍結參數。
@@ -310,6 +333,7 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 | 起點視角的位姿精修在 3 / 40 個場景一律退化 | 改用較寬的餘裕；沒有造成錯誤答案 | 記錄 |
 | 停點重定位 92.5% 用滿修正次數 | 每個目標約多 9 秒 | 記錄（改進屬新版本） |
 | 真實照片中外觀相近的物體被判成 present（R0a，9.2% 的偏難負樣本） | 錯誤的肯定答案風險；判定規則不檢查偵測框是否在 zone 內 | 記錄；修正屬新版本（需使用者決定） |
+| 有雜訊的 depth 讓位姿精修偏移 9–14 cm（R0b，p95），缺值像素讓 absent 判不出來 | v2 + 016 安全但只會回答 present / inconclusive | 記錄；修正屬新版本（需使用者決定） |
 
 ## 研究紀律
 
@@ -359,13 +383,13 @@ GPU 工作（detector 選型與 Core 偵測）在共享的 RTX 5070 Ti 上執行
 - 停點重定位讓多數目標的導航時間從 13.4 s 增加到 22.3 s（p50，模擬）。
 
 **實機**
-- 沒有任何實體機器人或真實影像的結果（見[驗證範圍](#驗證範圍模擬已驗證--實機未驗證)）。
+- 沒有任何實體機器人的結果。真實影像只有網路照片（R0a），不是機器人相機；depth / 定位誤差只在模擬中建模（R0b）。見[驗證範圍](#驗證範圍模擬已驗證--實機未驗證)。
 
 ## 後續
 
 - Advanced C（RL）：使用者決定不做。
 - 往真實巡檢的建議（不需採購的準備 → 實機 B0 → 實機正式評估）：[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)。
-  其中 R0a 已完成、R0b 進行中。
+  其中 R0a、R0b 已完成；之後的步驟（處理誤報、depth 校正、看穿判定處理缺值）都需要使用者決定。
 - 任何新階段都需要使用者決定。
 
 ## 目錄
@@ -380,7 +404,7 @@ tools/                     make_figures.py（README 圖表）、make_demo.py（D
 gazebo/models/             vendored Fuel 模型（fire_hydrant，CC0）
 data/episodes/             凍結的 spec / episode sets（含 GT）：core、pilot、detsel、holdout、nav-b1、nav-b2
 results/                   detector 選型、pilot、調參、v1 test、holdout、failure analysis、nav-b0* / nav-b1 / nav-b2、nav failure analysis
-docs/decisions/            decision logs 001–022（020– 為 R0）
+docs/decisions/            decision logs 001–023（020–023 為 R0）
 activeperception/r0a.py    R0a：真實照片的選樣、下載、偵測、報告
 activeperception/r0b*.py   R0b：depth / 位姿誤差模型與雜訊條件下的 replay
 docs/architecture.md       系統架構與資訊邊界
