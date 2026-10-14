@@ -118,6 +118,9 @@ class SceneLayout:
     object_radius: float  # footprint circumradius (placement; synthetic proxy bound)
     object_height: float
     occluders: tuple[Box, ...]
+    # extra target-class objects outside the zone (v3 development scenes, decision 024);
+    # empty for every earlier scene, and then left out of the serialised spec (same digests)
+    distractors: tuple[Pose, ...] = ()
 
 
 @dataclass(frozen=True)

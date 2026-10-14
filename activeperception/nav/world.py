@@ -12,6 +12,7 @@ from ..types import Box, EpisodeSpec
 from .scene import GENERATOR_VERSION, walls
 
 LABEL_WALL = 40
+LABEL_DISTRACTOR = 50  # target-class object outside the zone (v3 development scenes)
 NAV_SDF_VERSION = "sdf-nav-world-b0"
 
 
@@ -40,6 +41,7 @@ def nav_world_sdf(spec: EpisodeSpec, teleport_camera_rate: float | None = None) 
     obj = (
         _object(lay.object_pose, lay.object_model) if lay.object_present and lay.object_pose else ""
     )
+    dx = "".join(_distractor(i, p, lay.object_model) for i, p in enumerate(lay.distractors))
     cam = (
         _inspector(spec.initial_viewpoint.pose, spec.camera, teleport_camera_rate)
         if teleport_camera_rate
@@ -75,7 +77,22 @@ def nav_world_sdf(spec: EpisodeSpec, teleport_camera_rate: float | None = None) 
           {_label_plugin(LABEL_GROUND)}
         </visual>
       </link>
-    </model>{enclosure}{pillars}{obj}{cam}
+    </model>{enclosure}{pillars}{obj}{dx}{cam}
   </world>
 </sdf>
 """
+
+
+def _distractor(i: int, pose, model: str) -> str:
+    return f"""
+    <model name="distractor_{i}">
+      <static>true</static>
+      <pose>{pose.x:.6f} {pose.y:.6f} {pose.z:.6f} 0 0 {pose.yaw:.6f}</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><mesh><uri>model://{model}/meshes/{model}.dae</uri></mesh></geometry>
+          {_label_plugin(LABEL_DISTRACTOR)}
+        </visual>
+      </link>
+    </model>"""
+

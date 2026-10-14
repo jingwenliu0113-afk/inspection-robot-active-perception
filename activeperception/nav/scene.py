@@ -99,7 +99,11 @@ GENERATOR_VERSION_V1 = "gen-nav-v1"  # = gen-nav-b0 settings, frozen for B1 / B2
 B1_NAMESPACE = "nav-b1"  # B1 integration (dev) data
 B2_NAMESPACE = "nav-b2"  # B2 formal evaluation (decision 018), generated after it, run once
 EVAL_NAMESPACES = (B2_NAMESPACE,)
-R0B_SPLITS = {"r0b-dev": Split.R0_DEV, "r0b": Split.R0_EVAL}  # R0b (decision 022), same generator
+R0B_SPLITS = {  # same generator, other splits: R0b (decision 022), v3 development (decision 024)
+    "r0b-dev": Split.R0_DEV,
+    "r0b": Split.R0_EVAL,
+    "v3-dev": Split.R0_DEV,
+}
 
 
 def nav_specs(

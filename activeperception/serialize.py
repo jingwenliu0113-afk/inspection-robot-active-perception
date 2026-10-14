@@ -27,6 +27,8 @@ from .types import (
 
 def to_dict(obj: Any) -> Any:
     d = dataclasses.asdict(obj)
+    if isinstance(obj, EpisodeSpec) and not obj.layout.distractors:
+        d["layout"].pop("distractors")  # scenes without distractors serialise as before
     if isinstance(obj, EpisodeRecord):
         # obstacle maps are recomputable from the frame store and would dominate run logs
         for o in d["observations"]:
@@ -69,6 +71,7 @@ def spec_from_dict(d: dict) -> EpisodeSpec:
             object_radius=lay["object_radius"],
             object_height=lay["object_height"],
             occluders=tuple(Box(**b) for b in lay["occluders"]),
+            distractors=tuple(_pose(p) for p in lay.get("distractors", ())),
         ),
     )
 
