@@ -159,3 +159,27 @@ def test_detector_v2_formal_numbers():
     assert f"{m['v1_missed']} → {m['v2_missed']} / {m['n_positives']}" in README
     sel = load("results/detv2-dev/selection.json")
     assert sel["selected"] == "base" and "選 `base`" in README
+
+
+def test_v4_and_d3_formal_numbers():
+    rep = load("results/v4/report.json")
+    ver, res = rep["verdicts"], rep["results"]
+    assert all(ver[k]["pass"] for k in ("W1", "W2", "W3", "W4", "W5", "W6", "D1"))
+    v3s, v4s = res["v4:D2xL2:v3"], res["v4:D2xL2:v4"]
+    assert (
+        v3s["occupied_false_clearance"]["views"] == 1
+        and v4s["occupied_false_clearance"]["views"] == 0
+    )
+    for cond in ("D2xL2", "D3xL1"):
+        e3 = res[f"v4:{cond}:v3"]["exceed"]["refined_ok"]
+        e4 = res[f"v4:{cond}:v4"]["exceed"]["refined_ok"]
+        assert f"{e3} → **{e4}**" in README and f"{e4} / {e3}" in README
+    a1 = res["v4:D1xL1:v4"]["summary"]["rule@5"]["accuracy_by_state"]["absent"]
+    assert f"{round(a1 * 80)} / 80 = {a1:.3f}" in README
+    d3 = [res["v4:D3xL1:v3"], res["v4:D3xL1:v4"]]
+    absent = [c["summary"]["rule@5"]["accuracy_by_state"]["absent"] for c in d3]
+    assert f"absent@5 {absent[0]:.3f} → {absent[1]:.3f}" in README
+    d = rep["v4_minus_v3"]["v4:D1xL1"]["rule@3"]
+    assert f"budget 3 {d['mean']:+.3f}".replace("-", "−") in README.replace("-", "−")
+    assert ci(d).replace("-", "−") in README.replace("-", "−")
+    assert all(c["false_absent"] == 0 for c in res.values())

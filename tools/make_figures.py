@@ -14,6 +14,7 @@
 10. docs/figures/r0b_noise.png        - R0b: v2 safety under modelled depth / pose error
 11. docs/figures/v3_dev_ablation.png  - v3 development: geometry ablation, zone gating (dec. 024)
 12. docs/figures/v3_formal.png        - v3 formal test once: v2 vs v3 on new data (decision 026)
+13. docs/figures/v4_formal.png        - v4 + D3 formal test once: v3 vs v4, new data (dec. 032)
 
 The demo / failure-case animations (docs/figures/demo_nav2_*, failure_nav2_margin.*) come from
 tools/make_demo.py on run logs (docs/reproduce.md level B).
@@ -943,6 +944,82 @@ def v3_formal(report: dict) -> None:
     plt.close(fig)
 
 
+def v4_formal(report: dict) -> None:
+    """decision 032: frozen v3 vs frozen v4 on the new sets, incl. the D3 check."""
+    conds = [
+        ("v4:D0xP0", "D0 x P0\nclean"),
+        ("v4:D1xL1", "D1 x L1\ntypical (W1/W2)"),
+        ("v4:D2xL2", "D2 x L2\nstress (W3)"),
+        ("v4:D3xL1", "D3 x L1\nreal-camera-like (W4)"),
+        ("v4:D3xP0", "D3 x P0"),
+        ("v4:D1xL2-reportsL1", "D1 x L2, localiser\n2x over-confident"),
+        ("v4-dx:D1xL1", "hydrant outside\nzone, D1 x L1"),
+        ("v4-dx:D3xL1", "hydrant outside\nzone, D3 x L1"),
+    ]
+    res = report["results"]
+    pipes = (
+        ("v3", "v3 (frozen, decision 025)", "#a8a69e"),
+        ("v4", "v4 (frozen, decision 031)", "#2a78d6"),
+    )
+    panels = (
+        (
+            "exceed",
+            "(a) trusted pose fits whose true error exceeds the margin used (of 2080 views)",
+        ),
+        (
+            "unsafe",
+            "(b) unsafe outcomes: false present + false absent + views seeing through the hydrant",
+        ),
+        ("absent", "(c) Rule, budget 5: absent episodes answered 'absent' (of 80)"),
+    )
+    fig, axes = plt.subplots(3, 1, figsize=(10.4, 7.8), dpi=200, sharex=True)
+    fig.patch.set_facecolor(SURFACE)
+    x = np.arange(len(conds))
+
+    def value(c, field):
+        if field == "exceed":
+            return c["exceed"]["refined_ok"]
+        if field == "unsafe":
+            return c["false_present"] + c["false_absent"] + c["occupied_false_clearance"]["views"]
+        return round(c["summary"]["rule@5"]["accuracy_by_state"]["absent"] * 80)
+
+    tops = {}
+    for ax, (field, title) in zip(axes, panels, strict=True):
+        _style(ax)
+        vals_all = []
+        for (pipe, label, colour), off in zip(pipes, (-0.2, 0.2), strict=True):
+            vals = [value(res[f"{k}:{pipe}"], field) for k, _ in conds]
+            vals_all += vals
+            ax.bar(x + off, vals, width=0.38, color=colour, ec=SURFACE, lw=1.5, label=label)
+            for xi, v in zip(x + off, vals, strict=True):
+                ax.text(xi, v, f"{v}", ha="center", va="bottom", fontsize=6.3, color=INK2)
+        tops[field] = max(vals_all)
+        ax.set_title(title, fontsize=8.5, color=INK, loc="left")
+    axes[0].set_ylim(0, max(10, tops["exceed"] * 1.2))
+    axes[0].legend(loc="upper left", frameon=False, fontsize=7, labelcolor=INK2)
+    axes[1].set_ylim(0, max(3, tops["unsafe"] * 1.3))
+    axes[1].yaxis.get_major_locator().set_params(integer=True)
+    note = (
+        "v3 again: one view, refined pose 32.7 cm off (margin 6 cm);\n"
+        "v4 finds the true pose > 3 sigma away -> the view clears nothing"
+    )
+    axes[1].text(2.45, 1.2, note, fontsize=6.5, color=INK2, va="bottom")
+    axes[2].set_ylim(0, 95)
+    axes[2].set_xticks(x)
+    axes[2].set_xticklabels([n for _, n in conds], fontsize=6.6, color=INK2)
+    fig.suptitle(
+        "v4 + D3 formal test, run once on new data (decision 032) - simulated depth / pose error, "
+        "not a real robot",
+        x=0.01,
+        ha="left",
+        fontsize=9,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.12, top=0.92, hspace=0.42)
+    fig.savefig(OUT / "v4_formal.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
@@ -986,6 +1063,9 @@ if __name__ == "__main__":
     v3_rep = ROOT / "results/v3/report.json"
     if v3_rep.exists():
         v3_formal(json.loads(v3_rep.read_text()))
+    v4_rep = ROOT / "results/v4/report.json"
+    if v4_rep.exists():
+        v4_formal(json.loads(v4_rep.read_text()))
     v3_dev = ROOT / "results/v3-dev/ablation.json"
     if v3_dev.exists():
         v3_dev_ablation(json.loads(v3_dev.read_text())["rows"])

@@ -27,7 +27,8 @@
   - 凍結設定 `activeperception/v3/frozen_v3.py`；開發資料是 `v3-dev`、`v3-dev-dx`。
 - **A detector-v2 完成**（decision 027 → 030）：T1 未通過（偏難負樣本誤報 8.4% → 4.7%），T2–T4 通過。
   - `detector-v2` 不取代凍結的 `detector-v1`；test 與 `detv2-sim` 已用過、封存。
-- **v4 開發中**（decision 029）：V4 失敗的修正（位姿精修的比例 / 平移補償）與 D3 的正式驗證；開發只用 `v3-dev` 等開發資料。
+- **v4 與 D3 正式驗證完成**（decision 029 / 031 / 032）：W1–W6、D1 全部通過；凍結設定 `activeperception/v4/frozen_v4.py`。
+  - `v4` / `v4-dx` 已用過、封存；v3 在 D2×L2 再次失敗 1 次，v4 擋下；v4 的代價是 absent 較難判。
 - **B depth 模型檢查**（decision 028）：真實 D435 / D455 平面資料的量測完成；D3 只做開發檢查，正式結論需新 decision 與新資料。
 
 RTX 恢復後的步驟、以及其餘需要使用者決定的事，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。

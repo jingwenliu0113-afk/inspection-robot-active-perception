@@ -15,7 +15,11 @@
 >   - 壓力條件（D2×L2）有 1 個視角越過安全餘量（判準 V4 **未通過**）。
 > - **B depth 誤差模型檢查**（decision 028，真實 RealSense 平面資料）：
 >   - 隨機誤差在模型範圍內；
->   - 偏差方向、相關長度、固定樣式是模型沒涵蓋的。
+>   - 偏差方向、相關長度、固定樣式是模型沒涵蓋的，依此寫出更接近真實相機的誤差等級 D3。
+> - **v4 位姿安全修正 ＋ D3 正式驗證**（decision 029–032，模擬誤差，新資料只跑一次）：
+>   - V4 型失敗在新資料上**再次出現於 v3**（D2×L2，精修自認成功但偏 32.7 cm），v4 擋下了它；
+>   - 「精修自認成功、但誤差超出餘裕」的視角：D2×L2 101 → 13、D3×L1 228 → 2；所有判準通過；
+>   - 凍結的 v3 在 D3 下也安全；代價是 v4 的 absent 較難判（D1×L1 budget 3 −0.081）。
 > - **A detector 困難負樣本微調**（decision 027 / 030，真實照片）：
 >   - 偏難負樣本的誤報 8.4% → **4.7%**（成對修好 43、弄壞 16），但未達 ≤ 1%（判準 T1 **未通過**）；
 >   - 召回沒有明顯退步，模擬中的 v3 管線仍然安全（T2–T4 通過）；正樣本完全漏看 4 → 10 / 134。
@@ -52,16 +56,17 @@ real hardware or real images. Experiments were pre-registered, and every formal 
 | **R0b**（模擬誤差） | `r0b`，160 集 × 18 種 depth / 位姿誤差組合 | v2 + decision 016 在全部 9 種誤差組合 false absent 0、geometric risk 0 | depth 有雜訊時 absent 幾乎判不出（budget 5 下 0–1 / 80）；精修後位姿誤差 p95 9–14 cm，安全主要來自「不判 absent」 |
 | **v3**（模擬誤差） | `v3` ＋ `v3-dx`（zone 外有相似消防栓），各 160 集 | 典型誤差 D1×L1：FA / FP / GR / 佔用看穿全部 0；Rule absent@5 0.013 → **1.000**；zone 外消防栓的 false present 1,014 / 1,263 → **0** | 壓力條件 D2×L2 有 1 / 1,040 個視角越過安全餘量（V4 **未通過**，FA 仍為 0）；乾淨條件 budget 2 少 0.019（不顯著） |
 | **A**（真實照片） | 737 張偏難負樣本 ＋ 134 張含消防栓（v3 保留、從未跑過 detector） | 困難負樣本微調：偏難負樣本 false present 8.4% → **4.7%**（修好 43 / 弄壞 16，p = 0.0006）；召回不退步；模擬中 v3 管線安全 | ≤ 1% 的判準 T1 **未通過**；正樣本完全漏看 4 → 10 / 134 |
+| **v4 ＋ D3**（模擬誤差） | `v4` ＋ `v4-dx`，各 160 集；v3 與 v4 成對 | v4 在 D1 / D2×L2 / D3 誤差下全部安全；超出餘裕的視角 D2×L2 101 → **13**、D3×L1 228 → **2**；v3 在 D3 下也安全 | v3 在 D2×L2 再次有 1 / 1,040 個視角被看穿；v4 的 absent 較難判（D3×L1 absent@5 0.713 → 0.637） |
 | **B**（真實 depth） | RealSense D435 / D455 平面資料（公開資料集） | 隨機誤差在 D2 範圍內（接近 D1）；量化可忽略 | D435 低估距離最多 2.48%（模型只假設高估）；相關長度是模型的 2.6–3 倍 |
 
-詳細數字、CI 與 Gate 判定在下方[結果](#結果)。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–030）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
+詳細數字、CI 與 Gate 判定在下方[結果](#結果)。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–032）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
 
 ## 驗證範圍：模擬已驗證 / 實機未驗證
 
 | 項目 | 模擬中已驗證 | 實機尚未驗證 |
 |---|---|---|
 | 感知 | Gazebo 的消防栓模型 + `detector-v1`（COCO 預訓練、未微調）；可見像素 ≥ 10k 時偵測率 99.8%。**真實照片（R0a）**：clear 97.9%，但偏難負樣本誤報 9.2%。**v3** 只計入 zone 內的偵測：模擬中 zone 外的相似消防栓不再誤報 | 機器人相機的影像（俯角、距離、動態模糊、曝光）；真實巡檢現場的誤報率；zone **內**的相似物件：detector-v2（decision 030）把偏難負樣本誤報降到 4.7%，仍未達 1% |
-| Depth | Gazebo planar depth，與解析 ray-cast 的中位誤差 0.25 mm。**模擬的立體相機誤差（R0b / v3）**：v3 在典型誤差下安全且判得出 absent。**B**：誤差模型與真實 D435 / D455 平面資料比對 | 真實感測器在機器人上的整體表現（鏡面、黑色材質、陽光、邊緣）；B 發現的偏差方向、長相關、固定樣式下 v3 是否仍安全（只做了開發檢查） |
+| Depth | Gazebo planar depth，與解析 ray-cast 的中位誤差 0.25 mm。**模擬的立體相機誤差（R0b / v3 / v4）**：v3 在典型誤差下安全且判得出 absent；v4 在壓力條件與更接近真實相機的 D3 下也安全。**B**：誤差模型與真實 D435 / D455 平面資料比對 | 真實感測器在機器人上的整體表現（鏡面、黑色材質、陽光、邊緣）；真實 depth 在機器人上是否落在 D3 的範圍內（D3 只依平面資料寫成；v3 / v4 在 D3 下的安全是模擬結論，decision 032） |
 | 定位 | AMCL + 以 depth 對已知設施地圖精修（p95 約 0.3 cm）；起點已知，里程計接近理想 | 里程計漂移、地圖誤差、特徵不足的場地、人員等動態障礙 |
 | 導航 | TurtleBot 4 + Nav2 在 8 m 圍牆、方柱場景：440 / 440 準確到點，碰撞 0 | 真實地面、窄通道、電池與時間限制 |
 | 場景 | 方柱遮擋、固定光照、單一目標類別、固定 2.0 m 的視角環與 1.1 m 桅桿相機 | 真實設施的幾何與目標物 |
@@ -381,6 +386,38 @@ zone 過濾處理不了 zone **內**的相似物件。R0a 的誤報中有管件�
 - 結論：誤報顯著下降，但沒有達到 A2 的標準。`detector-v2` **不取代**凍結的 `detector-v1`；v3 / v4 的正式測試繼續用 v1。
 - 結果：[decision 030](docs/decisions/030-detector-v2-result.md)、[`results/detv2/`](results/detv2/report.json)；開發與困難負樣本分析：[docs/detv2-development.md](docs/detv2-development.md)。
 
+### v4：位姿安全修正，以及 D3 的正式驗證（decision 029–032，模擬誤差）
+
+v3 的 V4 失敗只有 1 個視角，但它是更普遍問題的一角。開發資料（`v3-dev`）上的代理指標「精修自認成功、但真實誤差超出所用餘裕的視角」，
+v3 在 D2×L2 有 65 個、在 D3×L1 有 144 個。分析找到三個原因（[docs/v4-development.md](docs/v4-development.md)）：
+
+| 原因 | v4 的處理 |
+|---|---|
+| L2 的先驗閘門（3σ = 18 cm）比 ±15 cm 的搜尋範圍寬，從未作用；起點很遠時只能收斂到錯的位置 | 搜尋範圍 max(15 cm, 4σ)：正確的擬合會移動超過 3σ，變成「矛盾」→ 該視角不提供看穿 |
+| 同一張 depth 可以用不同的「比例 + 平移」組合解釋得幾乎一樣好，v3 只取一組 | 比例假設 0.96–1.04 各自搜尋；成本接近的假設之位姿離散度加進餘裕 |
+| 雜訊與距離成正比，未修正的成本偏好縮小點雲（比例偏向上緣） | 尺度雅可比：不同比例的殘差以量測單位比較 |
+| D3 下 zone 外的消防栓會被定位進 zone（depth 短 6.3%） | zone 過濾考慮 ±8% 的 depth 區間：整段在 zone 內才能判 present，任何一點在 zone 內就擋 absent |
+
+被否決的嘗試：只擴大範圍（超出餘裕沒有減少）、粗網格唯一性檢查（正確擬合也不唯一）、比例邊界規則（代價大於好處）。
+
+![v4 正式結果](docs/figures/v4_formal.png)
+
+| 判準（decision 031，事先寫定） | 結果 | 判定 |
+|---|---|---|
+| W1 v4 典型誤差 D1×L1 安全 | 全部 0 | **通過** |
+| W2 D1×L1 absent@5 ≥ 0.90 | 79 / 80 = 0.988 | **通過** |
+| W3 v4 壓力條件 D2×L2 安全（V4 的條件） | 全部 0（v3：佔用看穿 1 / 1,040） | **通過** |
+| W4 v4 在 D3×L1 安全 | 全部 0 | **通過** |
+| W5 超出餘裕 ≤ v3 的 0.25 倍 | D2×L2 13 / 101、D3×L1 2 / 228 | 通過 |
+| W6 zone 外消防栓、D3×P0、定位器過度自信 | 全部 0 | 通過 |
+| D1 凍結的 v3 在 D3 下安全（D3 的正式驗證） | 全部 0 | **通過** |
+
+- **V4 型失敗在新資料上重現**：v3 的一個視角精修自認成功，實際偏 32.7 cm，消防栓底下的位置被看穿。
+  v4 在同一視角找到了真正的位姿（誤差 0.8 cm），但移動量 18.5 cm 超過 3σ，判為矛盾、不提供看穿。
+- **代價**：v4 的餘裕較大（中位 10 cm），absent 較難判。D1×L1 Rule budget 3 −0.081 [−0.125, −0.044]；
+  D2×L2 absent@5 0.975 → 0.863；D3×L1 0.713 → 0.637。D3×P0 反而較好（budget 5 +0.056）。乾淨條件兩者相同。
+- 結果：[decision 032](docs/decisions/032-v4-and-d3-formal-result.md)、[`results/v4/`](results/v4/tables.md)。
+
 ### B：depth 誤差模型 vs 真實立體相機（decision 028）
 
 R0b 與 v3 的安全結論都建立在依規格書寫的 D1 / D2 depth 誤差模型上。B 用公開的真實資料檢查這個模型：
@@ -395,10 +432,9 @@ RealSense D435 / D455，平面放在 13 個雷射測距的距離（Rustler et al
 | 平面上的缺值、量化 | 模型保守 / 可忽略 |
 
 - 依此寫出修正模型 D3：在 D2 上加入低估偏差、長相關、固定樣式、單側立體遮蔽帶。
-- D3 下 v3 的**開發**檢查（`v3-dev`）：
-  - 仍然安全：佔用看穿 0 / 780，FA / FP / GR 0；
-  - absent 可判率下降：budget 5 時 D3×L1 為 0.817（D1×L1 為 1.000）。原因是偏差加浮動超出比例搜尋的範圍，矛盾的視角不提供看穿。
-  - 正式結論需要另寫 decision 並使用新資料。
+- D3 的**正式驗證**（decision 031 / 032，新資料 `v4` / `v4-dx`，只跑一次）：凍結的 v3 在 D3×L1、D3×P0、zone 外有消防栓的 D3×L1 都安全（判準 D1 通過）。
+  但安全邊際小：精修自認成功、誤差卻超出餘裕的視角有 228 / 2,080（D1×L1 為 27），absent@5 0.713。v4 把前者降到 2。
+- 開發資料上，D3 讓 zone 外的消防栓被定位進 zone（depth 短了 6.3%），v3 有 1 集 false present；正式資料上沒有出現。v4 以 ±8% 的 depth 區間過濾處理。
 - 見 [docs/depth-noise-check.md](docs/depth-noise-check.md)、[`results/depthnoise/`](results/depthnoise/comparison.json)。
 
 ## 失敗分析（摘要）
@@ -419,15 +455,17 @@ RealSense D435 / D455，平面放在 13 個雷射測距的距離（Rustler et al
 | 困難負樣本微調讓 detector 更「乾脆」（A） | 偏難負樣本誤報降低，但正樣本完全沒反應的影像 4 → 10 / 134 | 記錄；`detector-v2` 不取代 v1，實機前要追蹤 |
 | 有雜訊的 depth 讓位姿精修偏移 9–14 cm（R0b，p95），缺值像素讓 absent 判不出來 | v2 + 016 安全但只會回答 present / inconclusive | v3：absent@5 0.013 → 1.000，典型誤差下仍安全 |
 | 定位器過度自信時，先驗閘門把正確的精修當成錯誤（v3 開發） | 開發資料上 1 / 780 個視角越過安全餘量 | 精修與定位器矛盾時，該視角不提供看穿（正式測試 V5 通過） |
-| 估計位姿已偏離 21.5 cm、精修又往錯的方向收斂（v3 正式測試，D2×L2） | 1 / 1,040 個視角越過安全餘量（V4 未通過；FA 仍 0） | 記錄；修正屬新版本 |
-| 真實 D435 低估距離、誤差成片且部分固定（B） | R0b / v3 的誤差模型沒有涵蓋 | D3 修正模型；開發檢查，正式結論需另外驗證 |
+| 估計位姿已偏離 21.5 cm、精修又往錯的方向收斂（v3 正式測試，D2×L2） | 1 / 1,040 個視角越過安全餘量（V4 未通過；FA 仍 0） | v4（見下兩列） |
+| 真實 D435 低估距離、誤差成片且部分固定（B） | R0b / v3 的誤差模型沒有涵蓋 | D3 修正模型；正式驗證：v3 與 v4 都安全（decision 032） |
+| 估計位姿已偏離、精修又往錯的方向收斂（V4 型，v3） | 新資料上再次出現（D2×L2，32.7 cm） | v4：搜尋範圍涵蓋 4σ，起點很遠時正確的擬合變成「矛盾」→ 不提供看穿（decision 032） |
+| 比例與平移互相補償、比例估計偏向縮小點雲（v4 開發） | v3 在 D3×L1 有 228 個視角誤差超出餘裕 | 比例假設 ＋ 尺度雅可比 ＋ 依離散度加大餘裕：降到 2，代價是 absent 較難判 |
 
 ## 研究紀律
 
 這個專案刻意用「不容易騙自己」的方式進行：
 
-- **先寫判準、再看結果**：30 份 decision log 記錄每個會影響結論的決定，標明是否在看過結果後才寫。調參只用 train，val 只檢查。
-- **正式評估只跑一次**：`core` test、`holdout`、`nav-b2`、R0a 正式集、`r0b`、`v3` / `v3-dx`、detector-v2 的 test 與 `detv2-sim` 都用過一次後封存。
+- **先寫判準、再看結果**：32 份 decision log 記錄每個會影響結論的決定，標明是否在看過結果後才寫。調參只用 train，val 只檢查。
+- **正式評估只跑一次**：`core` test、`holdout`、`nav-b2`、R0a 正式集、`r0b`、`v3` / `v3-dx`、detector-v2 的 test 與 `detv2-sim`、`v4` / `v4-dx` 都用過一次後封存。
   `SEALED.sha256` 釘住所有已 commit 的結果、凍結的 episode sets 與凍結設定，`tests/test_seal.py` 檢查；正式 runner 對封存資料只允許 `--reproduce`。
 - **v2 是看過 v1 test 後才提出的**：所以它的所有宣稱只來自新的 holdout，原 test 不用於 v2。
 - **未通過的 Gate 照實寫**：v1 的「接近 Oracle」沒有重現，v2 在 budget 2 未接近 Oracle，B0 兩次未通過，全部保留在 README 與 decision log。
@@ -470,9 +508,15 @@ GPU 工作（detector 選型與 Core 偵測）在共享的 RTX 5070 Ti 上執行
 - 停點重定位讓多數目標的導航時間從 13.4 s 增加到 22.3 s（p50，模擬）。
 
 **v3**
-- 安全結論只在 R0b 的 D1 / D2 誤差模型下成立；壓力條件 D2×L2 有 1 個視角越過安全餘量（V4 未通過）。
+- 壓力條件 D2×L2 有 1 個視角越過安全餘量（V4 未通過），新資料上再次出現（decision 032）。
+- D3 下也安全（decision 032），但超出餘裕的視角很多（228 / 2,080），安全邊際小。
 - 模擬中的定位器誠實回報不確定度；只檢查了 2 倍的過度自信。
 - zone 過濾只排除 zone 外的相似物件。
+
+**v4**
+- 以較大的餘裕換安全：absent 較難判（D1×L1 budget 3 −0.081，D3×L1 absent@5 0.637）。
+- 仍有少數視角的誤差超出餘裕（D2×L2 13 個，最多超出 8.7 cm），只是方向沒有對準消防栓；這不是保證。
+- D3 是依公開平面資料寫成的模型；精修的比例假設範圍 ±4%、zone 過濾的 ±8% 都取自開發資料，更大的 depth 誤差沒有涵蓋。
 
 **A（detector-v2）**
 - 偏難負樣本誤報 4.7%，未達 1%；單一訓練種子、單一架構，沒有重新校準信心。
@@ -481,7 +525,7 @@ GPU 工作（detector 選型與 Core 偵測）在共享的 RTX 5070 Ti 上執行
 **實機**
 - 沒有任何實體機器人的結果。
   - 真實影像只有網路照片（R0a），不是機器人相機。
-  - depth / 定位誤差只在模擬中建模（R0b / v3）。
+  - depth / 定位誤差只在模擬中建模（R0b / v3 / v4）。
   - 真實 depth 只有公開的平面資料（B）。
 - 見[驗證範圍](#驗證範圍模擬已驗證--實機未驗證)。
 
@@ -489,7 +533,7 @@ GPU 工作（detector 選型與 Core 偵測）在共享的 RTX 5070 Ti 上執行
 
 - Advanced C（RL）：使用者決定不做。
 - 往真實巡檢的建議（不需採購的準備 → 實機 B0 → 實機正式評估）：[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)。
-  其中 R0a、R0b、v3、A（detector 微調，T1 未通過）已完成；v4（V4 失敗的修正）與 D3 的正式驗證開發中（decision 029）。
+  其中 R0a、R0b、v3、A（detector 微調，T1 未通過）、v4 與 D3 的正式驗證已完成。
 - 任何新階段都需要使用者決定。
 
 ## 目錄
@@ -502,17 +546,19 @@ ros_ws/src/inspection_ap_ros/   ROS 2 package（inspector node、launch）
 docker/                    映像（sim / ros / nav / navdet）、render、smoke、ROS 線上執行、Nav2 批次、demo.sh
 tools/                     make_figures.py（README 圖表）、make_demo.py（Demo 動畫與分鏡）
 gazebo/models/             vendored Fuel 模型（fire_hydrant，CC0）
-data/episodes/             凍結的 spec / episode sets（含 GT）：core、pilot、detsel、holdout、nav-b1、nav-b2、r0b、v3-dev、v3、v3-dx
-results/                   detector 選型、pilot、調參、v1 test、holdout、failure analysis、nav-b0* / nav-b1 / nav-b2、nav failure analysis、r0a、r0b、v3-dev（開發）、v3（正式）、detv2-dev / detv2（A）、depthnoise（B）
-docs/decisions/            decision logs 001–030（020–023 R0、024–026 v3、027 / 030 A、028 B、029 v4）
+data/episodes/             凍結的 spec / episode sets（含 GT）：core、pilot、detsel、holdout、nav-b1、nav-b2、r0b、v3-dev、v3、v3-dx、detv2-sim、v4、v4-dx
+results/                   detector 選型、pilot、調參、v1 test、holdout、failure analysis、nav-b0* / nav-b1 / nav-b2、nav failure analysis、r0a、r0b、v3-dev（開發）、v3（正式）、detv2-dev / detv2（A）、depthnoise（B）、v4（正式）
+docs/decisions/            decision logs 001–032（020–023 R0、024–026 v3、027 / 030 A、028 B、029 / 031 / 032 v4 與 D3）
 activeperception/r0a.py    R0a：真實照片的選樣、下載、偵測、報告
 activeperception/r0b*.py   R0b：depth / 位姿誤差模型與雜訊條件下的 replay
 activeperception/v3/       v3：看穿 / 位姿精修 / 餘裕、zone 過濾、干擾物場景、開發評估、凍結設定、正式 runner
+activeperception/v4/       v4：4σ 搜尋、比例假設 + 尺度雅可比、依離散度加大的餘裕、depth 區間 zone 過濾、凍結設定、正式 runner
 activeperception/detv2/    A：detector-v2 的資料、訓練（RTX）、評測、正式 runner
 activeperception/depthnoise/   B：真實 depth 的誤差統計、OSF 下載、D3 修正模型
 docs/architecture.md       系統架構與資訊邊界
-docs/failure-analysis.md   失敗分析（Part A Core、Part B Nav2）
+docs/failure-analysis.md   失敗分析（Part A Core、B Nav2、C R0、D v3 / B、E A / v4）
 docs/v3-development.md     v3 開發紀錄：消融、失敗案例、遮擋分析、真實照片誤報分析
+docs/v4-development.md     v4 開發紀錄：V4 機制、比例與平移補償、消融、D3 下 zone 過濾的失效
 docs/detv2-development.md  A：資料與困難負樣本分析、RTX 之後的步驟
 docs/depth-noise-check.md  B：真實 D435 / D455 vs 誤差模型
 docs/reproduce.md          重現指南（四個層級）

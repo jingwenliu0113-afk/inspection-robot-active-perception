@@ -3,8 +3,8 @@
 ## 目前位置（2026-10-15）
 
 **Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）
-＋ v3 完成（decision 024–026）＋ A 完成（decision 027 / 030）。B（decision 028）完成量測；v4 與 D3 正式驗證開發中（decision 029）。**
-不進 RL、不採購、不用付費服務（使用者 2026-10-15 再確認）。
+＋ v3 完成（decision 024–026）＋ A 完成（decision 027 / 030）＋ B（decision 028）＋ v4 與 D3 正式驗證完成（decision 029 / 031 / 032）。**
+不進 RL、不採購、不用付費服務（使用者 2026-10-15 再確認）。目前沒有進行中的實驗；下一步都需要使用者決定（見最後）。
 
 ### A：detector-v2（decision 027 → 030）完成
 
@@ -14,15 +14,14 @@
 - `detector-v2` 不取代 `detector-v1`；v4 的正式測試繼續用 v1。是否在實機管線使用 v2 由使用者決定。
 - test 與 `detv2-sim` 已用過、封存。
 
-### v4（decision 029 → 031）：凍結完成，正式評測執行中
+### v4 與 D3（decision 029 → 031 → 032）完成
 
-- 開發（`v3-dev`、`v3-dev-dx`）：見 [docs/v4-development.md](docs/v4-development.md)。
-  - 位姿：4σ 搜尋範圍 ＋ 比例假設 ＋ 尺度雅可比 ＋ 以假設離散度加大餘裕（`w4hj`）。超出餘裕的視角 D3×L1 144 → 5、D2×L2 65 → 11。
-  - zone 過濾：D3 下 zone 外消防栓被定位進 zone（v3 也是）；±8% depth 區間（`decision-v4`）後 0。
-- 凍結：decision 031（`69ed3b7`）；正式資料 `v4` / `v4-dx` 在凍結後產生（specs `f55da19`、GT `7a9bfb6`），detector-v1（Mac CPU）。
-- 正式評測：`python -m activeperception.v4.formal --out results/v4 --raw runs/v4-formal`（16 個 job，只跑一次）。
-  完成後：寫結果 decision 032、更新 README / 失敗分析 / 圖表與 `tests/test_readme_claims.py`。
-- 事先已知：開發資料上凍結的 v3 在 D3 + zone 外干擾物下有 false present，D1 判準可能不通過；照原樣保留。
+| 項目 | 結果 |
+|---|---|
+| 開發 | V4 機制、比例與平移補償、比例估計偏差（尺度雅可比）、D3 下 zone 過濾失效：[docs/v4-development.md](docs/v4-development.md) |
+| 凍結 | decision 031（`69ed3b7`）；正式資料 `v4` / `v4-dx` 在凍結後產生（`f55da19`、`7a9bfb6`） |
+| 正式（decision 032） | **W1–W6、D1 全部通過**；v3 在 D2×L2 再次有 1 / 1,040 個視角被看穿，v4 擋下 |
+| 主要數字 | 超出餘裕 D2×L2 101 → 13、D3×L1 228 → 2；代價 D1×L1 Rule b3 −0.081、D3×L1 absent@5 0.713 → 0.637 |
 
 ### v3（decision 024–026）完成
 
@@ -100,7 +99,13 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 - failure analysis：v1 budget 2 失敗約 90% 是結構性（Oracle 也失敗）；v2 殘餘失敗 100% 可歸因於視角選擇；
   rule-nbv-v2 在初始視角被擋時 75–81% 的第二視角決策是平手、按候選編號選（開發資料）。
 
-## 待使用者決定
+## 待使用者決定（2026-10-15 更新）
+
+0. 本輪之後的候選（[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)）：
+   - zone 內相似物件：detector-v2 未達 1%，是否再做一輪（更多困難負樣本、多種子、信心校準）；是否在實機管線使用 v2。
+   - absent 可判率：多視角估計相機固定比例偏差，縮小 v4 的餘裕。
+   - 實機量測（需採購）。
+
 
 1. **下一步方向**（[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)，尚未啟動）：
    - R0a 真實影像的 detector 檢查、R0b depth 雜訊下 v2 的安全性（兩者不需採購，建議先做）；
