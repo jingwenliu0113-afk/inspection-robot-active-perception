@@ -160,6 +160,16 @@ uv run python -m activeperception.nav.failure_analysis --out /tmp/nav-failure-an
   2. `python -m activeperception.depthnoise.planes --out results/depthnoise/planes.json`：約 10 秒；
   3. `python -m activeperception.depthnoise.compare results/depthnoise/planes.json`。
 
+## G. v4 與 D3 的正式驗證（decision 029 / 031）
+
+- 開發：`python -m activeperception.v3.eval --ns v3-dev --configs w4hjg8 ...`（v4 的設定在 `activeperception/v4/configs.py`，共用 v3 的 harness）；
+  摘要：`python -m activeperception.v4.devreport runs/v4-dev/...`。所有開發結果見 [docs/v4-development.md](v4-development.md)。
+- 正式：
+  1. `python -m activeperception.nav.scene --namespace v4 --groups 40` 與 `python -m activeperception.v3.scenes --namespace v4-dx --groups 40`；
+  2. `./docker/render.sh` 渲染（各 4 個容器約 4 分鐘），`build-episodes` 建 GT，`detector.run` 跑 `detector-v1`；
+  3. `python -m activeperception.v4.formal --out results/v4 --raw runs/v4-formal`。`results/v4` 已存在時會拒絕重跑。
+- 16 個 job（v3 與 v4 各 8 個條件）；v4 的精修每個視角約 2 秒。
+
 ## 資源與隔離
 
 - 所有容器都叫 `inspection-ap-*`，各自有獨立的 network namespace，ROS 2 discovery 限制在 localhost。不碰其他專案的容器、網路與 volume，也不做全域的 Docker prune。

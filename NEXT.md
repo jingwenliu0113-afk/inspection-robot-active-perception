@@ -14,14 +14,15 @@
 - `detector-v2` 不取代 `detector-v1`；v4 的正式測試繼續用 v1。是否在實機管線使用 v2 由使用者決定。
 - test 與 `detv2-sim` 已用過、封存。
 
-### v4（decision 029）開發中
+### v4（decision 029 → 031）：凍結完成，正式評測執行中
 
-- V4 機制：L2 的 3σ 閘門（18 cm）比 ±15 cm 搜尋範圍寬，從未作用；但多數超出餘裕的視角來自**比例與平移互相補償**。
-- 開發代理指標「精修成功但誤差超出餘裕」：v3 在 D3×L1 144、D2×L2 65；比例假設（`w4he`）降到 1、5，代價是 absent@5 下降。
-- 發現精修的比例估計偏向上緣（雜訊與距離成正比 → 未修正的成本偏好縮小點雲），正在測試尺度雅可比修正（`w4hj`、`w4hje`）。
-- 之後：選定設定 → 寫凍結 decision（含 D3 正式驗證的判準）→ 產生 `v4` / `v4-dx` 新資料 → render → 偵測 → 正式評測一次。
-  正式 runner 草稿：`activeperception/v4/formal.py`（未 commit，等 `frozen_v4.py`）。
-- 細節：[docs/v4-development.md](docs/v4-development.md)。
+- 開發（`v3-dev`、`v3-dev-dx`）：見 [docs/v4-development.md](docs/v4-development.md)。
+  - 位姿：4σ 搜尋範圍 ＋ 比例假設 ＋ 尺度雅可比 ＋ 以假設離散度加大餘裕（`w4hj`）。超出餘裕的視角 D3×L1 144 → 5、D2×L2 65 → 11。
+  - zone 過濾：D3 下 zone 外消防栓被定位進 zone（v3 也是）；±8% depth 區間（`decision-v4`）後 0。
+- 凍結：decision 031（`69ed3b7`）；正式資料 `v4` / `v4-dx` 在凍結後產生（specs `f55da19`、GT `7a9bfb6`），detector-v1（Mac CPU）。
+- 正式評測：`python -m activeperception.v4.formal --out results/v4 --raw runs/v4-formal`（16 個 job，只跑一次）。
+  完成後：寫結果 decision 032、更新 README / 失敗分析 / 圖表與 `tests/test_readme_claims.py`。
+- 事先已知：開發資料上凍結的 v3 在 D3 + zone 外干擾物下有 false present，D1 判準可能不通過；照原樣保留。
 
 ### v3（decision 024–026）完成
 
