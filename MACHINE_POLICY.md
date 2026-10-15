@@ -21,7 +21,8 @@ Mac 是預設開發機，也是 Core 模擬的正式主機（容器化）。
 
 - 正式平台記錄以 Dockerfile + image digest 為準，commit 進 repo。
 - Gazebo 容器只用本 Project 自己的 image / container 名稱（`inspection-ap-*`），不碰其他 Project 的 container / network / volume，不做全域 `docker system prune`。
-- 大批次 render（上千張）屬於長時間吃 CPU 的工作：執行前先確認 `/tmp/ai-portfolio-mac-heavy.lock` 沒被其他 Project 持有；被持有時不要跑，也不要搶鎖。非正式 smoke test 不取鎖。
+- 「heavy」看資源用量，不是正式與否（PORTFOLIO.md）：大批次 render、多 worker 的開發 / 正式評估、完整測試都算。執行前先確認 `/tmp/ai-portfolio-mac-heavy.lock` 沒被其他 Project 持有；被持有時不要跑，也不要搶鎖或刪鎖。本專案的開發工作不取鎖，只檢查。
+- v5 起的 runner 內建檢查（`activeperception/v5/maclock.py`）：啟動前與每個 job 開始前各查一次，被持有的 job 跳過並標記 SKIPPED。其他 Project 也在跑時，worker 數用 6 以下。
 - 若日後正式 benchmark 需要取 Mac heavy lock，另寫規則與 wrapper，不借用其他 Project 的 wrapper。
 
 ## RTX 5070 Ti

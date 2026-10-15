@@ -81,6 +81,47 @@ def reported_prior(pose_level: str) -> tuple[float, float]:
 
 
 DEV_NAMESPACES = ("v3-dev", "v3-dev-dx", "r0b-dev", "nav-b1")  # decision 024 §3
+
+# decision 033 §5 (stress, development): the camera's depth scale drifted by this factor after a
+# calibration on the base level; e.g. "D3up" = D3 measured x 1.015.
+DRIFT_LEVELS = {"D3up": ("D3", 0.015), "D3dn": ("D3", -0.015), "D3up3": ("D3", 0.03)}
+
+
+def noisy_depth(spec, view_id: int, clean: np.ndarray, depth_level: str, rep: int | None = None):
+    """The depth a view's camera measures under ``depth_level`` (R0b D0-D2, D3, drift stress).
+    ``rep`` = a further frame at the same pose (new noise draw, same camera); None = the frame
+    every pipeline uses (identical to the original inline code)."""
+    view = f"v{view_id}"
+    extra = () if rep is None else ("rep", rep)
+    drift = 0.0
+    if depth_level in DRIFT_LEVELS:
+        depth_level, drift = DRIFT_LEVELS[depth_level]
+    dn = DEPTH_LEVELS.get(depth_level)
+    depth = clean
+    if depth_level == "D3":  # decision 028 §5
+        from ..depthnoise.d3 import apply_d3
+
+        f = spec.camera.width / 2 / math.tan(spec.camera.hfov / 2)
+        depth = apply_d3(depth, f, rng_for(spec.episode_id, view, "depth", "D3", *extra))
+    elif dn is not None:
+        depth = apply_depth_noise(
+            depth, dn, rng_for(spec.episode_id, view, "depth", dn.name, *extra)
+        )
+    if drift:
+        depth = depth * (1.0 + drift)
+    return depth
+
+
+def estimated_pose(spec, viewpoint, pose_level: str):
+    """The pose the localiser believes for this view (true pose + the level's error draw)."""
+    pn = POSE_LEVELS[pose_level]
+    if pn is None:
+        return viewpoint.pose
+    return perturb_pose(
+        viewpoint.pose, pn, rng_for(spec.episode_id, f"v{viewpoint.id}", "pose", pn.name)
+    )
+
+
 ZONE_SLACK_M = 0.25  # a detection counts as in the zone up to this far outside its rim
 GATE_MIN_VALID = 0.3
 
@@ -185,19 +226,9 @@ class V3World:
         if key in self._cache:
             return self._cache[key]
         self.base.zone_visible_fraction(spec, viewpoint)  # digest + rendered pose checks
-        depth = self.base._frames(spec).depth(viewpoint.id)
-        view = f"v{viewpoint.id}"
-        dn, pn = DEPTH_LEVELS.get(self.depth_level), POSE_LEVELS[self.pose_level]
-        if self.depth_level == "D3":  # decision 028 §5, development only
-            from ..depthnoise.d3 import apply_d3
-
-            f = spec.camera.width / 2 / math.tan(spec.camera.hfov / 2)
-            depth = apply_d3(depth, f, rng_for(spec.episode_id, view, "depth", "D3"))
-        elif dn is not None:
-            depth = apply_depth_noise(depth, dn, rng_for(spec.episode_id, view, "depth", dn.name))
-        est = viewpoint.pose
-        if pn is not None:
-            est = perturb_pose(viewpoint.pose, pn, rng_for(spec.episode_id, view, "pose", pn.name))
+        depth = noisy_depth(spec, viewpoint.id, self.base._frames(spec).depth(viewpoint.id),
+                            self.depth_level)  # fmt: skip
+        est = estimated_pose(spec, viewpoint, self.pose_level)
         dets = self.base.detections.get(spec.episode_id, viewpoint.id)
         spread = (math.nan, math.nan)
         conflict = blinded = False
@@ -312,7 +343,10 @@ def run(job: tuple) -> dict:
 
     specs, gts, _ = load_episode_set(f"data/episodes/gazebo-{ns}.json")
     base = GazeboReplayWorld(FrameStore(f"renders/{ns}"), DetectionCache.load(detections))
-    world = V3World(base, depth_level, pose_level, config(cfg_name), gated, prior_level)
+    cfg = cfg_name if isinstance(cfg_name, GeometryConfig) else config(cfg_name)  # v5: object
+    if not isinstance(cfg_name, str):
+        cfg_name = cfg.name
+    world = V3World(base, depth_level, pose_level, cfg, gated, prior_level)
     rule = DecisionRuleV3(frozen_v2.DECISION_V2, version="decision-v3-dev")
     res = outcomes(specs, gts, world, rule, tie_break)
     all_views = []
