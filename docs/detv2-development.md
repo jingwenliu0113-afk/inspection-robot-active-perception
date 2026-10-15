@@ -55,8 +55,9 @@
   - 模擬畫面的保持度：v1 在 `v3-dev` 清楚可見的視角是 634 / 637 判 present，absent 視角 false present 0。
 - 程式拒絕在 test 清單上下載、訓練或執行 detector（`tests/test_detv2.py`）。
 
-## 5. RTX 恢復後的步驟（需要 GPU lock）
+## 5. 執行紀錄（2026-10-15）
 
-1. 在 RTX 5070 Ti 上取得共享 GPU lock，依序訓練 `base`、`lowlr`、`negheavy`。預估每個 10–20 分鐘。
-2. 在 dev 上評估三個設定：真實照片，以及 `v3-dev` 的模擬畫面。依 decision 027 §4 的規則選一個；都不合格就不採用。
-3. 產生 `detv2-sim`（新 namespace），下載 test 影像。v1 與 v2 各在 test 上執行一次，判定 T1–T5。
+1. RTX 5070 Ti：`tools/detv2_gpu.sh check / sync / train / fetch`。三個設定都在 `flock -n /tmp/ai-portfolio-gpu.lock` 下訓練，各約 5–6 分鐘；權重 sha256 核對一致。
+   第一次實際使用時修了 lock 檢查的引號（Windows 端會拆開單引號內的 `&&` / `||`）與 tar 的 macOS `._` 項目。
+2. dev（Mac CPU）：三個設定都合格，依規則選 `base`（[`results/detv2-dev/selection.json`](../results/detv2-dev/selection.json)）。
+3. 正式評測只跑一次：T1 未通過（4.7%），T2–T4 通過。結果與解讀見 [decision 030](decisions/030-detector-v2-result.md)。

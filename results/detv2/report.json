@@ -1,0 +1,858 @@
+{
+ "decision": "027",
+ "weights": "runs/detv2/base/weights.pth",
+ "download": {
+  "ok": 871
+ },
+ "real": {
+  "v1": {
+   "neg:verified": {
+    "n": 737,
+    "present": {
+     "k": 62,
+     "n": 737,
+     "rate": 0.08412483039348712,
+     "ci95": [
+      0.06617713977925659,
+      0.1063855240884312
+     ]
+    },
+    "absent_blocked": {
+     "k": 362,
+     "n": 737,
+     "rate": 0.49118046132971505,
+     "ci95": [
+      0.45522671920108976,
+      0.5272256700815854
+     ]
+    }
+   },
+   "pos:boxed": {
+    "n": 62,
+    "present": {
+     "k": 46,
+     "n": 62,
+     "rate": 0.7419354838709677,
+     "ci95": [
+      0.621186360610032,
+      0.8344526275069032
+     ]
+    },
+    "found": {
+     "k": 46,
+     "n": 62,
+     "rate": 0.7419354838709677,
+     "ci95": [
+      0.621186360610032,
+      0.8344526275069032
+     ]
+    }
+   },
+   "pos:image-level": {
+    "n": 72,
+    "present": {
+     "k": 66,
+     "n": 72,
+     "rate": 0.9166666666666666,
+     "ci95": [
+      0.8298744472876599,
+      0.9612481028695096
+     ]
+    }
+   }
+  },
+  "v2": {
+   "neg:verified": {
+    "n": 737,
+    "present": {
+     "k": 35,
+     "n": 737,
+     "rate": 0.04748982360922659,
+     "ci95": [
+      0.03434218088943289,
+      0.065330407690906
+     ]
+    },
+    "absent_blocked": {
+     "k": 158,
+     "n": 737,
+     "rate": 0.21438263229308005,
+     "ci95": [
+      0.18627413273747337,
+      0.2454532432630104
+     ]
+    }
+   },
+   "pos:boxed": {
+    "n": 62,
+    "present": {
+     "k": 49,
+     "n": 62,
+     "rate": 0.7903225806451613,
+     "ci95": [
+      0.6736054886034556,
+      0.8731612971368666
+     ]
+    },
+    "found": {
+     "k": 49,
+     "n": 62,
+     "rate": 0.7903225806451613,
+     "ci95": [
+      0.6736054886034556,
+      0.8731612971368666
+     ]
+    }
+   },
+   "pos:image-level": {
+    "n": 72,
+    "present": {
+     "k": 64,
+     "n": 72,
+     "rate": 0.8888888888888888,
+     "ci95": [
+      0.795768557414096,
+      0.9426124893992622
+     ]
+    }
+   }
+  },
+  "paired": {
+   "pos:image-level": {
+    "fixed": 2,
+    "broken": 4,
+    "n": 72
+   },
+   "neg:verified": {
+    "fixed": 43,
+    "broken": 16,
+    "n": 737
+   },
+   "pos:boxed": {
+    "fixed": 5,
+    "broken": 2,
+    "n": 62
+   }
+  }
+ },
+ "sim": {
+  "v1": {
+   "visible_views": 828,
+   "visible_present": {
+    "k": 827,
+    "n": 828,
+    "rate": 0.998792270531401,
+    "ci95": [
+     0.9931907294235974,
+     0.9997867797560348
+    ]
+   },
+   "absent_views": 1040,
+   "absent_false_present": {
+    "k": 0,
+    "n": 1040,
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0036802518696323274
+    ]
+   },
+   "absent_blocked": {
+    "k": 0,
+    "n": 1040,
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0036802518696323274
+    ]
+   }
+  },
+  "v2": {
+   "visible_views": 828,
+   "visible_present": {
+    "k": 827,
+    "n": 828,
+    "rate": 0.998792270531401,
+    "ci95": [
+     0.9931907294235974,
+     0.9997867797560348
+    ]
+   },
+   "absent_views": 1040,
+   "absent_false_present": {
+    "k": 0,
+    "n": 1040,
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0036802518696323274
+    ]
+   },
+   "absent_blocked": {
+    "k": 0,
+    "n": 1040,
+    "rate": 0.0,
+    "ci95": [
+     0.0,
+     0.0036802518696323274
+    ]
+   }
+  }
+ },
+ "verdicts": {
+  "T1": {
+   "pass": false,
+   "false_present": {
+    "k": 35,
+    "n": 737,
+    "rate": 0.04748982360922659,
+    "ci95": [
+     0.03434218088943289,
+     0.065330407690906
+    ]
+   }
+  },
+  "T2": {
+   "pass": true,
+   "pos:boxed": {
+    "v2_minus_v1": 0.048387096774193505,
+    "pass": true
+   },
+   "pos:image-level": {
+    "v2_minus_v1": -0.02777777777777779,
+    "pass": true
+   }
+  },
+  "T3": {
+   "pass": true
+  },
+  "T4": {
+   "pass": true,
+   "results": {
+    "D0xP0": {
+     "job": {
+      "depth": "D0",
+      "pose": "P0",
+      "config": "v3",
+      "gated": true,
+      "tie_break": false
+     },
+     "summary": {
+      "single@1": {
+       "n": 160,
+       "accuracy": 0.35,
+       "inconclusive_rate": 0.65,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.325,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "single@2": {
+       "n": 160,
+       "accuracy": 0.35,
+       "inconclusive_rate": 0.65,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.325,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "single@3": {
+       "n": 160,
+       "accuracy": 0.35,
+       "inconclusive_rate": 0.65,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.325,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "single@4": {
+       "n": 160,
+       "accuracy": 0.35,
+       "inconclusive_rate": 0.65,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.325,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "single@5": {
+       "n": 160,
+       "accuracy": 0.35,
+       "inconclusive_rate": 0.65,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.325,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "random@1": {
+       "n": 480,
+       "accuracy": 0.35,
+       "inconclusive_rate": 0.65,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.325,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "random@2": {
+       "n": 480,
+       "accuracy": 0.8583333333333333,
+       "inconclusive_rate": 0.14166666666666666,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.65,
+       "accuracy_by_state": {
+        "absent": 0.7958333333333333,
+        "unobservable": 0.8733333333333333,
+        "visible": 1.0
+       }
+      },
+      "random@3": {
+       "n": 480,
+       "accuracy": 0.9625,
+       "inconclusive_rate": 0.0375,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.7916666666666667,
+       "accuracy_by_state": {
+        "absent": 0.9416666666666667,
+        "unobservable": 0.9733333333333334,
+        "visible": 1.0
+       }
+      },
+      "random@4": {
+       "n": 480,
+       "accuracy": 0.9895833333333334,
+       "inconclusive_rate": 0.010416666666666666,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.8291666666666666,
+       "accuracy_by_state": {
+        "absent": 0.9791666666666666,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "random@5": {
+       "n": 480,
+       "accuracy": 0.9979166666666667,
+       "inconclusive_rate": 0.0020833333333333333,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.8395833333333333,
+       "accuracy_by_state": {
+        "absent": 0.9958333333333333,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "rule@1": {
+       "n": 160,
+       "accuracy": 0.35,
+       "inconclusive_rate": 0.65,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.325,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "rule@2": {
+       "n": 160,
+       "accuracy": 0.90625,
+       "inconclusive_rate": 0.09375,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.65,
+       "accuracy_by_state": {
+        "absent": 0.8625,
+        "unobservable": 0.92,
+        "visible": 1.0
+       }
+      },
+      "rule@3": {
+       "n": 160,
+       "accuracy": 0.9875,
+       "inconclusive_rate": 0.0125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.74375,
+       "accuracy_by_state": {
+        "absent": 0.975,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "rule@4": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.75625,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "rule@5": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.75625,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@1": {
+       "n": 160,
+       "accuracy": 0.35,
+       "inconclusive_rate": 0.65,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.325,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@2": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.65,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@3": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.65,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@4": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.65,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@5": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.65,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      }
+     },
+     "false_absent": 0,
+     "false_present": 0,
+     "geometric_risk": 0,
+     "all_views_geometric_risk": [],
+     "occupied_false_clearance": {
+      "views": 0,
+      "present_views": 1040
+     },
+     "pose_error_m": {
+      "p50": 0.0,
+      "p95": 6.938893903907228e-18,
+      "max": 0.003605551275464085
+     },
+     "refine_ok": 0.675,
+     "gate_flags": {
+      "in": 838,
+      "out": 1,
+      "unknown": 0
+     },
+     "n_views": 2080
+    },
+    "D1xL1": {
+     "job": {
+      "depth": "D1",
+      "pose": "L1",
+      "config": "v3",
+      "gated": true,
+      "tie_break": false
+     },
+     "summary": {
+      "single@1": {
+       "n": 160,
+       "accuracy": 0.26875,
+       "inconclusive_rate": 0.73125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.1625,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "single@2": {
+       "n": 160,
+       "accuracy": 0.26875,
+       "inconclusive_rate": 0.73125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.1625,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "single@3": {
+       "n": 160,
+       "accuracy": 0.26875,
+       "inconclusive_rate": 0.73125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.1625,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "single@4": {
+       "n": 160,
+       "accuracy": 0.26875,
+       "inconclusive_rate": 0.73125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.1625,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "single@5": {
+       "n": 160,
+       "accuracy": 0.26875,
+       "inconclusive_rate": 0.73125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.1625,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "random@1": {
+       "n": 480,
+       "accuracy": 0.26875,
+       "inconclusive_rate": 0.73125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.1625,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "random@2": {
+       "n": 480,
+       "accuracy": 0.7125,
+       "inconclusive_rate": 0.2875,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.73125,
+       "accuracy_by_state": {
+        "absent": 0.5041666666666667,
+        "unobservable": 0.8733333333333333,
+        "visible": 1.0
+       }
+      },
+      "random@3": {
+       "n": 480,
+       "accuracy": 0.8770833333333333,
+       "inconclusive_rate": 0.12291666666666666,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 2.01875,
+       "accuracy_by_state": {
+        "absent": 0.7708333333333334,
+        "unobservable": 0.9733333333333334,
+        "visible": 1.0
+       }
+      },
+      "random@4": {
+       "n": 480,
+       "accuracy": 0.9541666666666667,
+       "inconclusive_rate": 0.04583333333333333,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 2.1416666666666666,
+       "accuracy_by_state": {
+        "absent": 0.9083333333333333,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "random@5": {
+       "n": 480,
+       "accuracy": 0.9854166666666667,
+       "inconclusive_rate": 0.014583333333333334,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 2.1875,
+       "accuracy_by_state": {
+        "absent": 0.9708333333333333,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "rule@1": {
+       "n": 160,
+       "accuracy": 0.26875,
+       "inconclusive_rate": 0.73125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.1625,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "rule@2": {
+       "n": 160,
+       "accuracy": 0.71875,
+       "inconclusive_rate": 0.28125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.73125,
+       "accuracy_by_state": {
+        "absent": 0.4625,
+        "unobservable": 0.96,
+        "visible": 1.0
+       }
+      },
+      "rule@3": {
+       "n": 160,
+       "accuracy": 0.90625,
+       "inconclusive_rate": 0.09375,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 2.0125,
+       "accuracy_by_state": {
+        "absent": 0.8125,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "rule@4": {
+       "n": 160,
+       "accuracy": 0.9875,
+       "inconclusive_rate": 0.0125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 2.10625,
+       "accuracy_by_state": {
+        "absent": 0.975,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "rule@5": {
+       "n": 160,
+       "accuracy": 0.99375,
+       "inconclusive_rate": 0.00625,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 2.11875,
+       "accuracy_by_state": {
+        "absent": 0.9875,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@1": {
+       "n": 160,
+       "accuracy": 0.26875,
+       "inconclusive_rate": 0.73125,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.0,
+       "accuracy_by_state": {
+        "absent": 0.1625,
+        "unobservable": 0.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@2": {
+       "n": 160,
+       "accuracy": 0.98125,
+       "inconclusive_rate": 0.01875,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.73125,
+       "accuracy_by_state": {
+        "absent": 0.9625,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@3": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.75,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@4": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.75,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      },
+      "oracle@5": {
+       "n": 160,
+       "accuracy": 1.0,
+       "inconclusive_rate": 0.0,
+       "false_absent": 0,
+       "false_present": 0,
+       "geometric_risk": 0,
+       "avg_views": 1.75,
+       "accuracy_by_state": {
+        "absent": 1.0,
+        "unobservable": 1.0,
+        "visible": 1.0
+       }
+      }
+     },
+     "false_absent": 0,
+     "false_present": 0,
+     "geometric_risk": 0,
+     "all_views_geometric_risk": [],
+     "occupied_false_clearance": {
+      "views": 0,
+      "present_views": 1040
+     },
+     "pose_error_m": {
+      "p50": 0.019950752781652977,
+      "p95": 0.06129216738174827,
+      "max": 0.11153700806236864
+     },
+     "refine_ok": 0.708173076923077,
+     "gate_flags": {
+      "in": 838,
+      "out": 1,
+      "unknown": 0
+     },
+     "n_views": 2080
+    }
+   }
+  },
+  "T5": "report only (report.json: real / paired / sim)"
+ }
+}

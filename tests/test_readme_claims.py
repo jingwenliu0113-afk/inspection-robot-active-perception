@@ -141,3 +141,21 @@ def test_b_depth_numbers():
     assert f"{-100 * cmp['D435']['bias']['worst']:.2f}%" in README
     assert cmp["D435"]["bias"]["sign"].startswith("符號未涵蓋")
     assert all(c["correlation"]["verdict"] == "相關更長" for c in cmp.values())
+
+
+def test_detector_v2_formal_numbers():
+    rep = load("results/detv2/report.json")
+    ver, real = rep["verdicts"], rep["real"]
+    assert not ver["T1"]["pass"] and "T1 **未通過**" in README  # the failure stays visible
+    assert ver["T2"]["pass"] and ver["T3"]["pass"] and ver["T4"]["pass"]
+    v1, v2 = real["v1"]["neg:verified"]["present"], real["v2"]["neg:verified"]["present"]
+    assert f"{v1['k']} / {v1['n']} = {100 * v1['rate']:.1f}%" in README
+    assert f"**{v2['k']} / {v2['n']} = {100 * v2['rate']:.1f}%**" in README
+    lo, hi = v2["ci95"]
+    assert f"[{100 * lo:.1f}%, {100 * hi:.1f}%]" in README
+    pv = real["paired"]["neg:verified"]
+    assert f"修好 {pv['fixed']} 張、弄壞 {pv['broken']} 張" in README
+    m = load("results/detv2/t5-misses.json")
+    assert f"{m['v1_missed']} → {m['v2_missed']} / {m['n_positives']}" in README
+    sel = load("results/detv2-dev/selection.json")
+    assert sel["selected"] == "base" and "選 `base`" in README

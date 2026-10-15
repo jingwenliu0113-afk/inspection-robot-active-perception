@@ -172,15 +172,41 @@ def test(out: Path, weights: str) -> int:
     return 0
 
 
+def misses(raw: Path = RUNS / "test") -> dict:
+    """T5 item the runner did not tabulate: test positives with no detection >= tau_absent (the
+    detector says "nothing here"), and how many of them each version shares. Read-only."""
+    from .. import frozen_v2
+
+    rows = [r for r in r0a.read_csv(Path("data/detv2/test.csv")) if r["label"] == "pos"]
+    out = {"n_positives": len(rows), "tau_absent": frozen_v2.DECISION_V2.tau_absent}
+    missed = {}
+    for name in ("v1", "v2"):
+        recs = ev.load(raw / f"test-{name}.jsonl")
+        missed[name] = {
+            f"{r['source']}:{r['image_id']}"
+            for r in rows
+            if max((d[0] for d in recs[f"{r['source']}:{r['image_id']}"]["detections"]), default=0)
+            < frozen_v2.DECISION_V2.tau_absent
+        }
+        out[f"{name}_missed"] = len(missed[name])
+    out["both_missed"] = len(missed["v1"] & missed["v2"])
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="activeperception.detv2.formal")
-    ap.add_argument("action", choices=["dev", "select", "test"])
+    ap.add_argument("action", choices=["dev", "select", "test", "misses"])
     ap.add_argument("--configs", default="base,lowlr,negheavy")
     ap.add_argument("--out", default="results/detv2")
     args = ap.parse_args(argv)
     configs = args.configs.split(",")
     if args.action == "dev":
         dev(configs)
+        return 0
+    if args.action == "misses":
+        res = misses()
+        (Path(args.out) / "t5-misses.json").write_text(json.dumps(res, indent=1) + "\n")
+        print(res)
         return 0
     if args.action == "select":
         res = select(configs)
