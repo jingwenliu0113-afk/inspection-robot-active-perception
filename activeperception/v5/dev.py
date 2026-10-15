@@ -75,9 +75,14 @@ def main(argv: list[str] | None = None) -> int:
         c = parse(cond)
         cal = None
         for band in args.bands.split(","):
-            if band == "v4":
+            parts = band.split("+")  # e.g. "v4+k14", "f0.02+k14", "s:f0.02"
+            see_k = next((int(x[1:]) for x in parts[1:] if x.startswith("k")), 0)
+            if parts[0] == "v4" and see_k == 0:
                 cfg = frozen_v4.CONFIG_NAME
                 name = f"{cond}-v4"
+            elif parts[0] == "v4":
+                cfg = configs.with_see(frozen_v4.GEOMETRY, see_k, name=f"v5-{band}")
+                name = f"{cond}-{band}"
             else:
                 if cal is None:
                     cal = calib.calibrate(
@@ -90,14 +95,14 @@ def main(argv: list[str] | None = None) -> int:
                         f"fits; jitter {cal['jitter']['sigma']:.4f} ({cal['jitter']['n_pairs']})",
                         flush=True,
                     )
-                rule, centre, see = band, cal["scale"]["center"], False
+                rule, centre, see = parts[0], cal["scale"]["center"], False
                 if rule.startswith("s:"):  # + see-through on calibrated depth
                     rule, see = rule[2:], True
                 if rule.startswith("truth:"):
                     rule, centre = rule.split(":")[1], true_scale(c["depth"])
                 b = configs.band_for(rule, cal["jitter"]["sigma"])
                 name = f"{cond}-{band}"
-                cfg = configs.calibrated(centre, b, name=f"v5-{band}", see=see)
+                cfg = configs.calibrated(centre, b, name=f"v5-{band}", see=see, see_k=see_k)
             prior = c["prior"]
             jobs.append(
                 (args.ns, c["depth"], c["pose"], cfg, args.gated == "1", frozen_v4.TIE_BREAK, prior)

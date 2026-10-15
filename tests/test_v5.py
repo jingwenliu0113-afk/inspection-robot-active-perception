@@ -126,3 +126,55 @@ def test_calibrated_config_see_scale_and_v4_identity():
     assert cfg.see_scale == 0.975
     assert configs.calibrated(0.975, 0.02, name="t").see_scale == 1.0
     assert not hasattr(configs.BASE, "see_scale")  # frozen v4 reads raw depth
+
+
+def _render(spec, pose):
+    from activeperception.nav import scene
+    from activeperception.sim.raycast import render
+
+    depth, _ = render(spec.camera, pose, (*spec.layout.occluders, *scene.walls()), None)
+    return depth.astype(np.float32)
+
+
+def test_see_v5_with_every_pose_is_v3_exactly(spec):
+    from activeperception.v3.geometry import robust_visibility_v3
+    from activeperception.v5.see import robust_visibility_v5
+
+    for vp in spec.candidate_viewpoints[:4]:
+        d = _render(spec, vp.pose)
+        d[::7, ::5] = np.nan  # some missing pixels
+        v3 = robust_visibility_v3(d, spec.camera, vp.pose, spec.zone, 0.06, 0.03, True)
+        assert robust_visibility_v5(d, spec.camera, vp.pose, spec.zone, 0.06, 0.03, 27) == v3
+        assert robust_visibility_v5(d, spec.camera, vp.pose, spec.zone, 0.06, 0.03, 99) == v3
+
+
+def test_see_v5_missing_depth_does_not_veto_but_a_blocking_pixel_does(spec):
+    from activeperception.v3.geometry import robust_visibility_v3
+    from activeperception.v5.see import BLOCKED, SEEN, UNKNOWN, point_states, robust_visibility_v5
+
+    vp = next(
+        v for v in spec.candidate_viewpoints
+        if np.mean(robust_visibility_v3(_render(spec, v.pose), spec.camera, v.pose, spec.zone,
+                                        0.06, 0.03, True)) > 0.5
+    )  # fmt: skip
+    clean = _render(spec, vp.pose)
+    holed = clean.copy()
+    holed[:, 300:330] = np.nan  # a missing vertical band (like a stereo shadow)
+    args = (spec.camera, vp.pose, spec.zone, 0.06, 0.03)
+    v3 = np.array(robust_visibility_v3(holed, *args, True))
+    v5 = np.array(robust_visibility_v5(holed, *args, 14))
+    clear = np.array(robust_visibility_v3(clean, *args, True))
+    assert (v5 >= v3).all() and v5.sum() > v3.sum()  # the band no longer vetoes ...
+    assert ((v5 >= 1.0) <= (clear >= 1.0)).all()  # ... and clears nothing clean depth would not
+    st = point_states(holed, spec.camera, vp.pose, spec.zone)
+    assert set(np.unique(st)) <= {SEEN, BLOCKED, UNKNOWN} and (st == UNKNOWN).any()
+    # a near surface in front of everything blocks every location for every k
+    wall = np.full_like(clean, 0.3)
+    assert sum(robust_visibility_v5(wall, *args, 1)) == 0.0
+
+
+def test_v5_config_with_see_rule():
+    cfg = configs.with_see(configs.BASE, 14, name="t")
+    assert cfg.see_k == 14 and cfg.see_scale == 1.0
+    assert cfg.hyp_scales == configs.BASE.hyp_scales  # v4 otherwise
+    assert configs.calibrated(0.975, 0.02, name="t", see_k=14).see_k == 14
