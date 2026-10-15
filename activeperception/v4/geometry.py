@@ -57,6 +57,11 @@ class GeometryConfigV4(GeometryConfig):
     hyp_points: int = 500  # coarse stage of each hypothesis on a subset
     hyp_blind_m: float = math.inf  # spread beyond this -> the pose is not trusted (conflict)
     hyp_margin: bool = True  # margin = margin_ok + spread
+    scale_edge: bool = False  # a fit at the edge of the scale search is not trusted (as for x, y)
+    # compare costs across scales in measured units: a point divided by s also has its noise
+    # divided by s, so an uncorrected cost prefers shrinking the cloud (s > 1) whenever the noise
+    # grows with range (dev: D2xL2 374 / 987 fits at 1.04 with the truth at 1.02)
+    scale_jacobian: bool = False
     name: str = "v4-dev"
 
 
@@ -122,8 +127,9 @@ def _align(pts, w, c, outlines, scales, fine_scale: bool, hxy0: float, hyaw0: fl
     return best, float(grid[:, far].min()) / near if near > 0 else math.inf
 
 
-def _search(pts, w, c, outlines, s, stages, coarse_pts):
-    """Coarse-to-fine (dx, dy, dyaw) at a fixed depth scale; the first stage on a subset."""
+def _search(pts, w, c, outlines, s, stages, coarse_pts, jac: float = 1.0):
+    """Coarse-to-fine (dx, dy, dyaw) at a fixed depth scale; the first stage on a subset.
+    ``jac`` multiplies the residuals (s with the scale Jacobian on, else 1)."""
     best = (0.0, 0.0, 0.0)
     cost_best = math.inf
     scaled = c + (pts - c) / s
@@ -137,7 +143,7 @@ def _search(pts, w, c, outlines, s, stages, coarse_pts):
             rot = _transform(q, c, 0.0, 0.0, best[2] + dyaw)
             px = rot[None, :, 0] + best[0] + txy[:, :1]
             py = rot[None, :, 1] + best[1] + txy[:, 1:]
-            cost = g3._wcost(outline_distance(px, py, outlines), ww)
+            cost = g3._wcost(jac * outline_distance(px, py, outlines), ww)
             j = int(np.argmin(cost))
             if cost[j] < top[0]:
                 top = (float(cost[j]), (best[0] + txy[j, 0], best[1] + txy[j, 1], best[2] + dyaw))
@@ -152,12 +158,14 @@ def _hypotheses(pts, w, c, outlines, cfg, hxy0, hyaw0):
     sub = g3._subsample(len(pts), cfg.hyp_points, 2)
     hyps = []
     for s in cfg.hyp_scales:
-        pose, cost = _search(pts, w, c, outlines, s, stages01, sub)
+        jac = s if cfg.scale_jacobian else 1.0
+        pose, cost = _search(pts, w, c, outlines, s, stages01, sub, jac)
         hyps.append((cost, s, pose))
     cost0, s0, p0 = min(hyps)
     fine = []
     step = g3.SCALE_FINE_STEP
     for s in (s0 - step, s0, s0 + step):
+        jac = s if cfg.scale_jacobian else 1.0
         scaled = c + (pts - c) / s
         best, top = p0, (math.inf, p0)
         hxy, sxy, hyaw, syaw = _STAGES[2]
@@ -167,7 +175,7 @@ def _hypotheses(pts, w, c, outlines, cfg, hxy0, hyaw0):
             rot = _transform(scaled, c, 0.0, 0.0, best[2] + dyaw)
             px = rot[None, :, 0] + best[0] + txy[:, :1]
             py = rot[None, :, 1] + best[1] + txy[:, 1:]
-            cost = g3._wcost(outline_distance(px, py, outlines), w)
+            cost = g3._wcost(jac * outline_distance(px, py, outlines), w)
             j = int(np.argmin(cost))
             if cost[j] < top[0]:
                 top = (float(cost[j]), (best[0] + txy[j, 0], best[1] + txy[j, 1], best[2] + dyaw))
@@ -230,6 +238,10 @@ def refine_pose_v4(
         ok = bool(ok and abs(dyaw) <= cfg.prior_k * syaw)
     ambiguous = bool(ok and unique_m is not None and unique < cfg.unique_ratio)
     ambiguous |= bool(ok and spread_xy > cfg.hyp_blind_m)
+    if cfg.scale_edge and cfg.scale:
+        grid = cfg.hyp_scales or scales
+        lo, hi = min(grid) - g3.SCALE_FINE_STEP, max(grid) + g3.SCALE_FINE_STEP
+        ambiguous |= bool(ok and (s <= lo + 1e-9 or s >= hi - 1e-9))
     ok = ok and not ambiguous
     conflict = bool(conditioned and not ok)
     pose = dataclasses.replace(

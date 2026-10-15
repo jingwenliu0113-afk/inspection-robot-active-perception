@@ -27,6 +27,7 @@ from ..serialize import save_spec_set
 from ..types import Pose, Split
 
 DEV_NAMESPACE, FORMAL_NAMESPACE = "v3-dev-dx", "v3-dx"
+FORMAL_SPLITS = {FORMAL_NAMESPACE: Split.V3_EVAL, "v4-dx": Split.V4_EVAL}  # own seed, run once
 GENERATOR_VERSION = "gen-nav-v1+dx-dev"  # development set (decision 024)
 GENERATOR_VERSION_FORMAL = "gen-nav-v1+dx"  # same placement rule, formal set (decision 025)
 NEAR_R = (0.95, 1.45)  # from the zone centre (zone radius 0.5; viewpoint ring 2.0)
@@ -60,15 +61,15 @@ def place_distractor(spec, rng: np.random.Generator) -> Pose:
 
 
 def _rng(namespace: str, group: int) -> np.random.Generator:
-    if namespace == FORMAL_NAMESPACE:
+    if namespace in FORMAL_SPLITS:
         return np.random.default_rng(stable_seed("distractor", namespace, group))
     return np.random.default_rng([20261015, group])  # as v3-dev-dx was generated
 
 
 def distractor_specs(namespace: str, n_groups: int) -> list:
-    formal = namespace == FORMAL_NAMESPACE
+    formal = namespace in FORMAL_SPLITS
     version = GENERATOR_VERSION_FORMAL if formal else GENERATOR_VERSION
-    split = Split.V3_EVAL if formal else Split.R0_DEV
+    split = FORMAL_SPLITS.get(namespace, Split.R0_DEV)
     base = scene.nav_specs(namespace, n_groups)
     out, placed = [], {}
     for s in base:

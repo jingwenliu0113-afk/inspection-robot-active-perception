@@ -105,6 +105,7 @@ R0B_SPLITS = {  # same generator, other splits: R0b (decision 022), v3 (decision
     "v3-dev": Split.R0_DEV,
     "v3": Split.V3_EVAL,
     "detv2-sim": Split.DETV2_EVAL,  # decision 027 §5
+    "v4": Split.V4_EVAL,  # decision 029: v4 and the D3 formal check
 }
 
 

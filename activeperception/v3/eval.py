@@ -247,7 +247,8 @@ class V3World:
             "max_conf": max((d.confidence for d in dets), default=0.0),
         }
         if hasattr(ref, "ambiguous"):  # v4 only, so v3 outputs keep their exact form
-            self.diag[key] |= {"ambiguous": ref.ambiguous, "unique": ref.unique}
+            u = ref.unique if math.isfinite(ref.unique) else None
+            self.diag[key] |= {"ambiguous": ref.ambiguous, "unique": u, "scale": ref.scale}
         self._cache[key] = obs
         return obs
 

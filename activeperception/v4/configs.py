@@ -28,6 +28,30 @@ CONFIGS = {
         dataclasses.replace(
             BASE, window_k=4.0, hyp_scales=SCALES_WIDE, hyp_blind_m=0.10, name="w4hb10"
         ),
+        # + a fit at the edge of the scale range is not trusted (D2: 1.045 when the truth is 1.02)
+        dataclasses.replace(
+            BASE, window_k=4.0, hyp_scales=SCALES_WIDE, scale_edge=True, name="w4he"
+        ),
+        dataclasses.replace(
+            BASE,
+            window_k=4.0,
+            hyp_scales=SCALES_WIDE,
+            scale_edge=True,
+            hyp_blind_m=0.10,
+            name="w4heb10",
+        ),
+        # + the scale Jacobian (residuals in measured units)
+        dataclasses.replace(
+            BASE, window_k=4.0, hyp_scales=SCALES_WIDE, scale_jacobian=True, name="w4hj"
+        ),
+        dataclasses.replace(
+            BASE,
+            window_k=4.0,
+            hyp_scales=SCALES_WIDE,
+            scale_jacobian=True,
+            scale_edge=True,
+            name="w4hje",
+        ),
         dataclasses.replace(
             BASE,
             window_k=4.0,

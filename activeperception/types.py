@@ -42,6 +42,7 @@ class Split(StrEnum):
     R0_EVAL = "r0-eval"  # R0b formal evaluation (decision 022), run once
     V3_EVAL = "v3-eval"  # v3 formal evaluation (decision 025), run once
     DETV2_EVAL = "detv2-eval"  # detector-v2 simulator test (decision 027), run once
+    V4_EVAL = "v4-eval"  # v4 + D3 formal evaluation (decision 029 -> its formal protocol), run once
 
 
 @dataclass(frozen=True)
