@@ -31,7 +31,10 @@
   - `v4` / `v4-dx` 已用過、封存；v3 在 D2×L2 再次失敗 1 次，v4 擋下；v4 的代價是 absent 較難判。
 - **B depth 模型檢查**（decision 028）：真實 D435 / D455 平面資料的量測完成；D3 的正式驗證在 decision 032 完成（v3 與 v4 在 D3 下都安全）。
 
-目前沒有進行中的實驗；需要使用者決定的下一步見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
+- **v5 進行中**（decision 033 / 034）：凍結 v4 ＋ see-v5（缺值位姿在被看穿位姿包住時不否決，k = 14）。比例自我校正在開發中排除。凍結於 `a92b440`；正式資料 `v5` / `v5-dx`（split `v5-eval`）尚未產生，步驟見 `NEXT.md`。
+- **Mac heavy lock**：任何長時間 CPU / Docker 工作前，鎖存在就中止（不是只印警告）；v5 runner 內建檢查。
+
+需要使用者決定的下一步見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
 
 ## 每個 session 的第一步
 

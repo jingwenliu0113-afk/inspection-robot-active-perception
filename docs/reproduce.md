@@ -170,6 +170,17 @@ uv run python -m activeperception.nav.failure_analysis --out /tmp/nav-failure-an
   3. `python -m activeperception.v4.formal --out results/v4 --raw runs/v4-formal`。`results/v4` 已存在時會拒絕重跑。
 - 16 個 job（v3 與 v4 各 8 個條件）；v4 的精修每個視角約 2 秒。
 
+## H. v5：see-v5（decision 033 / 034）
+
+- 開發：`python -m activeperception.v5.dev --ns v3-dev --cal-ns v3-dev-dx --conditions D3xL1,... --bands v4+k14 --out runs/v5-dev/seek`
+  （`v4+k14` = 凍結 v4 ＋ see-v5；`v4+k14+free` = 不包住；`f0.02` 等 = 比例自我校正的假設帶，校正值由 `python -m activeperception.v5.calib` 產生）；
+  比較：`python -m activeperception.v5.devreport runs/v5-dev/seek`（`--dx` 對照 `v3-dev-dx` 的 v4 基準）。開發結果見 [docs/v5-development.md](v5-development.md)。
+- 正式：
+  1. `python -m activeperception.nav.scene --namespace v5 --groups 40` 與 `python -m activeperception.v3.scenes --namespace v5-dx --groups 40`；
+  2. 渲染、建 GT、`detector-v1`（同 §G）；
+  3. `python -m activeperception.v5.formal --out results/v5 --raw runs/v5-formal`。`results/v5` 已存在時會拒絕重跑；Mac heavy lock 被持有時不啟動，執行中被取得時下一個 job 等鎖釋放。
+- 24 個 job（v4、v5、v5 不包住各 8 個條件）。
+
 ## 資源與隔離
 
 - 所有容器都叫 `inspection-ap-*`，各自有獨立的 network namespace，ROS 2 discovery 限制在 localhost。不碰其他專案的容器、網路與 volume，也不做全域的 Docker prune。
