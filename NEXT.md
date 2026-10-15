@@ -6,6 +6,13 @@
 ＋ v3 完成（decision 024–026）。A（detector 微調，decision 027）等 RTX；B（depth 模型檢查，decision 028）完成量測，D3 開發檢查中。**
 不進 RL、不採購、不用付費服務（使用者 2026-10-15 再確認）。
 
+### 進度（2026-10-15 上午，RTX 恢復）
+
+- A：步驟 1–4 完成。SSH / CUDA 正常，GPU lock 可取；`sync` 3.5 分鐘；三個設定在 `flock -n` 下訓練，各約 5–6 分鐘，權重 sha256 已核對。
+  `detv2_gpu.sh` 第一次實際使用時修了兩處（lock 檢查的引號、tar 的 macOS `._` 項目）。正在跑步驟 5（dev，Mac CPU）。
+- v4（decision 029）開發中：V4 機制已找到（L2 的 3σ 閘門比 ±15 cm 搜尋範圍寬，從未作用；多數超出餘裕的視角來自比例與平移互相補償）。
+  見 [docs/v4-development.md](docs/v4-development.md)。
+
 ### 需要 RTX 5070 Ti 的待辦（GPU 恢復後依序做）
 
 1. `tools/detv2_gpu.sh check`：GPU 是否空閒、`/tmp/ai-portfolio-gpu.lock` 是否可取。被占用時就停，不搶鎖。
