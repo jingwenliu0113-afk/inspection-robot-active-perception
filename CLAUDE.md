@@ -25,9 +25,9 @@
 - **v3 完成**（decision 024–026）：
   - 正式資料 `v3` / `v3-dx` 已用過；V1–V3、V5 通過，V4（D2×L2）未通過。
   - 凍結設定 `activeperception/v3/frozen_v3.py`；開發資料是 `v3-dev`、`v3-dev-dx`。
-- **A detector-v2**（decision 027，使用者 2026-10-15 授權，只限此協定可重新訓練 detector）：
-  - 協定、資料、程式完成；訓練需 RTX 5070 Ti（`tools/detv2_gpu.sh`，GPU lock）。
-  - test（`data/detv2/test.csv`、`detv2-sim`）在正式評測前不得執行任何 detector。
+- **A detector-v2 完成**（decision 027 → 030）：T1 未通過（偏難負樣本誤報 8.4% → 4.7%），T2–T4 通過。
+  - `detector-v2` 不取代凍結的 `detector-v1`；test 與 `detv2-sim` 已用過、封存。
+- **v4 開發中**（decision 029）：V4 失敗的修正（位姿精修的比例 / 平移補償）與 D3 的正式驗證；開發只用 `v3-dev` 等開發資料。
 - **B depth 模型檢查**（decision 028）：真實 D435 / D455 平面資料的量測完成；D3 只做開發檢查，正式結論需新 decision 與新資料。
 
 RTX 恢復後的步驟、以及其餘需要使用者決定的事，見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。

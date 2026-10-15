@@ -3,33 +3,25 @@
 ## 目前位置（2026-10-15）
 
 **Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）
-＋ v3 完成（decision 024–026）。A（detector 微調，decision 027）等 RTX；B（depth 模型檢查，decision 028）完成量測，D3 開發檢查中。**
+＋ v3 完成（decision 024–026）＋ A 完成（decision 027 / 030）。B（decision 028）完成量測；v4 與 D3 正式驗證開發中（decision 029）。**
 不進 RL、不採購、不用付費服務（使用者 2026-10-15 再確認）。
 
-### 進度（2026-10-15 上午，RTX 恢復）
+### A：detector-v2（decision 027 → 030）完成
 
-- A：步驟 1–4 完成。SSH / CUDA 正常，GPU lock 可取；`sync` 3.5 分鐘；三個設定在 `flock -n` 下訓練，各約 5–6 分鐘，權重 sha256 已核對。
-  `detv2_gpu.sh` 第一次實際使用時修了兩處（lock 檢查的引號、tar 的 macOS `._` 項目）。正在跑步驟 5（dev，Mac CPU）。
-- v4（decision 029）開發中：V4 機制已找到（L2 的 3σ 閘門比 ±15 cm 搜尋範圍寬，從未作用；多數超出餘裕的視角來自比例與平移互相補償）。
-  見 [docs/v4-development.md](docs/v4-development.md)。
+- RTX 5070 Ti：三個設定在 `flock -n` 下訓練，各約 5–6 分鐘；GPU 前後皆空閒。`detv2_gpu.sh` 第一次實際使用時修了 lock 檢查的引號與 tar 的 `._` 項目。
+- dev：三個都合格，選 `base`（dev 確認負樣本誤報 12.7% → 5.3%）。
+- 正式（只跑一次）：**T1 未通過**（35 / 737 = 4.7%，v1 8.4%；修好 43 / 弄壞 16），T2–T4 通過；正樣本完全漏看 4 → 10 / 134。
+- `detector-v2` 不取代 `detector-v1`；v4 的正式測試繼續用 v1。是否在實機管線使用 v2 由使用者決定。
+- test 與 `detv2-sim` 已用過、封存。
 
-### 需要 RTX 5070 Ti 的待辦（GPU 恢復後依序做）
+### v4（decision 029）開發中
 
-1. `tools/detv2_gpu.sh check`：GPU 是否空閒、`/tmp/ai-portfolio-gpu.lock` 是否可取。被占用時就停，不搶鎖。
-2. `tools/detv2_gpu.sh sync`：同步程式碼、train / dev 清單與影像到 gpu-server，約 350 MB，0.6 MB/s 約 10 分鐘。test 清單不會被複製。
-3. `tools/detv2_gpu.sh train`：在 `flock -n` 下依序訓練 `base`、`lowlr`、`negheavy`。
-4. `tools/detv2_gpu.sh fetch`：把權重和紀錄取回 `runs/detv2/<config>/`。
-5. Mac 上：
-   - `python -m activeperception.detv2.formal dev`：dev 真實照片與 `v3-dev` 模擬畫面，CPU；
-   - 接著 `... formal select`：依 decision 027 §4 選設定。
-6. 選到設定才做：`... formal test --out results/detv2`，只跑一次。它會：
-   - 下載 test 影像，跑 v1 / v2；
-   - 跑 `detv2-sim`（已封存、未執行）；
-   - 判定 T1–T3。
-   同一個指令也會跑 T4：完整 v3 管線改用 v2 的偵測，在 `detv2-sim` 的 D0×P0 與 D1×L1 上執行。
-7. 寫結果 decision，更新 README 的 A 段落與 `tests/test_readme_claims.py`。
-
-`tools/detv2_gpu.sh` 的遠端指令（ssh + wsl 引號、tar 串流）**今晚無法實測**，第一次使用時先跑 `check`。
+- V4 機制：L2 的 3σ 閘門（18 cm）比 ±15 cm 搜尋範圍寬，從未作用；但多數超出餘裕的視角來自**比例與平移互相補償**。
+- 開發代理指標「精修成功但誤差超出餘裕」：v3 在 D3×L1 144、D2×L2 65；比例假設（`w4he`）降到 1、5，代價是 absent@5 下降。
+- 發現精修的比例估計偏向上緣（雜訊與距離成正比 → 未修正的成本偏好縮小點雲），正在測試尺度雅可比修正（`w4hj`、`w4hje`）。
+- 之後：選定設定 → 寫凍結 decision（含 D3 正式驗證的判準）→ 產生 `v4` / `v4-dx` 新資料 → render → 偵測 → 正式評測一次。
+  正式 runner 草稿：`activeperception/v4/formal.py`（未 commit，等 `frozen_v4.py`）。
+- 細節：[docs/v4-development.md](docs/v4-development.md)。
 
 ### v3（decision 024–026）完成
 
