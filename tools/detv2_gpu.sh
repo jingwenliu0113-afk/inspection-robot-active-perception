@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # detector-v2 training on the RTX 5070 Ti (decision 027), from the Mac.
 #   tools/detv2_gpu.sh check      # GPU idle? lock free? (no changes)
-#   tools/detv2_gpu.sh sync       # code + manifests + train/dev images -> gpu-server (~0.6 MB/s)
+#   tools/detv2_gpu.sh sync       # code + manifests + train images -> gpu-server (~0.6 MB/s)
 #   tools/detv2_gpu.sh train      # the three pre-registered configs, one flock -n each
 #   tools/detv2_gpu.sh fetch      # weights + logs back to runs/detv2/<config>/
 #
@@ -10,6 +10,7 @@
 # the lock. Uses the existing project venv `.venv-det` on gpu-server; the WSL system is not
 # touched. The test manifest is never copied (decision 027: test runs only in the formal step).
 set -euo pipefail
+export COPYFILE_DISABLE=1  # no macOS ._ resource-fork entries in the tar streams
 cd "$(dirname "$0")/.."
 REMOTE_DIR='~/ai-portfolio/inspection-robot-active-perception'
 WSL='wsl.exe -d Ubuntu-22.04 -- bash -lc'
@@ -19,16 +20,18 @@ remote() { ssh gpu-server "$WSL \"cd $REMOTE_DIR && $1\""; }
 
 case "${1:-}" in
   check)
-    ssh gpu-server "$WSL 'nvidia-smi --query-gpu=name,utilization.gpu,memory.used --format=csv'"
-    ssh gpu-server "$WSL 'flock -n /tmp/ai-portfolio-gpu.lock true && echo lock-free || echo LOCK-HELD'"
+    # double quotes around the bash -lc string: the Windows side would split a single-quoted && / ||
+    ssh gpu-server "$WSL \"nvidia-smi --query-gpu=name,utilization.gpu,memory.used --format=csv\""
+    ssh gpu-server "$WSL \"nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv\""
+    ssh gpu-server "$WSL \"flock -n /tmp/ai-portfolio-gpu.lock true && echo lock-free || echo LOCK-HELD\""
     ;;
   sync)
     # code and the train / dev manifests of the committed HEAD (no git credentials needed remotely)
     git archive --format=tar HEAD activeperception pyproject.toml uv.lock data/detv2 \
       ':(exclude)data/detv2/test.csv' | ssh gpu-server "$WSL \"cd $REMOTE_DIR && tar -xf -\""
-    # images: train + dev only, as a tar stream (no rsync dependency on the remote)
+    # images: train only (dev / test detection runs on the Mac), as a tar stream (no rsync remotely)
     list="$(mktemp)"
-    for split in train dev; do
+    for split in train; do
       python3 - "$split" <<'EOF' > "$list"
 import csv, sys
 for r in csv.DictReader(open(f"data/detv2/{sys.argv[1]}.csv")):
