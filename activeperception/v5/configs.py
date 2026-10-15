@@ -22,6 +22,7 @@ class GeometryConfigV5(GeometryConfigV4):
     # see-v5 (appendix A): a location is seen through when no pose of the 27-pose set is blocked
     # and at least see_k poses see it; poses without enough valid depth do not veto. 0 = v3 rule.
     see_k: int = 0
+    see_bracket: bool = True  # missing poses must lie between seen poses (False: ablation)
 
 
 BASE = frozen_v4.GEOMETRY

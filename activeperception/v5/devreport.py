@@ -27,6 +27,13 @@ V4_BASELINE = {  # condition -> frozen v4 (or identical) development run on v3-d
 }
 
 
+V4_BASELINE_DX = {  # the same on v3-dev-dx (distractors outside the zone)
+    "D0xP0": "runs/v4-dev/gate-dx/D0xP0-w4hjg8-g1-t0.json",
+    "D1xL1": "runs/v4-dev/gate-dx/D1xL1-w4hjg8-g1-t0.json",
+    "D3xL1": "runs/v4-dev/gate-dx/D3xL1-w4hjg8-g1-t0.json",
+}
+
+
 def paired(a: dict, b: dict) -> str:
     """'a-only / b-only' correct episodes per budget 2 / 3 / 5."""
     ea, eb = a["rule_per_episode"], b["rule_per_episode"]
@@ -39,7 +46,12 @@ def paired(a: dict, b: dict) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    paths = [Path(p) for p in (argv if argv is not None else sys.argv[1:])]
+    argv = list(argv if argv is not None else sys.argv[1:])
+    baselines = V4_BASELINE
+    if "--dx" in argv:  # the runs were on v3-dev-dx
+        argv.remove("--dx")
+        baselines = V4_BASELINE_DX
+    paths = [Path(p) for p in argv]
     files = sorted(f for p in paths for f in (p.glob("*.json") if p.is_dir() else [p]))
     by_cond: dict[str, list[Path]] = {}
     for f in files:
@@ -50,8 +62,8 @@ def main(argv: list[str] | None = None) -> int:
     print(sep + "---|")
     for cond, fs in sorted(by_cond.items()):
         base = None
-        if cond in V4_BASELINE and Path(V4_BASELINE[cond]).exists():
-            base = json.loads(Path(V4_BASELINE[cond]).read_text())
+        if cond in baselines and Path(baselines[cond]).exists():
+            base = json.loads(Path(baselines[cond]).read_text())
             print(row(f"{cond} v4", summarize(base)) + " — |")
         for f in fs:
             r = json.loads(f.read_text())

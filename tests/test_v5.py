@@ -178,3 +178,34 @@ def test_v5_config_with_see_rule():
     assert cfg.see_k == 14 and cfg.see_scale == 1.0
     assert cfg.hyp_scales == configs.BASE.hyp_scales  # v4 otherwise
     assert configs.calibrated(0.975, 0.02, name="t", see_k=14).see_k == 14
+
+
+def test_see_v5_one_sided_missing_band_against_a_near_surface_keeps_v3(spec):
+    """Missing pixels bordered by a nearer surface on one side are not interpolated across."""
+    from activeperception.v3.geometry import robust_visibility_v3
+    from activeperception.v5.see import robust_visibility_v5
+
+    vp = spec.candidate_viewpoints[0]
+    d = _render(spec, vp.pose)
+    args = (spec.camera, vp.pose, spec.zone, 0.06, 0.03)
+    base = np.array(robust_visibility_v3(d, *args, True))
+    near = d.copy()
+    near[:, 330:] = 0.4  # a near surface on the right ...
+    near[:, 250:330] = np.nan  # ... with a missing band against it (stereo-shadow geometry)
+    v3 = np.array(robust_visibility_v3(near, *args, True))
+    brk = np.array(robust_visibility_v5(near, *args, 14, True))
+    free = np.array(robust_visibility_v5(near, *args, 14, False))
+    assert (brk == v3).all()  # nothing on the band's right side sees through -> no bracketing
+    assert (free >= brk).all()
+    assert ((brk >= 1.0) <= (base >= 1.0)).all()
+
+
+def test_see_v5_out_of_image_vetoes(spec):
+    from activeperception.v5.see import OUTSIDE, point_states
+
+    vp = spec.candidate_viewpoints[0]
+    d = _render(spec, vp.pose)
+    import dataclasses as dc
+
+    away = dc.replace(vp.pose, yaw=vp.pose.yaw + math.pi)  # looking away from the zone
+    assert (point_states(d, spec.camera, away, spec.zone) == OUTSIDE).all()

@@ -77,11 +77,14 @@ def main(argv: list[str] | None = None) -> int:
         for band in args.bands.split(","):
             parts = band.split("+")  # e.g. "v4+k14", "f0.02+k14", "s:f0.02"
             see_k = next((int(x[1:]) for x in parts[1:] if x.startswith("k")), 0)
+            free = "free" in parts[1:]  # see-v5 without bracketing (ablation)
             if parts[0] == "v4" and see_k == 0:
                 cfg = frozen_v4.CONFIG_NAME
                 name = f"{cond}-v4"
             elif parts[0] == "v4":
-                cfg = configs.with_see(frozen_v4.GEOMETRY, see_k, name=f"v5-{band}")
+                cfg = configs.with_see(
+                    frozen_v4.GEOMETRY, see_k, name=f"v5-{band}", see_bracket=not free
+                )
                 name = f"{cond}-{band}"
             else:
                 if cal is None:

@@ -251,8 +251,9 @@ class V3World:
                 from ..v5.see import robust_visibility_v5
 
                 vis = robust_visibility_v5(
-                    see_depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_k
-                )
+                    see_depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_k,
+                    getattr(self.cfg, "see_bracket", True),
+                )  # fmt: skip
             else:
                 vis = robust_visibility_v3(
                     see_depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_v3
