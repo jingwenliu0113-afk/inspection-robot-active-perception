@@ -226,7 +226,16 @@ class V3World:
             ok, spread = ref.ok, (ref.spread_xy, ref.spread_yaw)
         used, true = obs.viewpoint.pose, viewpoint.pose
         g = None
-        if self.gated:
+        if self.gated and getattr(self.cfg, "gate_band", 0.0) > 0:  # decision-v4 (decision 029)
+            from ..v4.geometry import gate_band
+
+            g = gate_band(
+                dets, depth, spec.camera, used, spec.zone, self.cfg.gate_band, ZONE_SLACK_M
+            )
+            obs = dataclasses.replace(
+                obs, meta={**obs.meta, "c_in": g["c_in"], "c_block": g["c_block"]}
+            )
+        elif self.gated:
             g = gate(dets, depth, spec.camera, used, spec.zone)
             obs = dataclasses.replace(
                 obs, meta={**obs.meta, "c_in": g["c_in"], "c_block": g["c_block"]}

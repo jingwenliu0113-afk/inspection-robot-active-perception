@@ -52,6 +52,15 @@ CONFIGS = {
             scale_edge=True,
             name="w4hje",
         ),
+        # + zone gating robust to a +-8 % depth-scale error (D2 / D3 box-depth 99.5 % quantiles)
+        dataclasses.replace(
+            BASE,
+            window_k=4.0,
+            hyp_scales=SCALES_WIDE,
+            scale_jacobian=True,
+            gate_band=0.08,
+            name="w4hjg8",
+        ),
         dataclasses.replace(
             BASE,
             window_k=4.0,
@@ -65,4 +74,8 @@ CONFIGS = {
 
 
 def config(name: str) -> GeometryConfigV4:
+    if name == "v4":  # the frozen one (decision 031)
+        from .frozen_v4 import GEOMETRY
+
+        return GEOMETRY
     return CONFIGS[name]

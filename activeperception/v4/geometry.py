@@ -62,6 +62,11 @@ class GeometryConfigV4(GeometryConfig):
     # divided by s, so an uncorrected cost prefers shrinking the cloud (s > 1) whenever the noise
     # grows with range (dev: D2xL2 374 / 987 fits at 1.04 with the truth at 1.02)
     scale_jacobian: bool = False
+    # zone gating with a depth-scale band (decision-v4): a detection makes "present" only if it
+    # is in the zone for every depth scale in [1 - band, 1 + band], and blocks "absent" if it is
+    # for any. 0 = decision-v3 (nominal depth only). Dev: D3 moved a box's median depth by up to
+    # -9.9 % (0.5 % quantile -7.6 %), enough to pull a distractor 1.0 m away into the zone.
+    gate_band: float = 0.0
     name: str = "v4-dev"
 
 
@@ -260,3 +265,37 @@ def margin_for_v4(ref, cfg: GeometryConfigV4, prior=None) -> tuple[float, float]
     if ref.ok and cfg.hyp_scales and cfg.hyp_margin:
         return fx + ref.spread_xy, fyaw + ref.spread_yaw
     return fx, fyaw
+
+
+def gate_band(dets, depth, camera, pose, zone, band: float, slack: float) -> dict:
+    """decision-v4 zone gating: like ``v3.eval.gate`` but robust to a depth-scale error up to
+    ``band``. Scaling the depth moves a located point along its ray from the camera, so the
+    plausible locations form a segment; distance to the zone centre is convex along it."""
+    from ..v3.eval import locate_detection
+
+    c = np.array([pose.x, pose.y])
+    z = np.array([zone.cx, zone.cy])
+    limit = zone.radius + slack
+    c_in = c_block = 0.0
+    flags = []
+    for det in dets:
+        xy = locate_detection(det, depth, camera, pose)
+        if xy is None:
+            flags.append("unknown")
+            c_block = max(c_block, det.confidence)
+            continue
+        v = np.array(xy) - c
+        a, b = c + (1 - band) * v, c + (1 + band) * v
+        far = max(np.linalg.norm(a - z), np.linalg.norm(b - z))
+        t = float(np.clip(np.dot(z - a, b - a) / max(np.dot(b - a, b - a), 1e-12), 0.0, 1.0))
+        near = float(np.linalg.norm(a + t * (b - a) - z))
+        if far <= limit:
+            flags.append("in")
+            c_in = max(c_in, det.confidence)
+            c_block = max(c_block, det.confidence)
+        elif near <= limit:
+            flags.append("maybe")  # may be in the zone: cannot make present, still blocks absent
+            c_block = max(c_block, det.confidence)
+        else:
+            flags.append("out")
+    return {"c_in": c_in, "c_block": c_block, "flags": flags}

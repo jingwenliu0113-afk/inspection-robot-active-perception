@@ -104,3 +104,100 @@ def test_shared_harness_resolves_v4_configs_and_still_refuses_formal_data():
     for ns in ("v3", "v3-dx", "detv2-sim", "r0b", "nav-b2"):
         with pytest.raises(SystemExit):
             v3e.main(["--ns", ns, "--configs", "w4h", "--out", "/tmp/never"])
+
+
+def test_frozen_v4_is_the_development_choice():
+    from activeperception.v4 import frozen_v4
+
+    assert frozen_v4.GEOMETRY == dataclasses.replace(configs.CONFIGS["w4hjg8"], name="v4")
+    assert frozen_v4.GEOMETRY.gate_band == 0.08
+    assert v3e.config("v4") is frozen_v4.GEOMETRY
+    g = frozen_v4.GEOMETRY
+    assert g.window_k == 4.0 and g.scale_jacobian and not g.scale_edge
+    assert g.hyp_scales == (0.96, 0.98, 1.0, 1.02, 1.04) and g.hyp_blind_m == math.inf
+    assert (g.margin_ok, g.prior_k, g.on_conflict) == ((0.06, 0.03), 3.0, "blind")  # as v3
+    assert frozen_v4.describe()["detector"].startswith("detector-v1")
+
+
+def _fake(safe=True, absent=1.0, exceed=0):
+    s = {
+        f"{m}@{b}": {
+            "accuracy": 1.0,
+            "false_absent": 0,
+            "false_present": 0,
+            "geometric_risk": 0,
+            "accuracy_by_state": {"absent": absent},
+        }
+        for m in ("rule",)
+        for b in (2, 3, 5)
+    }
+    return {
+        "summary": s,
+        "false_absent": 0,
+        "false_present": 0,
+        "geometric_risk": 0,
+        "all_views_geometric_risk": [],
+        "occupied_false_clearance": {"views": 0 if safe else 1, "present_views": 1040},
+        "exceed": {"refined_ok": exceed},
+    }
+
+
+def test_v4_formal_verdicts_follow_the_preregistered_rules():
+    from activeperception.v4 import formal
+
+    res = {}
+    for ns, d, p, prior in formal.CONDITIONS:
+        res[formal.key(ns, d, p, prior, "v3")] = _fake(exceed=40)
+        res[formal.key(ns, d, p, prior, "v4")] = _fake(exceed=10)
+    ver = formal.verdicts(res)
+    assert all(ver[k]["pass"] for k in ("W1", "W2", "W3", "W4", "W5", "W6", "D1"))
+    assert "pass" not in ver["R1"]  # report only
+    res[formal.key("v4", "D2", "L2", None, "v4")] = _fake(safe=False, exceed=11)
+    ver = formal.verdicts(res)
+    assert not ver["W3"]["pass"] and not ver["W5"]["pass"]  # 11 > 0.25 x 40
+    res[formal.key("v4", "D3", "L1", None, "v3")] = _fake(safe=False, exceed=40)
+    res[formal.key("v4", "D1", "L1", None, "v4")] = _fake(absent=0.85)
+    ver = formal.verdicts(res)
+    assert not ver["D1"]["pass"] and not ver["W2"]["pass"] and ver["W1"]["pass"]
+
+
+def test_v4_formal_runner_uses_only_its_new_namespaces():
+    from activeperception.v4 import formal
+
+    assert {j[0] for j in formal.jobs()} == {"v4", "v4-dx"}
+    assert {j[3] for j in formal.jobs()} == {"v3", "v4"}
+    assert len(formal.jobs()) == 16
+
+
+def test_band_gating_needs_the_whole_depth_band_in_the_zone_to_make_present():
+    from activeperception.types import Detection
+    from activeperception.v4.geometry import gate_band
+
+    spec = load_spec_set("data/episodes/specs-nav-b1.json")[0][1]
+    vp, cam, z = spec.candidate_viewpoints[0], spec.camera, spec.zone
+    box = (300.0, 200.0, 340.0, 280.0)
+    dets = [Detection(confidence=0.9, bbox=box, area_frac=0.1, center_uv=(0.5, 0.5))]
+    rng = math.hypot(vp.pose.x - z.cx, vp.pose.y - z.cy)
+
+    def located(d):
+        depth = np.full((cam.height, cam.width), d, np.float32)
+        xy = v3e.locate_detection(dets[0], depth, cam, vp.pose)
+        return depth, math.hypot(xy[0] - z.cx, xy[1] - z.cy)
+
+    limit = z.radius + v3e.ZONE_SLACK_M
+    for d in np.linspace(0.6, 1.6, 41) * rng:  # walk the detection along the ray through the zone
+        depth, dist = located(d)
+        nominal = v3e.gate(dets, depth, cam, vp.pose, z)
+        assert gate_band(dets, depth, cam, vp.pose, z, 0.0, v3e.ZONE_SLACK_M) == nominal
+        band = gate_band(dets, depth, cam, vp.pose, z, 0.08, v3e.ZONE_SLACK_M)
+        _, lo = located(d * 0.92)
+        _, hi = located(d * 1.08)
+        if max(lo, hi) <= limit:
+            assert band["flags"] == ["in"] and band["c_in"] == 0.9
+        elif dist <= limit or min(lo, hi) <= limit:
+            assert band["flags"] == ["maybe"] and band["c_in"] == 0.0 and band["c_block"] == 0.9
+    flags = {
+        gate_band(dets, located(d)[0], cam, vp.pose, z, 0.08, v3e.ZONE_SLACK_M)["flags"][0]
+        for d in np.linspace(0.6, 1.6, 41) * rng
+    }
+    assert flags == {"in", "maybe", "out"}
