@@ -1,10 +1,38 @@
 # NEXT
 
-## 目前位置（2026-10-15）
+## 目前位置（2026-10-16）
 
 **Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）
-＋ v3 完成（decision 024–026）＋ A 完成（decision 027 / 030）＋ B（decision 028）＋ v4 與 D3 正式驗證完成（decision 029 / 031 / 032）。**
-不進 RL、不採購、不用付費服務（使用者 2026-10-15 再確認）。目前沒有進行中的實驗；下一步都需要使用者決定（見最後）。
+＋ v3 完成（decision 024–026）＋ A 完成（decision 027 / 030）＋ B（decision 028）＋ v4 與 D3 正式驗證完成（decision 029 / 031 / 032）
+＋ v5 開發完成、已凍結（decision 033 / 034），正式資料尚未產生。**
+不進 RL、不採購、不用付費服務。
+
+### v5（decision 033 → 034）：凍結完成，正式測試等 Mac heavy lock 釋放
+
+使用者 2026-10-15「你看一下目前進度 然後接著做」→ 做 NEXT 候選 2（absent 可判率）。
+
+| 項目 | 結果（開發資料 `v3-dev` / `v3-dev-dx`，不是正式結果） |
+|---|---|
+| 比例自我校正 | 可行（校正值在真值 0.5% 內，靜止重拍估得浮動 1.06%），但只縮窄比例假設帶有得有失；看穿用校正 depth 沒有作用 → **不採用** |
+| 新發現 | v4 的寬假設帶有一部分保護是意外的多起點一致性檢查；D3 的 absent 瓶頸是「缺值像素 × 27 個位姿逐一要求有效」，不是比例 |
+| see-v5 | 缺值位姿不否決（但須被看穿位姿左右包住）、任一位姿被擋或畫面外就否決、至少 14 / 27 看穿。9 組條件全部安全；Rule b3 D2×L2 0.767 → 0.950、D3×L1 0.758 → 0.875 |
+| 凍結 | decision 034（`a92b440`）：v5 = 凍結 v4 ＋ see-v5；判準 X1（安全）、X2（D2×L2 / D3×L1 的 b3 改善 CI 下界 > 0）、X3（D0×P0 與 v4 相同）、X4（無顯著變差）；R2 不包住版本只報告 |
+| 紀錄 | [docs/v5-development.md](docs/v5-development.md) |
+
+剩下的步驟（都要 CPU / Docker，**Mac heavy lock 被其他 Project 持有時不做**）：
+
+1. 產生正式 spec：`uv run python -m activeperception.nav.scene --namespace v5 --groups 40 --out data/episodes/specs-v5.json`
+   與 `uv run python -m activeperception.v3.scenes --namespace v5-dx --groups 40`；立即 commit。
+2. `./docker/render.sh` 渲染兩個 namespace、`build-episodes` 建 GT、`detector.run` 跑 `detector-v1`（同 docs/reproduce.md §G 的 v4 步驟）；commit。
+3. `uv run python -m activeperception.v5.formal --out results/v5 --raw runs/v5-formal`（24 個 job，只跑一次）。
+4. 寫 decision 035（結果），更新 README / 圖 / failure analysis / CLAUDE.md。
+
+### 事件紀錄：2026-10-16 干擾了 rust-hnsw 的正式 benchmark
+
+- rust-hnsw 在 03:13:33 以 `tools/with-mac-lock` 取得 Mac heavy lock，執行 `./scripts/formal_batch.sh results/batches/text-6.log ...`。
+- 本專案 03:14 起執行完整 pytest（單一行程，約 3 分鐘）。檢查鎖的指令寫成「印出警告後繼續」，沒有中止。
+- **text-6 批次開頭約 3 分鐘的量測可能受影響**，請使用者或 rust-hnsw 的 session 判斷是否重跑。本專案沒有碰它的行程或鎖。
+- 修正：檢查改為「鎖存在就中止」；v5 的 runner 內建檢查（`activeperception/v5/maclock.py`）。
 
 ### A：detector-v2（decision 027 → 030）完成
 
@@ -99,11 +127,11 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 - failure analysis：v1 budget 2 失敗約 90% 是結構性（Oracle 也失敗）；v2 殘餘失敗 100% 可歸因於視角選擇；
   rule-nbv-v2 在初始視角被擋時 75–81% 的第二視角決策是平手、按候選編號選（開發資料）。
 
-## 待使用者決定（2026-10-15 更新）
+## 待使用者決定（2026-10-16 更新）
 
 0. 本輪之後的候選（[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)）：
    - zone 內相似物件：detector-v2 未達 1%，是否再做一輪（更多困難負樣本、多種子、信心校準）；是否在實機管線使用 v2。
-   - absent 可判率：多視角估計相機固定比例偏差，縮小 v4 的餘裕。
+   - absent 可判率：**v5 進行中**（見上）。比例自我校正已在開發中排除。
    - 實機量測（需採購）。
 
 
