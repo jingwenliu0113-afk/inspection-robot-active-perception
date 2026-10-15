@@ -62,7 +62,11 @@ def config(name: str) -> GeometryConfig:
         from .frozen_v3 import GEOMETRY
 
         return GEOMETRY
-    return CONFIGS[name]
+    if name in CONFIGS:
+        return CONFIGS[name]
+    from ..v4.configs import config as v4_config  # v4 (decision 029) shares this harness
+
+    return v4_config(name)
 
 
 PRIOR_FLOOR = (0.01, 0.005)  # the covariance a localiser reports even when it is exact
@@ -202,10 +206,14 @@ class V3World:
             ok, margin = ref.ok, (None, None)
         else:
             prior = reported_prior(self.prior_level)
-            ref = refine_pose_v3(
+            refine, margin_fn = refine_pose_v3, margin_for
+            if getattr(self.cfg, "window_k", None) is not None:  # v4 (decision 029)
+                from ..v4.geometry import margin_for_v4 as margin_fn
+                from ..v4.geometry import refine_pose_v4 as refine
+            ref = refine(
                 depth, spec.camera, est, spec.zone, map_outlines(spec), self.cfg, prior=prior
             )
-            margin = margin_for(ref, self.cfg, prior)
+            margin = margin_fn(ref, self.cfg, prior)
             vis = robust_visibility_v3(
                 depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_v3
             )
@@ -238,6 +246,8 @@ class V3World:
             "gate": None if g is None else g["flags"],
             "max_conf": max((d.confidence for d in dets), default=0.0),
         }
+        if hasattr(ref, "ambiguous"):  # v4 only, so v3 outputs keep their exact form
+            self.diag[key] |= {"ambiguous": ref.ambiguous, "unique": ref.unique}
         self._cache[key] = obs
         return obs
 

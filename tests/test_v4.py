@@ -1,0 +1,106 @@
+"""v4 development components (decision 029): wider pose search, scale hypotheses."""
+
+import dataclasses
+import math
+
+import numpy as np
+import pytest
+
+from activeperception.nav import localize, scene
+from activeperception.serialize import load_spec_set
+from activeperception.v3 import eval as v3e
+from activeperception.v3 import geometry as g3
+from activeperception.v3.frozen_v3 import GEOMETRY
+from activeperception.v4 import configs
+from activeperception.v4.geometry import margin_for_v4, refine_pose_v4
+
+
+@pytest.fixture(scope="module")
+def spec():
+    return load_spec_set("data/episodes/specs-nav-b1.json")[0][0]
+
+
+def _depth(spec, pose, scale=1.0):
+    from activeperception.sim.raycast import render
+
+    depth, _ = render(spec.camera, pose, (*spec.layout.occluders, *scene.walls()), None)
+    return (depth * scale).astype(np.float32)
+
+
+def _err(ref, truth):
+    return math.hypot(ref.pose.x - truth.x, ref.pose.y - truth.y)
+
+
+def test_v4_with_defaults_is_frozen_v3(spec):
+    truth = spec.candidate_viewpoints[3].pose
+    depth = _depth(spec, truth, 1.015)
+    for dx, dy, dyaw in ((0.05, -0.03, 0.03), (0.12, 0.10, -0.05), (0.0, 0.0, 0.0)):
+        est = dataclasses.replace(truth, x=truth.x + dx, y=truth.y + dy, yaw=truth.yaw + dyaw)
+        args = (depth, spec.camera, est, spec.zone, localize.map_outlines(spec))
+        r3 = g3.refine_pose_v3(*args, GEOMETRY, prior=(0.06, 0.04))
+        r4 = refine_pose_v4(*args, configs.BASE, prior=(0.06, 0.04))
+        for f in dataclasses.fields(r3):
+            assert getattr(r3, f.name) == getattr(r4, f.name), f.name
+        assert margin_for_v4(r4, configs.BASE, (0.06, 0.04)) == g3.margin_for(
+            r3, GEOMETRY, (0.06, 0.04)
+        )
+
+
+def test_window_covering_the_prior_turns_a_far_estimate_into_a_conflict(spec):
+    """decision 026 V4: with L2 (sigma 6 cm) v3 searched +-15 cm, so the 3-sigma gate (18 cm) never
+    fired. v4 searches +-4 sigma: the correct fit to a 20 cm-off estimate moves > 3 sigma."""
+    truth = spec.candidate_viewpoints[3].pose
+    depth = _depth(spec, truth)
+    prior = (0.06, 0.04)
+    far = dataclasses.replace(truth, x=truth.x + 0.20, y=truth.y - 0.05)
+    args = (depth, spec.camera, far, spec.zone, localize.map_outlines(spec))
+    w4 = configs.CONFIGS["w4"]
+    r = refine_pose_v4(*args, w4, prior=prior)
+    assert r.window_xy == pytest.approx(0.24)
+    assert abs(r.dx + 0.20) < 0.01  # found the truth ...
+    assert not r.ok and r.conflict and g3.blind(r, w4)  # ... beyond the gate -> clears nothing
+    near = dataclasses.replace(truth, x=truth.x + 0.12, y=truth.y - 0.05)
+    r = refine_pose_v4(
+        depth, spec.camera, near, spec.zone, localize.map_outlines(spec), w4, prior=prior
+    )
+    assert r.ok and _err(r, truth) < 0.01
+    # L1 (sigma 3 cm): 4 sigma = 12 cm < v3's 15 cm -> the window stays v3's
+    r = refine_pose_v4(
+        depth, spec.camera, near, spec.zone, localize.map_outlines(spec), w4, prior=(0.03, 0.02)
+    )
+    assert r.window_xy == localize.SEARCH_XY_M
+
+
+def test_scale_hypotheses_widen_the_margin_by_their_spread(spec):
+    truth = spec.candidate_viewpoints[3].pose
+    depth = _depth(spec, truth, 0.97)  # the camera under-reads range by 3 % (D435-like)
+    est = dataclasses.replace(truth, x=truth.x + 0.03, yaw=truth.yaw - 0.02)
+    cfg = configs.CONFIGS["w4h"]
+    r = refine_pose_v4(
+        depth, spec.camera, est, spec.zone, localize.map_outlines(spec), cfg, prior=(0.03, 0.02)
+    )
+    assert r.ok and _err(r, truth) < 0.02
+    assert abs(r.scale - 0.97) <= 0.011
+    mx, myaw = margin_for_v4(r, cfg, (0.03, 0.02))
+    assert mx == pytest.approx(cfg.margin_ok[0] + r.spread_xy)
+    assert myaw == pytest.approx(cfg.margin_ok[1] + r.spread_yaw)
+    blind_cfg = dataclasses.replace(cfg, hyp_blind_m=r.spread_xy / 2) if r.spread_xy > 0 else None
+    if blind_cfg is not None:
+        rb = refine_pose_v4(
+            depth,
+            spec.camera,
+            est,
+            spec.zone,
+            localize.map_outlines(spec),
+            blind_cfg,
+            prior=(0.03, 0.02),
+        )
+        assert not rb.ok and rb.ambiguous and g3.blind(rb, blind_cfg)
+
+
+def test_shared_harness_resolves_v4_configs_and_still_refuses_formal_data():
+    assert v3e.config("w4h") is configs.CONFIGS["w4h"]
+    assert v3e.config("v3") is GEOMETRY
+    for ns in ("v3", "v3-dx", "detv2-sim", "r0b", "nav-b2"):
+        with pytest.raises(SystemExit):
+            v3e.main(["--ns", ns, "--configs", "w4h", "--out", "/tmp/never"])
