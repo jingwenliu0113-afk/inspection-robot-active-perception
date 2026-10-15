@@ -209,3 +209,86 @@ def test_see_v5_out_of_image_vetoes(spec):
 
     away = dc.replace(vp.pose, yaw=vp.pose.yaw + math.pi)  # looking away from the zone
     assert (point_states(d, spec.camera, away, spec.zone) == OUTSIDE).all()
+
+
+# ---------------------------------------------------------------- frozen v5 / formal runner
+
+
+def test_frozen_v5_is_frozen_v4_plus_see_v5():
+    from activeperception.v4 import frozen_v4
+    from activeperception.v5 import frozen_v5
+
+    g = frozen_v5.GEOMETRY
+    assert g.name == "v5" and g.see_k == 14 and g.see_bracket and g.see_scale == 1.0
+    assert not frozen_v5.FREE.see_bracket and frozen_v5.FREE.see_k == 14
+    for f in dataclasses_fields(frozen_v4.GEOMETRY):
+        if f != "name":
+            assert getattr(g, f) == getattr(frozen_v4.GEOMETRY, f), f
+    assert frozen_v5.TIE_BREAK == frozen_v4.TIE_BREAK
+    assert frozen_v5.describe()["see_v5"]["k"] == 14
+
+
+def dataclasses_fields(obj):
+    import dataclasses
+
+    return [f.name for f in dataclasses.fields(obj)]
+
+
+def test_v5_formal_runner_uses_only_its_new_namespaces():
+    from activeperception.types import Split
+    from activeperception.v5 import formal
+
+    assert {j[0] for j in formal.jobs()} == {"v5", "v5-dx"}
+    assert {formal.pipeline_of(j[3]) for j in formal.jobs()} == {"v4", "v5", "v5-free"}
+    assert len(formal.jobs()) == 24
+    from activeperception.nav.scene import R0B_SPLITS
+    from activeperception.v3.scenes import FORMAL_SPLITS
+
+    assert R0B_SPLITS["v5"] == Split.V5_EVAL and FORMAL_SPLITS["v5-dx"] == Split.V5_EVAL
+
+
+def _fake(correct: dict[str, bool], safe=True, absent=1.0):
+    """A compact result: ``correct`` maps episode -> Rule correct at every budget."""
+    per = {
+        e: {"state": "absent", **{f"b{b}": "absent" if ok else "inconclusive" for b in (2, 3, 5)}}
+        for e, ok in correct.items()
+    }
+    acc = {"accuracy": 1.0, "accuracy_by_state": {"absent": absent}}
+    return {
+        "summary": {f"rule@{b}": acc for b in (2, 3, 5)},
+        "false_absent": 0 if safe else 1,
+        "false_present": 0,
+        "geometric_risk": 0,
+        "all_views_geometric_risk": [],
+        "occupied_false_clearance": {"views": 0, "present_views": 10},
+        "rule_per_episode": per,
+    }
+
+
+def test_v5_formal_verdicts_follow_the_preregistered_rules():
+    from activeperception.v5 import formal
+
+    eps = [f"e{i}" for i in range(40)]
+    groups = {e: i // 4 for i, e in enumerate(eps)}
+    v4_ok = {e: i % 2 == 0 for i, e in enumerate(eps)}  # v4 right on half
+    v5_ok = {e: True for e in eps}  # v5 right everywhere
+    res = {}
+    for ns, d, p, prior in formal.CONDITIONS:
+        same = (d, p) == ("D0", "P0")
+        res[formal.key(ns, d, p, prior, "v4")] = _fake(v5_ok if same else v4_ok)
+        res[formal.key(ns, d, p, prior, "v5")] = _fake(v5_ok)
+        res[formal.key(ns, d, p, prior, "v5-free")] = _fake(v5_ok)
+    diff = formal.paired(res, groups)
+    ver = formal.verdicts(res, diff)
+    assert all(ver[k]["pass"] for k in ("X1", "X2", "X3", "X4"))
+    assert "pass" not in ver["R1"] and "pass" not in ver["R2"]
+    assert diff["v5:D3xL1"]["v5@3"]["v5_only_correct"] == 20
+    # unsafe somewhere -> X1; D0xP0 differs -> X3; v5 worse in one condition -> X4; no gain -> X2
+    res[formal.key("v5-dx", "D3", "L1", None, "v5")] = _fake(v5_ok, safe=False)
+    res[formal.key("v5", "D0", "P0", None, "v5")] = _fake(v4_ok)
+    res[formal.key("v5", "D2", "L2", None, "v5")] = _fake(v4_ok)
+    diff = formal.paired(res, groups)
+    ver = formal.verdicts(res, diff)
+    assert not ver["X1"]["pass"] and ver["X1"]["unsafe"] == ["v5-dx:D3xL1:v5"]
+    assert not ver["X2"]["pass"] and not ver["X3"]["pass"]
+    assert not ver["X4"]["pass"] and "v5:D0xP0@2" in ver["X4"]["significantly_worse"]

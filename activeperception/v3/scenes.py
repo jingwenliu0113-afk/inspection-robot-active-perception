@@ -27,7 +27,11 @@ from ..serialize import save_spec_set
 from ..types import Pose, Split
 
 DEV_NAMESPACE, FORMAL_NAMESPACE = "v3-dev-dx", "v3-dx"
-FORMAL_SPLITS = {FORMAL_NAMESPACE: Split.V3_EVAL, "v4-dx": Split.V4_EVAL}  # own seed, run once
+FORMAL_SPLITS = {  # own seed each, run once
+    FORMAL_NAMESPACE: Split.V3_EVAL,
+    "v4-dx": Split.V4_EVAL,
+    "v5-dx": Split.V5_EVAL,  # decision 034
+}
 GENERATOR_VERSION = "gen-nav-v1+dx-dev"  # development set (decision 024)
 GENERATOR_VERSION_FORMAL = "gen-nav-v1+dx"  # same placement rule, formal set (decision 025)
 NEAR_R = (0.95, 1.45)  # from the zone centre (zone radius 0.5; viewpoint ring 2.0)
