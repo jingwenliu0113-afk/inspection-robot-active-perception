@@ -115,3 +115,14 @@ def test_v5_runner_refuses_formal_and_same_namespace():
         dev.main(["--ns", "v4", "--cal-ns", "v3-dev-dx", "--out", "/tmp/x"])
     with pytest.raises(SystemExit):
         dev.main(["--ns", "v3-dev", "--cal-ns", "v3-dev", "--out", "/tmp/x"])
+
+
+def test_calibrated_config_see_scale_and_v4_identity():
+    from activeperception.v3.geometry import GeometryConfig
+    from activeperception.v4.geometry import GeometryConfigV4
+
+    cfg = configs.calibrated(0.975, 0.02, name="t", see=True)
+    assert isinstance(cfg, GeometryConfigV4) and isinstance(cfg, GeometryConfig)
+    assert cfg.see_scale == 0.975
+    assert configs.calibrated(0.975, 0.02, name="t").see_scale == 1.0
+    assert not hasattr(configs.BASE, "see_scale")  # frozen v4 reads raw depth

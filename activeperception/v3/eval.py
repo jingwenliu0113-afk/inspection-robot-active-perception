@@ -245,9 +245,11 @@ class V3World:
                 depth, spec.camera, est, spec.zone, map_outlines(spec), self.cfg, prior=prior
             )
             margin = margin_fn(ref, self.cfg, prior)
+            see_scale = getattr(self.cfg, "see_scale", 1.0)  # v5 candidate (decision 033)
             vis = robust_visibility_v3(
-                depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_v3
-            )
+                depth if see_scale == 1.0 else depth / see_scale,
+                spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_v3,
+            )  # fmt: skip
             conflict, blinded = ref.conflict, blind(ref, self.cfg)
             if blinded:
                 vis = (0.0,) * len(vis)

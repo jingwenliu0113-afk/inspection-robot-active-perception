@@ -51,9 +51,9 @@ def pair_ratio(a: np.ndarray, b: np.ndarray, min_pixels: int = 1000) -> float | 
 
 
 def _episode(args: tuple) -> dict:
-    ns, eid, depth_level, pose_level, prior_level, pairs = args
+    ns, eid, depth_level, pose_level, prior_level, pairs, *rest = args
+    every_view = bool(rest and rest[0])
     from ..framestore import FrameStore
-    from ..serialize import load_episode_set
 
     spec = next(s for s in _specs(ns) if s.episode_id == eid)
     frames = FrameStore(f"renders/{ns}").episode(eid)
@@ -62,12 +62,17 @@ def _episode(args: tuple) -> dict:
         for vp in (spec.initial_viewpoint, *spec.candidate_viewpoints)
     ]
     ratios = []
-    for k in range(pairs):  # stationary repeat at the initial view: frames rep 2k and 2k + 1
-        clean = frames.depth(spec.initial_viewpoint.id)
-        a = noisy_depth(spec, spec.initial_viewpoint.id, clean, depth_level, rep=2 * k)
-        b = noisy_depth(spec, spec.initial_viewpoint.id, clean, depth_level, rep=2 * k + 1)
-        ratios.append(pair_ratio(a, b))
-    del load_episode_set
+    stops = (
+        (spec.initial_viewpoint, *spec.candidate_viewpoints)
+        if every_view
+        else (spec.initial_viewpoint,)
+    )
+    for vp in stops:  # stationary repeat at a stop: frames rep 2k and 2k + 1
+        clean = frames.depth(vp.id)
+        for k in range(pairs):
+            a = noisy_depth(spec, vp.id, clean, depth_level, rep=2 * k)
+            b = noisy_depth(spec, vp.id, clean, depth_level, rep=2 * k + 1)
+            ratios.append(pair_ratio(a, b))
     return {"episode": eid, "views": views, "pair_ratios": ratios}
 
 
@@ -116,17 +121,20 @@ def calibrate(
     pairs: int = 1,
     workers: int = 6,
     cache: Path | None = None,
+    pairs_every_view: bool = False,
 ) -> dict:
     """Self-calibration on the first ``episodes`` episodes of ``ns`` (all if None)."""
     prior_level = prior_level or pose_level
     name = f"{ns}-{depth_level}x{pose_level}-pr{prior_level}-n{episodes or 'all'}-p{pairs}"
+    if pairs_every_view:  # one stationary pair set at every stop instead of the initial view
+        name += "v"
     if cache is not None and (cache / f"{name}.json").exists():
         return json.loads((cache / f"{name}.json").read_text())
     from .maclock import require_free
 
     require_free()
     eids = [s.episode_id for s in _specs(ns)][:episodes]
-    jobs = [(ns, e, depth_level, pose_level, prior_level, pairs) for e in eids]
+    jobs = [(ns, e, depth_level, pose_level, prior_level, pairs, pairs_every_view) for e in eids]
     with ProcessPoolExecutor(min(workers, len(jobs))) as ex:
         per_ep = list(ex.map(_episode, jobs))
     fits = [v for e in per_ep for v in e["views"]]
@@ -157,6 +165,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pairs", type=int, default=1)
     ap.add_argument("--workers", type=int, default=6)
     ap.add_argument("--cache", default="runs/v5-dev/calib")
+    ap.add_argument("--pairs-every-view", action="store_true")
     args = ap.parse_args(argv)
     if args.ns not in DEV_NAMESPACES:
         raise SystemExit(f"{args.ns}: not development data (allowed: {DEV_NAMESPACES})")
@@ -166,8 +175,9 @@ def main(argv: list[str] | None = None) -> int:
             cond, prior = cond.split(":")
         d, p = cond.split("x")
         c = calibrate(
-            args.ns, d, p, prior, args.episodes, args.pairs, args.workers, Path(args.cache)
-        )
+            args.ns, d, p, prior, args.episodes, args.pairs, args.workers, Path(args.cache),
+            args.pairs_every_view,
+        )  # fmt: skip
         s, j = c["scale"], c["jitter"]
         print(
             f"{c['name']}: centre {s['center']:.4f} from {s['n_ok']} / {c['views']} fits "

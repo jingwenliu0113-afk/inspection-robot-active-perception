@@ -90,12 +90,14 @@ def main(argv: list[str] | None = None) -> int:
                         f"fits; jitter {cal['jitter']['sigma']:.4f} ({cal['jitter']['n_pairs']})",
                         flush=True,
                     )
-                rule, centre = band, cal["scale"]["center"]
-                if band.startswith("truth:"):
-                    rule, centre = band.split(":")[1], true_scale(c["depth"])
+                rule, centre, see = band, cal["scale"]["center"], False
+                if rule.startswith("s:"):  # + see-through on calibrated depth
+                    rule, see = rule[2:], True
+                if rule.startswith("truth:"):
+                    rule, centre = rule.split(":")[1], true_scale(c["depth"])
                 b = configs.band_for(rule, cal["jitter"]["sigma"])
                 name = f"{cond}-{band}"
-                cfg = configs.calibrated(centre, b, name=f"v5-{band}")
+                cfg = configs.calibrated(centre, b, name=f"v5-{band}", see=see)
             prior = c["prior"]
             jobs.append(
                 (args.ns, c["depth"], c["pose"], cfg, args.gated == "1", frozen_v4.TIE_BREAK, prior)
