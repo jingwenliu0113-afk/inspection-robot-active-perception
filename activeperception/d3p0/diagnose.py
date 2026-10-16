@@ -20,6 +20,8 @@ from pathlib import Path
 
 import numpy as np
 
+from ..v6.hp import fit_costs  # moved there for H-P (decision 037 appendix A)
+
 CONDITIONS = ("D0xP0", "D3xP0", "D3xL1", "D1xL2:L1")
 SEE_K = 14
 _CACHE: dict = {}
@@ -60,29 +62,6 @@ def _install_capture() -> None:
 
     g4.refine_pose_v4 = capture
     g4._d3p0_patched = True
-
-
-def fit_costs(depth, camera, est, zone, outlines, cfg, ref) -> dict | None:
-    """Alignment cost at v5's fit and at the localiser's pose (best hypothesised scale): a
-    deployable measure of how much better the fit explains the depth than the localiser."""
-    from ..nav.localize import MAX_POINTS, _transform, outline_distance
-    from ..v3 import geometry as g3
-
-    pts, rng, _ = g3._points(depth, camera, est, zone, cfg.max_range)
-    if len(pts) < 50:
-        return None
-    c = np.array([est.x, est.y])
-    sel = g3._subsample(len(pts), MAX_POINTS, 0)
-    p, w = pts[sel], g3._weights(rng, cfg.weights)[sel]
-
-    def cost(dx, dy, dyaw, s):
-        jac = s if cfg.scale_jacobian else 1.0
-        moved = _transform(c + (p - c) / s, c, dx, dy, dyaw)
-        return float(g3._wcost(jac * outline_distance(moved[:, 0], moved[:, 1], outlines), w))
-
-    best = cost(ref.dx, ref.dy, ref.dyaw, ref.scale)
-    at_est = min(cost(0.0, 0.0, 0.0, s) for s in cfg.hyp_scales)
-    return {"cost_fit": best, "cost_at_localiser": at_est, "ratio": at_est / best if best else None}
 
 
 def episode(args: tuple) -> dict:

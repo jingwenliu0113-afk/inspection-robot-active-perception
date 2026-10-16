@@ -72,12 +72,14 @@ def config(name: str) -> GeometryConfig:
 PRIOR_FLOOR = (0.01, 0.005)  # the covariance a localiser reports even when it is exact
 
 
-def reported_prior(pose_level: str) -> tuple[float, float]:
-    """The localiser's own covariance (AMCL publishes it): here the error model's sigma."""
+def reported_prior(pose_level: str, floor: tuple[float, float] | None = None):
+    """The localiser's own covariance (AMCL publishes it): here the error model's sigma, at least
+    ``floor`` (default ``PRIOR_FLOOR``; B-floor of decision 037 raises it)."""
+    floor = PRIOR_FLOOR if floor is None else floor
     pn = POSE_LEVELS[pose_level]
     if pn is None:
-        return PRIOR_FLOOR
-    return max(pn.sigma_xy, PRIOR_FLOOR[0]), max(pn.sigma_yaw, PRIOR_FLOOR[1])
+        return floor
+    return max(pn.sigma_xy, floor[0]), max(pn.sigma_yaw, floor[1])
 
 
 DEV_NAMESPACES = ("v3-dev", "v3-dev-dx", "r0b-dev", "nav-b1")  # decision 024 §3
@@ -236,33 +238,45 @@ class V3World:
             obs, ref = observation_d016(spec, viewpoint.id, depth, dets, est)
             ok, margin = ref.ok, (None, None)
         else:
-            prior = reported_prior(self.prior_level)
+            prior = reported_prior(self.prior_level, getattr(self.cfg, "prior_floor", None))
             refine, margin_fn = refine_pose_v3, margin_for
             if getattr(self.cfg, "window_k", None) is not None:  # v4 (decision 029)
                 from ..v4.geometry import margin_for_v4 as margin_fn
                 from ..v4.geometry import refine_pose_v4 as refine
-            ref = refine(
-                depth, spec.camera, est, spec.zone, map_outlines(spec), self.cfg, prior=prior
-            )
+            outlines = map_outlines(spec)
+            ref = refine(depth, spec.camera, est, spec.zone, outlines, self.cfg, prior=prior)
             margin = margin_fn(ref, self.cfg, prior)
+            # development ceiling (decision 037 appendix A): the true pose, never blind
+            oracle = getattr(self.cfg, "oracle_pose", False)
+            pose = viewpoint.pose if oracle else ref.pose
             see_scale = getattr(self.cfg, "see_scale", 1.0)  # v5 candidates (decision 033)
             see_depth = depth if see_scale == 1.0 else depth / see_scale
             if getattr(self.cfg, "see_k", 0) > 0:
                 from ..v5.see import robust_visibility_v5
 
                 vis = robust_visibility_v5(
-                    see_depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_k,
+                    see_depth, spec.camera, pose, spec.zone, *margin, self.cfg.see_k,
                     getattr(self.cfg, "see_bracket", True),
                 )  # fmt: skip
             else:
                 vis = robust_visibility_v3(
-                    see_depth, spec.camera, ref.pose, spec.zone, *margin, self.cfg.see_v3
+                    see_depth, spec.camera, pose, spec.zone, *margin, self.cfg.see_v3
                 )
             conflict, blinded = ref.conflict, blind(ref, self.cfg)
+            hp_c = getattr(self.cfg, "hp_c", 0.0)
+            if hp_c > 0 and blinded and conflict:  # H-P (decision 037): pose / margin as failed
+                from ..v6.hp import cost_ratio, trusts_localiser
+
+                ratio = cost_ratio(depth, spec.camera, est, spec.zone, outlines, self.cfg, ref)
+                hp = {"hp_ratio": ratio, "hp_trusted": trusts_localiser(ratio, hp_c)}
+                blinded = not hp["hp_trusted"]
+            elif hp_c > 0:
+                hp = {"hp_ratio": None, "hp_trusted": False}
+            blinded = blinded and not oracle
             if blinded:
                 vis = (0.0,) * len(vis)
             obs = dataclasses.replace(
-                observation(spec, viewpoint.id, depth, dets, ref.pose), location_visibility=vis
+                observation(spec, viewpoint.id, depth, dets, pose), location_visibility=vis
             )
             ok, spread = ref.ok, (ref.spread_xy, ref.spread_yaw)
         used, true = obs.viewpoint.pose, viewpoint.pose
@@ -299,6 +313,8 @@ class V3World:
         if hasattr(ref, "ambiguous"):  # v4 only, so v3 outputs keep their exact form
             u = ref.unique if math.isfinite(ref.unique) else None
             self.diag[key] |= {"ambiguous": ref.ambiguous, "unique": u, "scale": ref.scale}
+        if getattr(self.cfg, "hp_c", 0.0) > 0:  # v6 candidates only (v5 outputs unchanged)
+            self.diag[key] |= hp
         self._cache[key] = obs
         return obs
 
