@@ -173,3 +173,92 @@ def test_harness_blinds_trusts_or_uses_the_truth_per_arm(monkeypatch, spec):
     obs = world.observe(spec, vp)
     assert obs.viewpoint.pose == vp.pose and world.diag[key]["err_xy"] == 0.0
     assert not world.diag[key]["blind"] and any(obs.location_visibility)
+
+
+def _summary(**k):
+    base = {"FA": 0, "FP": 0, "GR": 0, "allview": 0, "occ": 0, "exceed": 5, "absent5": 0.8}
+    return base | k
+
+
+def _diff(mean=0.0, lo=-0.01, hi=0.02):
+    cell = {"mean": mean, "ci95": [lo, hi], "arm_only": 0, "b0_only": 0}
+    return {"rule@2": cell, "rule@3": cell, "rule@5": cell, "absent@5": cell}
+
+
+def _verdict_inputs():
+    from activeperception.v6 import devreport as dr
+
+    summ, hpv, diffs = {}, {}, {}
+    for ns, cond, arm in dr.expected_keys():
+        summ[(ns, cond, arm)] = _summary()
+        if arm in ("HP12", "HP13"):
+            hpv[(ns, cond, arm)] = {"accepted_exceed_xy": 0}
+        if arm != "B0":
+            diffs[(ns, cond, arm)] = _diff()
+    for ns in dev.NAMESPACES:
+        diffs[(ns, "D3xP0", "HP12")] = _diff(0.15, 0.05, 0.25) | {
+            "absent@5": {"mean": 0.15, "ci95": [0.05, 0.25], "arm_only": 9, "b0_only": 0}
+        }
+        summ[(ns, "D3xP0", "HP12")] = _summary(absent5=0.95)
+        summ[(ns, "D3xP0", "Bfloor")] = _summary(absent5=0.85)
+    return summ, hpv, diffs
+
+
+def test_verdicts_follow_the_preregistered_rules():
+    from activeperception.v6 import devreport as dr
+
+    summ, hpv, diffs = _verdict_inputs()
+    v = dr.verdicts(summ, hpv, diffs)
+    assert v["recommend_formal"] and not v["stop"]
+    # any safety count on HP-1.2 stops
+    s = dict(summ) | {("v3-dev-dx", "D1xL1", "HP12"): _summary(occ=1)}
+    assert dr.verdicts(s, hpv, diffs)["stop"]
+    # an accepted view beyond its margin stops (HP-1.3 alone does not decide)
+    h = dict(hpv) | {("v3-dev", "D1xL2:L1", "HP12"): {"accepted_exceed_xy": 1}}
+    assert dr.verdicts(summ, h, diffs)["stop"]
+    h = dict(hpv) | {("v3-dev", "D1xL2:L1", "HP13"): {"accepted_exceed_xy": 1}}
+    assert not dr.verdicts(summ, h, diffs)["stop"]
+    # gain below +0.10 on v3-dev D3xP0 stops
+    d = dict(diffs) | {("v3-dev", "D3xP0", "HP12"): _diff(0.05) | {"absent@5": {
+        "mean": 0.0999, "ci95": [0.0, 0.2], "arm_only": 6, "b0_only": 0}}}  # fmt: skip
+    assert dr.verdicts(summ, hpv, d)["stop"]
+    # a significant loss anywhere stops
+    d = dict(diffs) | {("v3-dev", "D2xL2", "HP12"): _diff(-0.05, -0.09, -0.01)}
+    v = dr.verdicts(summ, hpv, d)
+    assert v["stop"] and v["R1_no_significant_loss"]["violations"]
+    # B-floor safe and as good on both namespaces -> no recommendation for H-P alone
+    s = dict(summ) | {(ns, "D3xP0", "Bfloor"): _summary(absent5=0.95) for ns in dev.NAMESPACES}
+    v = dr.verdicts(s, hpv, diffs)
+    assert v["F1_bfloor_as_good"]["holds"] and not v["recommend_formal"] and not v["stop"]
+    # ... unless it exceeds its margins more often than B0
+    s[("v3-dev", "D3xP0", "Bfloor")] = _summary(absent5=0.95, exceed=6)
+    assert not dr.verdicts(s, hpv, diffs)["F1_bfloor_as_good"]["holds"]
+
+
+def test_hp_views_counts_the_accepted_and_their_margin():
+    from activeperception.v6 import devreport as dr
+
+    def view(ratio, trusted, err, margin=0.10):
+        return {"hp_ratio": ratio, "hp_trusted": trusted, "err_xy": err, "margin_xy": margin,
+                "err_yaw": 0.0, "margin_yaw": 0.06}  # fmt: skip
+
+    assert dr.hp_views({"views": [{"err_xy": 0.0}]}) is None  # not an H-P run
+    v = [view(None, False, 0.0), view(1.1, True, 0.02), view(1.15, True, 0.12)]
+    v.append(view(3.0, False, 0.3))
+    h = dr.hp_views({"views": v})
+    assert (h["evaluated"], h["accepted"], h["accepted_exceed_xy"]) == (3, 2, 1)
+    assert h["accepted_err_xy_max"] == 0.12 and h["exceed_rate_upper95"] == 1.5
+
+
+def test_failure_attribution_order():
+    from activeperception.v6 import devreport as dr
+
+    def r(path, by_path, by_all):
+        return {"path": path, "cleared_by_path": by_path, "cleared_by_all_views": by_all}
+
+    ok = {"status": "ok", "c_block": 0.0}
+    blind = {"status": "blind", "c_block": 0.0}
+    assert dr.attribute(r([ok, {"status": "ok", "c_block": 0.5}], 1.0, 1.0)).startswith("detection")
+    assert dr.attribute(r([ok, blind], 0.9, 1.0)) == "path: blind views (ratio > c)"
+    assert dr.attribute(r([ok, ok], 0.9, 1.0)) == "path: view selection / budget"
+    assert dr.attribute(r([ok, blind], 0.9, 0.95)) == "not clearable with every view"
