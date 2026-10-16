@@ -7,8 +7,19 @@
 ＋ v5 完成並正式結案（decision 033 / 034 / 035；使用者 2026-10-16 確認，不修改、不重跑）。**
 不進 RL、不採購、不用付費服務。目前沒有進行中的實驗。
 
-**下一階段：zone 內相似物件造成的 detector 誤報**（[decision 036](docs/decisions/036-proposal-in-zone-similar-object-false-present.md)）。
-使用者 2026-10-16 只核准 E0；E0 已完成（[docs/e0-report.md](docs/e0-report.md)，附錄 B）。**E1、H2、正式實驗都未啟動，等使用者決定。**
+**目前：D3×P0 診斷完成，研究方案待使用者決定**（[decision 037](docs/decisions/037-d3p0-diagnosis-and-proposal.md)、[docs/d3p0-diagnosis.md](docs/d3p0-diagnosis.md)）。
+
+| D3×P0 診斷（開發資料 `v3-dev`） | |
+|---|---|
+| 真正不可觀測 | 0：乾淨 depth、真實位姿下 Rule 的 5 個視角 60 / 60 可清除；D3 depth 下 59 / 60 |
+| 14 個 absent 失敗 | 全部是「Rule 選中的視角被判矛盾而不提供看穿」；同樣視角用真實位姿全部可清除 |
+| 原因 | P0 回報 1 cm → 3 cm 先驗閘門 < D3 下精修自身誤差（p50 4.9、p95 14.8 cm）；定位器越準，被浪費的視角越多（454 vs D3×L1 103） |
+| 可部署的區分特徵 | 定位器位姿 / 精修解的擬合成本比：D3×P0 p50 1.18；定位器真的錯時 p50 32.8 |
+| 提案 H-P | 成本比 ≤ 1.3 的矛盾改用定位器位姿 ＋ 失敗擬合餘裕 max(10 cm, 3σ)；離線估計救回 12 / 14，過度自信定位器下 0 個錯誤接受 |
+
+需要使用者決定：是否啟動 H-P 的開發評估（`v3-dev` / `v3-dev-dx` 完整管線，對照 B0 = v5、B-floor）；c ∈ {1.2, 1.3}。
+
+**zone 內相似物件**（[decision 036](docs/decisions/036-proposal-in-zone-similar-object-false-present.md)）：E0 完成並封存（[docs/e0-report.md](docs/e0-report.md)）；**E1 暫緩**。
 
 | E0 結果（開發資料，方法與可行性；不是 H1 / H2 證據） | |
 |---|---|
@@ -24,7 +35,7 @@
 
 | 項目 | 內容 | 來源 |
 |---|---|---|
-| D3×P0 的 absent（使用者 2026-10-16 指定列入） | 精修與幾乎精確的定位器矛盾，683 / 2,080 個視角不提供看穿，absent@5 0.637 | decision 035 §5 |
+| ~~D3×P0 的 absent~~ → **研究中**（decision 037） | 診斷完成：失敗來自矛盾規則浪費選中的視角，不是不可觀測 | decision 035 §5 → 037 |
 | 立體遮蔽帶測試（使用者 2026-10-16 指定列入） | 刻意製造「物件整個落在貼著近處表面的立體遮蔽帶」的場景，檢驗 see-v5 的「包住」是否必要 | decision 035 §4 |
 | rule-nbv-v2 的增益預測（本專案補記） | 清除狀態改變時選到不增加清除的視角（v5 正式 7 集） | decision 035 §3 |
 
