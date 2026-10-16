@@ -30,10 +30,11 @@
 - **v4 與 D3 正式驗證完成**（decision 029 / 031 / 032）：W1–W6、D1 全部通過；凍結設定 `activeperception/v4/frozen_v4.py`。
   - `v4` / `v4-dx` 已用過、封存；v3 在 D2×L2 再次失敗 1 次，v4 擋下；v4 的代價是 absent 較難判。
 - **B depth 模型檢查**（decision 028）：真實 D435 / D455 平面資料的量測完成；D3 的正式驗證在 decision 032 完成（v3 與 v4 在 D3 下都安全）。
-- **v5 完成**（decision 033 → 034 → 035）：v5 = 凍結 v4 ＋ see-v5（缺值位姿被看穿位姿左右包住時不否決，k = 14），凍結設定 `activeperception/v5/frozen_v5.py`。
+- **v5 完成並正式結案**（decision 033 → 034 → 035；使用者 2026-10-16 確認，不修改、不重跑）：v5 = 凍結 v4 ＋ see-v5（缺值位姿被看穿位姿左右包住時不否決，k = 14），凍結設定 `activeperception/v5/frozen_v5.py`。
   - 正式（`v5` / `v5-dx`，只跑一次）：X1–X4 全部通過；Rule budget 3 D2×L2 +0.237、D3×L1 +0.138；absent@5 D3×L1 0.637 → 0.950。`v5` / `v5-dx` 已用過、封存。
   - 比例自我校正（decision 033 原主題）在開發中排除；不包住的版本只報告（也安全）。
-- **Mac heavy lock**：任何長時間 CPU / Docker 工作前，鎖存在就中止（不是只印警告）；v5 runner 內建檢查。
+- **下一階段（提案，未啟動）**：zone 內相似物件的誤報（decision 036）。**使用者確認前不得啟動**任何資料收集、開發或正式實驗；D3×P0 與立體遮蔽帶測試在 Backlog。
+- **資源**：任何重工作前先跑 `uv run python -m activeperception.preflight`（鎖、CPU、RAM；Apple GPU 加 `--gpu`）；鎖存在或負載過高就不啟動。Mac 上可能有不取鎖的工作。text-6 事件紀錄：`docs/incidents/`，交由 Rust HNSW 專案處理，本專案不跨專案操作。
 
 目前沒有進行中的實驗；需要使用者決定的下一步見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
 

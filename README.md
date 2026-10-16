@@ -24,7 +24,7 @@
 >   - 偏難負樣本的誤報 8.4% → **4.7%**（成對修好 43、弄壞 16），但未達 ≤ 1%（判準 T1 **未通過**）；
 >   - 召回沒有明顯退步，模擬中的 v3 管線仍然安全（T2–T4 通過）；正樣本完全漏看 4 → 10 / 134。
 >   - `detector-v2` 不取代凍結的 `detector-v1`。
-> - **v5 看穿判定修正**（decision 033–035，模擬誤差，新資料只跑一次）：
+> - **v5 看穿判定修正**（decision 033–035，模擬誤差，新資料只跑一次，已結案）：
 >   - 原本要做的「depth 比例自我校正」在開發中排除：只縮窄比例假設帶有得有失，看穿用校正 depth 沒有作用；
 >   - 找到 absent 判不出的真正原因：27 個位姿中**任何一個缺值就否決**。see-v5 讓兩側都有看穿證據的缺值位姿不否決；
 >   - 8 個條件全部安全；Rule budget 3 在 v4 付出代價的條件 D2×L2 +0.237、D3×L1 +0.138（CI 下界都 > 0）；absent@5 D3×L1 0.637 → 0.950。
@@ -574,6 +574,7 @@ GPU 工作（detector 選型與 Core 偵測）在共享的 RTX 5070 Ti 上執行
 - Advanced C（RL）：使用者決定不做。
 - 往真實巡檢的建議（不需採購的準備 → 實機 B0 → 實機正式評估）：[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)。
   其中 R0a、R0b、v3、A（detector 微調，T1 未通過）、v4 與 D3 的正式驗證、v5（看穿判定修正）已完成。
+- 下一階段（**提案，未啟動**）：zone 內相似物件造成的 detector 誤報，見 [decision 036](docs/decisions/036-proposal-in-zone-similar-object-false-present.md)。
 - 任何新階段都需要使用者決定。
 
 ## 目錄

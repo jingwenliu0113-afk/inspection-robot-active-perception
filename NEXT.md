@@ -4,8 +4,24 @@
 
 **Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）
 ＋ v3 完成（decision 024–026）＋ A 完成（decision 027 / 030）＋ B（decision 028）＋ v4 與 D3 正式驗證完成（decision 029 / 031 / 032）
-＋ v5 完成（decision 033 / 034 / 035）。**
-不進 RL、不採購、不用付費服務。目前沒有進行中的實驗；下一步需要使用者決定（見最後）。
+＋ v5 完成並正式結案（decision 033 / 034 / 035；使用者 2026-10-16 確認，不修改、不重跑）。**
+不進 RL、不採購、不用付費服務。目前沒有進行中的實驗。
+
+**下一階段（提案，待使用者確認後才啟動）**：zone 內相似物件造成的 detector 誤報 → [decision 036（提案）](docs/decisions/036-proposal-in-zone-similar-object-false-present.md)。
+假設 H1：誤報跟著視角走（多視角確認可以濾掉）；成立才做 H2「確認式 present」。需要使用者決定：是否核准、E1 真實多視角資料的來源（建議手機拍照）、門檻。
+
+### Backlog（暫不做）
+
+| 項目 | 內容 | 來源 |
+|---|---|---|
+| D3×P0 的 absent（使用者 2026-10-16 指定列入） | 精修與幾乎精確的定位器矛盾，683 / 2,080 個視角不提供看穿，absent@5 0.637 | decision 035 §5 |
+| 立體遮蔽帶測試（使用者 2026-10-16 指定列入） | 刻意製造「物件整個落在貼著近處表面的立體遮蔽帶」的場景，檢驗 see-v5 的「包住」是否必要 | decision 035 §4 |
+| rule-nbv-v2 的增益預測（本專案補記） | 清除狀態改變時選到不增加清除的視角（v5 正式 7 集） | decision 035 §3 |
+
+### 資源檢查（使用者 2026-10-16 提醒）
+
+Mac 上可能有不取鎖的工作（例如本機 LLM 伺服器占用 Apple GPU、其他專案的 Docker 容器）。任何重工作前先跑
+`uv run python -m activeperception.preflight`（鎖、CPU、RAM；用到 Apple GPU 時加 `--gpu`），未通過就不啟動。
 
 ### v5（decision 033 → 034 → 035）完成
 
@@ -23,12 +39,10 @@
 
 正式步驟都在 Mac heavy lock 釋放後（07:52）才進行；rust-hnsw 持鎖期間只做文件工作。
 
-### 事件紀錄：2026-10-16 干擾了 rust-hnsw 的正式 benchmark
+### 事件紀錄：2026-10-16 本專案的測試與 rust-hnsw 正式 benchmark `text-6` 重疊
 
-- rust-hnsw 在 03:13:33 以 `tools/with-mac-lock` 取得 Mac heavy lock，執行 `./scripts/formal_batch.sh results/batches/text-6.log ...`。
-- 本專案 03:14 起執行完整 pytest（單一行程，約 3 分鐘）。檢查鎖的指令寫成「印出警告後繼續」，沒有中止。
-- **text-6 批次開頭約 3 分鐘的量測可能受影響**，請使用者或 rust-hnsw 的 session 判斷是否重跑。本專案沒有碰它的行程或鎖。
-- 修正：檢查改為「鎖存在就中止」；v5 的 runner 內建檢查（`activeperception/v5/maclock.py`）。
+完整紀錄：[docs/incidents/2026-10-16-mac-heavy-lock-rust-hnsw-text-6.md](docs/incidents/2026-10-16-mac-heavy-lock-rust-hnsw-text-6.md)。
+依使用者指示，**交由 Rust HNSW 專案重新評估、必要時重跑**；本專案不跨專案操作。
 
 ### A：detector-v2（decision 027 → 030）完成
 
@@ -126,9 +140,8 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 ## 待使用者決定（2026-10-16 更新）
 
 0. 本輪之後的候選（[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)）：
-   - zone 內相似物件：detector-v2 未達 1%，是否再做一輪（更多困難負樣本、多種子、信心校準）；是否在實機管線使用 v2。
-   - absent 可判率：**v5 已處理主要部分**。剩下 D3×P0（精修與幾乎精確的定位器矛盾，683 個視角不提供看穿），需要新版本與新資料。
-   - 「包住」規則是否必要：可以設計刻意製造立體遮蔽帶幾何的測試場景（新資料）來檢驗。
+   - **zone 內相似物件（優先，使用者 2026-10-16 指定）**：方案見 decision 036（提案），待確認。是否在實機管線使用 detector-v2 仍待決定。
+   - absent 可判率：**v5 已處理主要部分**；D3×P0 與立體遮蔽帶測試列入 Backlog。
    - 實機量測（需採購）。
 
 

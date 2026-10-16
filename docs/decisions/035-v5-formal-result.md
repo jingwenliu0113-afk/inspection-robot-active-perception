@@ -1,7 +1,7 @@
 # 035 — v5 的正式測試結果（decision 034 協定，只跑一次）
 
 - **日期**：2026-10-16
-- **狀態**：結果。協定 decision 034（凍結於 `a92b440`）；正式資料在凍結後產生（specs `65c1fcb`、GT `3d40ae3`）；只跑一次（`3c67bbd`）。
+- **狀態**：結果。**使用者 2026-10-16 確認 v5 正式結案：不修改既有結果，不重跑。** 協定 decision 034（凍結於 `a92b440`）；正式資料在凍結後產生（specs `65c1fcb`、GT `3d40ae3`）；只跑一次（`3c67bbd`）。
 - 結果檔：[`results/v5/report.json`](../../results/v5/report.json)、[`tables.md`](../../results/v5/tables.md)、圖 [`docs/figures/v5_formal.png`](../figures/v5_formal.png)。
   逐視角診斷在 `runs/v5-formal/`（不 commit，可重現）。
 - **這是模擬誤差測試**：Gazebo 影像加上 `r0b_noise.py`（D1 / D2）與 `depthnoise/d3.py`（D3）的誤差，不是實機。
