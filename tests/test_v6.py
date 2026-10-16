@@ -262,3 +262,32 @@ def test_failure_attribution_order():
     assert dr.attribute(r([ok, blind], 0.9, 1.0)) == "path: blind views (ratio > c)"
     assert dr.attribute(r([ok, ok], 0.9, 1.0)) == "path: view selection / budget"
     assert dr.attribute(r([ok, blind], 0.9, 0.95)) == "not clearable with every view"
+
+
+def test_hp_dev_report_matches_its_documents():
+    """The committed development result and the numbers quoted in the docs (decision 037 B)."""
+    import json
+    from pathlib import Path
+
+    r = json.loads(Path("results/hp-dev/summary.json").read_text())
+    v = r["verdicts"]
+    assert v["stop"] and not v["recommend_formal"]
+    assert v["S1_safety"]["pass"] and not v["S2_accepted_within_margin"]["pass"]
+    assert v["R1_no_significant_loss"]["pass"] and not v["F1_bfloor_as_good"]["holds"]
+    assert sum(x == "identical" for x in r["reproduction_B0"].values()) == 9
+    assert "DIFFERS" not in r["reproduction_B0"].values()
+    assert r["runs"]["v3-dev-dx:D1xL2:L1:HP12"]["hp"]["accepted_exceed_xy"] == 3
+    docs = Path("docs/hp-development.md").read_text()
+    for name, quoted in (
+        ("v3-dev:D3xP0:HP12", "+0.200 [+0.067, +0.333]"),
+        ("v3-dev-dx:D3xP0:HP12", "+0.133 [+0.033, +0.250]"),
+    ):
+        d = r["paired_vs_B0"][name]["absent@5"]
+        assert f"{d['mean']:+.3f} [{d['ci95'][0]:+.3f}, {d['ci95'][1]:+.3f}]" == quoted
+        assert quoted in docs
+    for key, absent5 in (
+        ("v3-dev:D3xP0", ("0.767", "0.967")),
+        ("v3-dev-dx:D3xP0", ("0.750", "0.883")),
+    ):
+        assert f"{r['runs'][key + ':B0']['absent5']:.3f}" == absent5[0]
+        assert f"{r['runs'][key + ':HP12']['absent5']:.3f}" == absent5[1]

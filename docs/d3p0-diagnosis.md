@@ -6,6 +6,9 @@
 - **真實位姿只用於歸因**（T0–T2、反事實 C1），不進入任何可部署的規則。
 - 程式：`activeperception/d3p0/`（`diagnose.py`、`summarize.py`），測試 `tests/test_d3p0.py`。逐視角結果與既有 v5 開發輸出完全一致（smoke test 逐項比對）。
 
+> **後續（2026-10-17）**：依本診斷提出的 H-P 已完成開發評估（[docs/hp-development.md](hp-development.md)）。下面第 4 點的成本比在樣本外的過度自信定位器下失效：
+> r ≈ 1 只代表 depth 分辨不出，不代表定位器是對的（`v3-dev-dx` D1×L2 有 3 個 r ≤ 1.07 的視角定位器誤差 10–13 cm）。本診斷的數字不變。
+
 ## 結論先講
 
 1. **D3×P0 的 absent 失敗不是「真正不可觀測」**。
