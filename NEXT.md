@@ -19,13 +19,11 @@
 | 凍結 | decision 034（`a92b440`）：v5 = 凍結 v4 ＋ see-v5；判準 X1（安全）、X2（D2×L2 / D3×L1 的 b3 改善 CI 下界 > 0）、X3（D0×P0 與 v4 相同）、X4（無顯著變差）；R2 不包住版本只報告 |
 | 紀錄 | [docs/v5-development.md](docs/v5-development.md) |
 
-剩下的步驟（都要 CPU / Docker，**Mac heavy lock 被其他 Project 持有時不做**）：
+進度（2026-10-16，Mac heavy lock 07:52 釋放後）：
 
-1. 產生正式 spec：`uv run python -m activeperception.nav.scene --namespace v5 --groups 40 --out data/episodes/specs-v5.json`
-   與 `uv run python -m activeperception.v3.scenes --namespace v5-dx --groups 40`；立即 commit。
-2. `./docker/render.sh` 渲染兩個 namespace、`build-episodes` 建 GT、`detector.run` 跑 `detector-v1`（同 docs/reproduce.md §G 的 v4 步驟）；commit。
-3. `uv run python -m activeperception.v5.formal --out results/v5 --raw runs/v5-formal`（24 個 job，只跑一次）。
-4. 寫 decision 035（結果），更新 README / 圖 / failure analysis / CLAUDE.md。
+1. 正式 spec `v5` / `v5-dx`（`65c1fcb`）→ 渲染、GT（`3d40ae3`：v5 80 absent / 57 unobservable / 23 visible；v5-dx 80 / 39 / 41）→ `detector-v1`（CPU，各 2,080 張）。完成。
+2. **正式評測已啟動**：`uv run python -m activeperception.v5.formal --out results/v5 --raw runs/v5-formal`（24 個 job，只跑一次）。
+3. 之後：寫 decision 035（結果），更新 README / 圖 / failure analysis / CLAUDE.md。
 
 ### 事件紀錄：2026-10-16 干擾了 rust-hnsw 的正式 benchmark
 
