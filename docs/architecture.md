@@ -107,6 +107,8 @@ flowchart TD
 | `activeperception/nav/` | Advanced B：場景 / 地圖、TB4 桅桿相機、位姿精修與餘裕、B0 / B1 driver、分析、失敗分析 |
 | `activeperception/r0a.py`、`r0b*.py` | R0：真實照片上的 detector、模擬的 depth / 位姿誤差 |
 | `activeperception/v3/` | v3：`decision-v3`（zone 過濾）、`see-through-v3`、`nav-pose-v3`（先驗閘門、矛盾時不可信）、開發評估、凍結設定、正式 runner |
+| `activeperception/v4/` | v4：`nav-pose-v4`（4σ 搜尋、比例假設 ＋ 尺度雅可比、依離散度加大的餘裕）、`decision-v4`（depth 區間 zone 過濾）、凍結設定、正式 runner |
+| `activeperception/v5/` | v5：`see-v5`（缺值位姿被看穿位姿包住時不否決）、比例自我校正（開發，未採用）、開發 / 正式 runner、Mac heavy lock 檢查 |
 | `activeperception/detv2/` | A：detector-v2 的資料、訓練（RTX）、評測、正式 runner |
 | `activeperception/depthnoise/` | B：真實 depth 誤差統計、公開資料下載、D3 修正模型 |
 | `ros_ws/src/inspection_ap_ros/` | ROS 2 inspector node（Core 線上版） |

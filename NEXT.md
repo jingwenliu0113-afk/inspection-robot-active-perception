@@ -4,26 +4,24 @@
 
 **Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）
 ＋ v3 完成（decision 024–026）＋ A 完成（decision 027 / 030）＋ B（decision 028）＋ v4 與 D3 正式驗證完成（decision 029 / 031 / 032）
-＋ v5 開發完成、已凍結（decision 033 / 034），正式資料尚未產生。**
-不進 RL、不採購、不用付費服務。
+＋ v5 完成（decision 033 / 034 / 035）。**
+不進 RL、不採購、不用付費服務。目前沒有進行中的實驗；下一步需要使用者決定（見最後）。
 
-### v5（decision 033 → 034）：凍結完成，正式測試等 Mac heavy lock 釋放
+### v5（decision 033 → 034 → 035）完成
 
 使用者 2026-10-15「你看一下目前進度 然後接著做」→ 做 NEXT 候選 2（absent 可判率）。
 
-| 項目 | 結果（開發資料 `v3-dev` / `v3-dev-dx`，不是正式結果） |
+| 項目 | 結果 |
 |---|---|
-| 比例自我校正 | 可行（校正值在真值 0.5% 內，靜止重拍估得浮動 1.06%），但只縮窄比例假設帶有得有失；看穿用校正 depth 沒有作用 → **不採用** |
-| 新發現 | v4 的寬假設帶有一部分保護是意外的多起點一致性檢查；D3 的 absent 瓶頸是「缺值像素 × 27 個位姿逐一要求有效」，不是比例 |
-| see-v5 | 缺值位姿不否決（但須被看穿位姿左右包住）、任一位姿被擋或畫面外就否決、至少 14 / 27 看穿。9 組條件全部安全；Rule b3 D2×L2 0.767 → 0.950、D3×L1 0.758 → 0.875 |
-| 凍結 | decision 034（`a92b440`）：v5 = 凍結 v4 ＋ see-v5；判準 X1（安全）、X2（D2×L2 / D3×L1 的 b3 改善 CI 下界 > 0）、X3（D0×P0 與 v4 相同）、X4（無顯著變差）；R2 不包住版本只報告 |
-| 紀錄 | [docs/v5-development.md](docs/v5-development.md) |
+| 開發（`v3-dev` / `v3-dev-dx`） | 比例自我校正可行但只縮窄假設帶有得有失、看穿用校正 depth 沒有作用 → 不採用；absent 瓶頸是「27 個位姿任一缺值就否決」→ see-v5。紀錄：[docs/v5-development.md](docs/v5-development.md) |
+| 凍結 | decision 034（`a92b440`）；正式資料 `v5` / `v5-dx` 在凍結後產生（`65c1fcb`、`3d40ae3`） |
+| 正式（decision 035，`3c67bbd`） | **X1–X4 全部通過**：8 個條件全部安全；Rule budget 3 D2×L2 +0.237 [0.175, 0.294]、D3×L1 +0.138 [0.081, 0.194]；D0×P0 與 v4 相同；沒有顯著變差 |
+| absent@5（v4 → v5） | D2×L2 0.887 → 0.988、D3×L1 0.637 → 0.950、`v5-dx` D3×L1 0.425 → 0.800；D3×P0 0.512 → 0.637 |
+| 只有 v4 對 | 7 集，全部是 absent 被判成 inconclusive（選視角路徑改變；安全方向） |
+| 不包住版本（只報告） | 全部安全、收益更大；依事先解讀不據此修改 v5 |
+| 限制 | D3×P0 仍有 683 / 2,080 個視角因精修與定位器矛盾不提供看穿；立體遮蔽帶沒有實測 |
 
-進度（2026-10-16，Mac heavy lock 07:52 釋放後）：
-
-1. 正式 spec `v5` / `v5-dx`（`65c1fcb`）→ 渲染、GT（`3d40ae3`：v5 80 absent / 57 unobservable / 23 visible；v5-dx 80 / 39 / 41）→ `detector-v1`（CPU，各 2,080 張）。完成。
-2. **正式評測已啟動**：`uv run python -m activeperception.v5.formal --out results/v5 --raw runs/v5-formal`（24 個 job，只跑一次）。
-3. 之後：寫 decision 035（結果），更新 README / 圖 / failure analysis / CLAUDE.md。
+正式步驟都在 Mac heavy lock 釋放後（07:52）才進行；rust-hnsw 持鎖期間只做文件工作。
 
 ### 事件紀錄：2026-10-16 干擾了 rust-hnsw 的正式 benchmark
 
@@ -129,7 +127,8 @@ GitHub：https://github.com/jingwenliu0113-afk/inspection-robot-active-perceptio
 
 0. 本輪之後的候選（[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)）：
    - zone 內相似物件：detector-v2 未達 1%，是否再做一輪（更多困難負樣本、多種子、信心校準）；是否在實機管線使用 v2。
-   - absent 可判率：**v5 進行中**（見上）。比例自我校正已在開發中排除。
+   - absent 可判率：**v5 已處理主要部分**。剩下 D3×P0（精修與幾乎精確的定位器矛盾，683 個視角不提供看穿），需要新版本與新資料。
+   - 「包住」規則是否必要：可以設計刻意製造立體遮蔽帶幾何的測試場景（新資料）來檢驗。
    - 實機量測（需採購）。
 
 

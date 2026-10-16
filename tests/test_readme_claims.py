@@ -183,3 +183,41 @@ def test_v4_and_d3_formal_numbers():
     assert f"budget 3 {d['mean']:+.3f}".replace("-", "−") in README.replace("-", "−")
     assert ci(d).replace("-", "−") in README.replace("-", "−")
     assert all(c["false_absent"] == 0 for c in res.values())
+
+
+def test_v5_formal_numbers():
+    rep = load("results/v5/report.json")
+    ver, res = rep["verdicts"], rep["results"]
+    assert all(ver[k]["pass"] for k in ("X1", "X2", "X3", "X4"))
+    assert all(v3_safe(c) for k, c in res.items() if k.endswith(":v5"))
+    for cond in ("D2xL2", "D3xL1"):
+        r = ver["X2"]["rule_b3_v5_minus_v4"][cond]
+        assert f"{cond.replace('x', '×')} {num(r['mean'], True)}" in README
+        assert f"[{r['ci95'][0]:.3f}, {r['ci95'][1]:.3f}]" in README
+        b3 = [res[f"v5:{cond}:{p}"]["summary"]["rule@3"]["accuracy"] for p in ("v4", "v5")]
+        assert f"{num(b3[0])} → **{num(b3[1])}**" in README
+    for k in ("v5:D2xL2", "v5:D3xL1", "v5-dx:D3xL1"):
+        a = [
+            res[f"{k}:{p}"]["summary"]["rule@5"]["accuracy_by_state"]["absent"]
+            for p in ("v4", "v5")
+        ]
+        assert f"{num(a[0])} → {num(a[1])}" in README, k
+    d3p0 = res["v5:D3xP0:v5"]["summary"]["rule@5"]["accuracy_by_state"]["absent"]
+    assert f"D3×P0 absent@5 仍只有 {num(d3p0)}" in README
+    only_v4 = sum(
+        per[f"v5@{b}"]["v4_only_correct"]
+        for per in rep["paired_minus_v4"].values()
+        for b in (2, 3, 5)
+    )
+    assert f"{only_v4} 集 absent" in README and only_v4 == 7
+    assert all(ver["R2"]["safe"].values())  # "不包住的版本也全部安全"
+
+
+def v3_safe(c: dict) -> bool:
+    return (
+        c["false_absent"] == 0
+        and c["false_present"] == 0
+        and c["geometric_risk"] == 0
+        and not c["all_views_geometric_risk"]
+        and c["occupied_false_clearance"]["views"] == 0
+    )

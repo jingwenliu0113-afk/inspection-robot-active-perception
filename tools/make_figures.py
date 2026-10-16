@@ -15,6 +15,7 @@
 11. docs/figures/v3_dev_ablation.png  - v3 development: geometry ablation, zone gating (dec. 024)
 12. docs/figures/v3_formal.png        - v3 formal test once: v2 vs v3 on new data (decision 026)
 13. docs/figures/v4_formal.png        - v4 + D3 formal test once: v3 vs v4, new data (dec. 032)
+14. docs/figures/v5_formal.png        - v5 formal test once: v4 vs v5 (+ unbracketed), new data
 
 The demo / failure-case animations (docs/figures/demo_nav2_*, failure_nav2_margin.*) come from
 tools/make_demo.py on run logs (docs/reproduce.md level B).
@@ -1020,6 +1021,79 @@ def v4_formal(report: dict) -> None:
     plt.close(fig)
 
 
+def v5_formal(report: dict) -> None:
+    """decision 035: frozen v4 vs frozen v5 (see-v5) and v5 without bracketing, new sets."""
+    conds = [
+        ("v5:D0xP0", "D0 x P0\nclean (X3)"),
+        ("v5:D1xL1", "D1 x L1\ntypical"),
+        ("v5:D2xL2", "D2 x L2\nstress (X2)"),
+        ("v5:D3xL1", "D3 x L1\nreal-camera-like (X2)"),
+        ("v5:D3xP0", "D3 x P0"),
+        ("v5:D1xL2-reportsL1", "D1 x L2, localiser\n2x over-confident"),
+        ("v5-dx:D1xL1", "hydrant outside\nzone, D1 x L1"),
+        ("v5-dx:D3xL1", "hydrant outside\nzone, D3 x L1"),
+    ]
+    res = report["results"]
+    pipes = (
+        ("v4", "v4 (frozen, decision 031)", "#a8a69e"),
+        ("v5", "v5 = v4 + see-v5 (frozen, decision 034)", "#2a78d6"),
+        ("v5-free", "see-v5 without bracketing (report only)", "#eb6834"),
+    )
+    panels = (
+        ("b3", "(a) Rule accuracy, budget 3 (160 episodes)"),
+        (
+            "unsafe",
+            "(b) unsafe outcomes: false present + false absent + views seeing through the hydrant",
+        ),
+        ("absent", "(c) Rule, budget 5: absent episodes answered 'absent' (of 80)"),
+    )
+    fig, axes = plt.subplots(3, 1, figsize=(10.4, 7.8), dpi=200, sharex=True)
+    fig.patch.set_facecolor(SURFACE)
+    x = np.arange(len(conds))
+
+    def value(c, field):
+        if field == "b3":
+            return c["summary"]["rule@3"]["accuracy"]
+        if field == "unsafe":
+            return c["false_present"] + c["false_absent"] + c["occupied_false_clearance"]["views"]
+        return round(c["summary"]["rule@5"]["accuracy_by_state"]["absent"] * 80)
+
+    tops = {}
+    for ax, (field, title) in zip(axes, panels, strict=True):
+        _style(ax)
+        vals_all = []
+        for (pipe, label, colour), off in zip(pipes, (-0.27, 0.0, 0.27), strict=True):
+            vals = [value(res[f"{k}:{pipe}"], field) for k, _ in conds]
+            vals_all += vals
+            ax.bar(x + off, vals, width=0.26, color=colour, ec=SURFACE, lw=1.2, label=label)
+            for xi, v in zip(x + off, vals, strict=True):
+                txt = f"{v:.2f}" if field == "b3" else f"{v}"
+                ax.text(xi, v, txt, ha="center", va="bottom", fontsize=5.6, color=INK2)
+        tops[field] = max(vals_all)
+        ax.set_title(title, fontsize=8.5, color=INK, loc="left")
+    axes[0].set_ylim(0, 1.12)
+    handles, labels = axes[0].get_legend_handles_labels()  # panel (b) is empty when all safe
+    axes[1].legend(
+        handles, labels, loc="upper left", frameon=False, fontsize=7, labelcolor=INK2, ncol=3
+    )
+    axes[1].set_ylim(0, max(3, tops["unsafe"] * 1.3))
+    axes[1].yaxis.get_major_locator().set_params(integer=True)
+    axes[2].set_ylim(0, 95)
+    axes[2].set_xticks(x)
+    axes[2].set_xticklabels([n for _, n in conds], fontsize=6.6, color=INK2)
+    fig.suptitle(
+        "v5 formal test, run once on new data (decision 035) - simulated depth / pose error, "
+        "not a real robot",
+        x=0.01,
+        ha="left",
+        fontsize=9,
+        color=INK,
+    )
+    fig.subplots_adjust(left=0.05, right=0.99, bottom=0.12, top=0.92, hspace=0.42)
+    fig.savefig(OUT / "v5_formal.png", facecolor=SURFACE)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
@@ -1066,6 +1140,9 @@ if __name__ == "__main__":
     v4_rep = ROOT / "results/v4/report.json"
     if v4_rep.exists():
         v4_formal(json.loads(v4_rep.read_text()))
+    v5_rep = ROOT / "results/v5/report.json"
+    if v5_rep.exists():
+        v5_formal(json.loads(v5_rep.read_text()))
     v3_dev = ROOT / "results/v3-dev/ablation.json"
     if v3_dev.exists():
         v3_dev_ablation(json.loads(v3_dev.read_text())["rows"])
