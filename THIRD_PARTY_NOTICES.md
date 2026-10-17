@@ -1,9 +1,9 @@
 # 第三方內容與授權（Third-party notices）
 
-本檔列出 repo 內含或引用的第三方內容、來源與授權。**本檔不是本專案程式碼的授權**；本 repo 目前沒有附加開源授權檔（LICENSE）。
+本專案作者有權授權的**原創程式碼**以 [BSD-3-Clause](LICENSE) 授權。下列第三方內容**不在**該授權範圍內，保留其原有授權。
 
-This file lists third-party content contained in or referenced by this repository, with its source and license.
-It is not a license for this project's own code.
+The original code in this repository that its authors have the right to license is licensed under
+[BSD-3-Clause](LICENSE). The third-party content below is not covered by that license and keeps its own license.
 
 ## repo 內含的第三方內容
 
@@ -24,7 +24,7 @@ It is not a license for this project's own code.
 | 內容 | 取得方式 | 授權（以原始來源為準） |
 |---|---|---|
 | detector 權重 `fasterrcnn_mobilenet_v3_large_fpn`（COCO 預訓練） | `download.pytorch.org`，載入時驗證 sha256（docs/reproduce.md §B） | torchvision：BSD-3-Clause |
-| detector 選型時比較過的 YOLOv8 / YOLO11 權重（decision 005，未採用） | Ultralytics | AGPL-3.0 |
+| detector 選型時比較過的 YOLOv8 / YOLO11（decision 005，未採用）：權重與 `ultralytics` 套件 | Ultralytics；只有安裝選用的 `detectors` extra 並使用 YOLO 候選時才會載入（`activeperception/detector/models.py` 的 lazy import），正式管線使用 torchvision 的 FRCNN | AGPL-3.0 |
 | ROS 2 Jazzy、Gazebo Harmonic、Nav2、TurtleBot 4 模擬等 | `docker/Dockerfile*` 從公開套件來源建置映像；repo 只含 Dockerfile | 各套件的授權（多為 Apache-2.0） |
 | Python 套件 | `pyproject.toml` / `uv.lock`，由 `uv` 安裝 | 各套件的授權 |
 | Open Images 照片、OSF 原始 depth 影像 | 見 docs/reproduce.md §E、§F | 各自的授權（見上） |

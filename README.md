@@ -650,8 +650,15 @@ docs/depth-noise-check.md  B：真實 D435 / D455 vs 誤差模型
 docs/reproduce.md          重現指南（四個層級 ＋ 各研究階段）
 docs/roadmap-real-inspection.md   往真實巡檢的後續建議（未啟動）
 SEALED.sha256              封存檔案的 sha256（tests/test_seal.py 檢查）
-THIRD_PARTY_NOTICES.md     第三方內容的來源與授權
+LICENSE                    BSD-3-Clause（原創程式碼）
+THIRD_PARTY_NOTICES.md     第三方內容的來源與授權（不在 BSD-3-Clause 範圍內）
 ```
 
 研究定義：[SPEC.md](SPEC.md)。實驗規範：[docs/EXPERIMENT_RULES.md](docs/EXPERIMENT_RULES.md)。進度紀錄：[NEXT.md](NEXT.md)。
-第三方內容（消防栓模型、Open Images / COCO 標註子集、RealSense depth 衍生統計）的來源與授權：[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+## 授權
+
+- 本專案作者有權授權的**原創程式碼**以 **BSD-3-Clause** 授權（[LICENSE](LICENSE)；ROS 2 package `inspection_ap_ros` 的 `package.xml` 與 `pyproject.toml` 宣告相同）。
+- 第三方內容**不在**此授權範圍內，保留其原有授權：消防栓模型（CC0 1.0）、Open Images / COCO 標註子集（CC BY 4.0）、RealSense depth 衍生統計（CC BY 4.0）；
+  照片不在 repo 內，只以網址引用，各自適用原授權。來源與標示：[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+- 選用的 `detectors` extra 會安裝 `ultralytics`（AGPL-3.0），只用於 detector 選型時比較的 YOLO 候選；正式管線使用 torchvision（BSD-3-Clause）的 FRCNN。
