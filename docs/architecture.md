@@ -90,6 +90,30 @@ flowchart TD
 設計來源：[decision 015](decisions/015-advanced-b-start-and-b0-protocol.md)（B0 協定）→ [016](decisions/016-b0-pose-refinement-and-margin.md)（B0 失敗後的修正）→
 [017](decisions/017-b1-closed-loop-protocol.md)（閉迴路）→ [018](decisions/018-b2-formal-evaluation-protocol.md)（正式評估，預先登錄）→ [019](decisions/019-b2-result-and-advanced-b-closure.md)（結果）。
 
+## 3a. v3–v5：模擬誤差下的可靠性管線（目前的正式版本是 v5）
+
+Core 的 render 影像不變，`V3World`（`activeperception/v3/eval.py`）在 replay 時加上 depth / 位姿誤差，再走 v3–v5 的判定。
+誤差以（episode、視角、等級）固定 seed 抽樣，所以同一管線重跑會逐項相同；四個方法仍共用同一條判定規則。
+
+```mermaid
+flowchart LR
+  R["render 的 RGB-D<br/>（與 Core 同一份）"] --> N["誤差模型<br/>depth D1–D3、位姿 L1–L2<br/>固定 seed"]
+  N --> P["位姿精修 nav-pose-v4<br/>4σ 搜尋、比例假設 0.96–1.04<br/>先驗閘門 3σ"]
+  P -->|成功| M1["精修位姿<br/>餘裕 6 cm ＋ 假設離散度"]
+  P -->|退化| M2["定位器位姿<br/>餘裕 max(10 cm, 3σ)"]
+  P -->|與定位器矛盾| BL["不提供看穿"]
+  M1 --> S["see-v5<br/>27 個位姿的穩健看穿<br/>缺值被包住時不否決"]
+  M2 --> S
+  N --> G["decision-v4<br/>±8% depth 區間的 zone 過濾"]
+  S --> D{"decision-v2 門檻<br/>present / absent / inconclusive"}
+  BL --> D
+  G --> D
+```
+
+- 「與定位器矛盾 → 不提供看穿」是防範過度自信定位器的保護；它也是 D3×P0 absent 較難判的原因。
+  放寬它的研究假設 H-P 未通過安全 Gate（[decision 037](decisions/037-d3p0-diagnosis-and-proposal.md)、[hp-development](hp-development.md)），不屬於任何正式管線。
+- 凍結設定：`activeperception/v5/frozen_v5.py`（= `v4/frozen_v4.py` ＋ see-v5）。
+
 ## 4. 程式模組
 
 | 位置 | 角色 |

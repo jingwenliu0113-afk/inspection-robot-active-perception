@@ -21,6 +21,10 @@ uv run ruff check .
 uv run python -m activeperception.seal verify      # 封存的結果、episode sets、frozen.py / frozen_v2.py 沒被改動
 ```
 
+乾淨 clone 上的結果（2026-10-17 確認）：300 個通過、**1 個跳過**。跳過的是 `tests/test_v1_regression.py`，
+它用凍結的 v1 在 core val 上重跑並與 `results/tuning/stage3_val.json` 逐項比對，需要 render 影像 `renders/core`（不在 git 裡）。
+依 §C 只 render val 的 220 集就能解除跳過（見 §C「只 render v1 regression 需要的部分」）。
+
 場景產生器是 seeded 的，所有 spec 都能重新產生，並與 repo 內的版本逐位元相同：
 
 ```bash
@@ -71,6 +75,24 @@ uv run python -m activeperception build-episodes --world gazebo \
 ```
 
 同一個 pose 重新 render 會得到逐像素相同的 RGB / depth / labels（跨容器、跨機器都已驗證，見 [decision 007](decisions/007-gazebo-observation-pipeline.md)）。
+
+### 只 render v1 regression 需要的部分（2026-10-17 在乾淨 clone 上實測）
+
+```bash
+VAL=$(uv run python -c "from activeperception.serialize import load_spec_set; \
+print(','.join(s.episode_id for s in load_spec_set('data/episodes/specs-core.json')[0] if s.split.value == 'val'))")
+./docker/render.sh data/episodes/specs-core.json renders/core 4 --episodes "$VAL"   # 220 集，約 5.5 分鐘、143 MB
+uv run pytest tests/test_v1_regression.py                                          # 1 passed
+```
+
+- 實測：220 集與原本的 frame store 相比，RGB、depth、語意標籤、位姿與視角編號**全部逐像素相同**；
+  只有 render 耗時（`meta.seconds`）與模擬器時間戳（`stamps_ns`、`t_ref_ns` 等）不同，它們不進入任何判定。
+- 偵測使用已 commit 的 `results/core/detector-v1.jsonl`（與本機快取逐位元相同），所以不需要 GPU。
+- **依賴與限制**：
+  - 需要 Docker Desktop 與 `inspection-ap-sim` 映像（`./docker/build.sh`，約 3.4 GB；建置時需要網路取得 ROS 2 / Gazebo 套件）。消防栓模型已 vendored 在 `gazebo/models/`。
+  - render 影像因為體積（core 約 760 MB、holdout 約 385 MB）不放進 git；封存的 test / holdout 逐位元比對需要完整的 core / holdout render。
+  - 2026-10-17 只重新 render 了 core val。封存的 test / holdout 以 `--reproduce` 逐位元相同，是 2026-10-14 用本機既有的 render 確認的；完整重新 render 後再比對，本次沒有做。
+  - Mac heavy lock 被其他專案持有時 `render.sh` 不會啟動；建議先跑 `uv run python -m activeperception.preflight`。
 
 ### 偵測
 

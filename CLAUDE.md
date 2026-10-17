@@ -6,6 +6,8 @@
 
 **Core 結案（decision 014，2026-10-13）：v1（decision 010）＋ v2（decision 011–013）。Advanced B 完成（decision 019）。作品集整理完成（2026-10-14）。v5 完成（decision 035，2026-10-16）。E0（decision 036）與 D3×P0 / H-P（decision 037）結案、研究成果與工程功能整理（2026-10-17）。**
 
+**本專案暫時正式結案（使用者 2026-10-17）**：不再自行擴張研究，不開新的研究方向或實驗；Future Work 保留，等使用者決定是否重新啟動。只做使用者明確要求的維護。
+
 - v1：正式 test 一次；Rule 穩定勝過 Single / Random。holdout 上「接近 Oracle」未重現（decision 013）。
 - v2：看過 v1 test 後提出；只用 core train / val 開發，在新的 `holdout` split 一次性與 v1 分開比較；
   所有方法 false-absent = 0，Rule budget 2 0.683 → 0.957。**改善主要來自 absent 判定規則（`decision-v2`），不是 NBV 策略**（不得描述成策略改善）。

@@ -72,6 +72,7 @@ Core 的 teleport harness 直接用 gz-transport（`/world/inspection/set_pose` 
 預估下載：base 約 0.3 GB（compressed）+ `gz-harmonic` 及依賴約 1 GB 以上；需使用者核准。
 
 Smoke test 腳本（`docker/smoke.sh`、`docker/grab_frames.py`）與 SDF 產生器（`activeperception/sim/sdf.py`）已寫好；SDF 產生器有單元測試，容器腳本在 image 建好前未經執行。
+（2026-10-17 註：`docker/grab_frames.py` 在 `91d56f1` 由 `activeperception/sim/gz_client.py` 與 `gz_smoke.py` 取代，`docker/smoke.sh` 改呼叫後者；本段保留當時的紀錄。）
 
 ## 附錄 B（2026-10-13）：改用 ROS vendor 套件，ROS 2 進入 Core 系統整合
 

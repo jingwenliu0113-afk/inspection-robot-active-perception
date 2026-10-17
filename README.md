@@ -4,7 +4,7 @@
 本專案研究：在固定的觀測次數（viewpoint budget）內，主動選擇下一個視角，能不能比單一視角或隨機移動更可靠地判斷目標是
 `present`、`absent` 還是 `inconclusive`，而且不把漏看當成不存在。
 
-> **狀態（2026-10-17）**
+> **狀態（2026-10-17）：本專案暫時正式結案。** 不再擴張研究；Future Work 保留，等之後決定是否重新啟動（見[後續與 Future Work](#後續與-future-work)）。
 > - Core（v1、v2）已結案；Advanced B（Nav2 實際導航）已完成。Advanced C（RL）由使用者決定不做。
 > - R0 真實環境適應研究（不是實機驗證）已完成：
 >   - **R0a 真實照片**：清楚可見的消防栓 97.9% 認得出來，但外觀相近的物體有 9.2% 被誤判（判準未通過）。
@@ -133,6 +133,7 @@ flowchart LR
   ROS 2 inspector node 的線上執行與 replay 完全一致（pilot：v1 192 / 192、v2 168 / 168）。
 - **Advanced B** 每個（episode, 方法, seed）啟動一個獨立容器：TurtleBot 4 + 1.1 m 桅桿相機、Nav2 1.3.13、AMCL。
   判定只用 AMCL 估計位姿、機載影像、detector 與設施地圖（牆、柱子，**不含目標物**）。
+- **v3–v5** 在同一份 render 上加入模擬的 depth / 位姿誤差，判定前先做位姿精修、看穿餘裕與 zone 過濾；目前的正式版本是 v5（架構文件 §3a）。
 - 完整架構、資訊邊界與模組對照：[docs/architecture.md](docs/architecture.md)。
 
 ## 結果
@@ -600,7 +601,7 @@ GPU 工作（detector 選型與 Core 偵測）在共享的 RTX 5070 Ti 上執行
 - 往真實巡檢的建議（不需採購的準備 → 實機 B0 → 實機正式評估）：[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)。
   其中 R0a、R0b、v3、A（detector 微調，T1 未通過）、v4 與 D3 的正式驗證、v5（看穿判定修正）已完成；
   zone 內相似物件的 E0（方法與可行性）與 D3×P0 的診斷 / H-P 開發評估（未通過安全 Gate）也已完成。
-- **目前沒有進行中的研究；以下 Future Work 都未啟動**，任何一項都需要使用者決定，並先寫新的協定：
+- **本專案暫時正式結案（2026-10-17）**：目前沒有進行中的研究，**以下 Future Work 都未啟動**；任何一項都需要使用者決定重新啟動，並先寫新的協定：
 
 | 項目 | 現況 | 需要什麼 |
 |---|---|---|

@@ -3,7 +3,7 @@
 #   ./docker/demo.sh                    # nav-b1-g0001-v2: hydrant hidden behind a pillar at the start
 #   ./docker/demo.sh nav-b1-g0001-v3    # same scene, no hydrant
 # Needs the inspection-ap-navdet image (./docker/build_nav.sh && ./docker/build_navdet.sh) and the
-# detector weights in models/ (docs/reproduce.md). About 2-3 minutes on an M-series Mac.
+# detector weights in models/ (docs/reproduce.md). About 1-1.5 minutes on an M-series Mac (2026-10-17: 64 s).
 # Output: runs/demo/<episode>/rule-s0 (logs, frames), runs/demo/<episode>.gif / .png.
 # Development data only; nothing under results/ is written.
 set -euo pipefail

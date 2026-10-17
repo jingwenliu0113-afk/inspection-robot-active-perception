@@ -5,7 +5,9 @@
 **Core 結案（decision 014）＋ Advanced B 完成（decision 015–019）＋ 作品集整理 ＋ R0 完成（decision 020–023）
 ＋ v3 完成（decision 024–026）＋ A 完成（decision 027 / 030）＋ B（decision 028）＋ v4 與 D3 正式驗證完成（decision 029 / 031 / 032）
 ＋ v5 完成並正式結案（decision 033 / 034 / 035）＋ E0 完成並封存（decision 036，E1 暫緩）＋ D3×P0 / H-P 結案（decision 037）。**
-不進 RL、不採購、不用付費服務。**目前沒有進行中的實驗，也不自行開啟新的正式研究方向**（使用者 2026-10-17）。
+不進 RL、不採購、不用付費服務。
+
+**本專案暫時正式結案（使用者 2026-10-17）**：不再自行擴張研究，沒有進行中的實驗；Future Work 保留，等使用者決定是否重新啟動。
 
 **目前：研究成果與可展示的工程功能整理完成（2026-10-17）**。使用者指示：結束 H-P 研究線、整理成果、確認 Demo / README / 重現指南 / 測試完整。
 
@@ -17,7 +19,10 @@
 | 重現指南 | 新增 §I（E0）、§J（D3×P0 診斷與 H-P 開發評估）；資源預檢 |
 | 工程 | E0 / D3×P0 / H-P 的 runner 拒絕覆寫已封存的結果（`seal.refuse_pinned`） |
 | Demo | `./docker/demo.sh` 重跑（2026-10-17，64 秒，exit 0）：判定序列與 README 相同（inconclusive → #0 inconclusive → #2 present），動畫工具的判定輸入比對通過，無殘留容器 |
-| 測試 | 工作目錄 301 個全部通過；**乾淨 clone**（無 `runs/`、`renders/`）：300 通過、1 跳過（v1 regression 需要本機 frame store），`seal verify` 通過、ruff 通過 |
+| 測試 | 工作目錄 301 個全部通過；**乾淨 clone**（無 `runs/`、`renders/`）：300 通過、1 跳過，`seal verify` 通過、ruff 通過 |
+| 跳過的 v1 regression | 只缺 `renders/core`（偵測改用已 commit 的檔，與本機快取逐位元相同）。乾淨 clone 依重現指南 §C 只 render core val 220 集（約 5.5 分鐘、143 MB）：RGB / depth / 標籤 / 位姿**逐像素相同**（只有 render 耗時與模擬器時間戳不同），測試通過。依賴與限制寫在 reproduce §A / §C |
+| GitHub 內容 | 本機與 `origin/main` 一致；歷史中最大的檔案是 28.8 MB 的封存結果，沒有權重、render、npz；全歷史掃描沒有 token / 金鑰 / 密碼 / 私有 IP。email 只有 commit 作者欄（使用者的 git 身分）、Open Images 公開署名欄位與第三方模型作者 |
+| 一致性 | 所有文件的相對連結、`python -m` 模組與腳本路徑都存在（decision 001 提到的已移除腳本加註）；Demo 時間註解改為實測；架構文件補上 v3–v5 的可靠性管線圖 |
 | 重現 | 乾淨 clone 上 core / nav-b2 spec 逐位元重新產生；`tools/make_figures.py` 重畫後所有圖逐位元相同（並修正它把跳過的圖也列為 wrote 的訊息） |
 
 ### D3×P0 / H-P（decision 037，結案）
