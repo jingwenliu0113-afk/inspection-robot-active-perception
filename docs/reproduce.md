@@ -4,7 +4,7 @@
 
 | 層級 | 需要 | 時間 | 能檢查什麼 |
 |---|---|---|---|
-| **A. 不需 Docker** | `uv`、Python 3.12 | 數分鐘 | 測試、封存檔未被改動、所有 spec 逐位元重新產生、大部分圖表從已 commit 的結果重畫 |
+| **A. 不需 Docker** | `uv`、Python 3.12 | 數分鐘 | 測試、封存檔未被改動、所有 spec 重新產生（macOS 上逐位元相同）、大部分圖表從已 commit 的結果重畫 |
 | **B. Demo** | Docker Desktop、Nav2 映像、detector 權重 | 建映像後每集約 1–1.5 分鐘 | 一集真正的 Nav2 閉迴路，並輸出動畫 |
 | **C. Core 完整重現** | Docker（模擬映像）、約 1.3 GB 的 render | render 約 0.3 s / 視角 | 重新 render，並對已封存的 test / holdout 做逐位元比對 |
 | **D. Advanced B 完整重現** | Nav2 映像 | `nav-b2` 960 次閉迴路約 2 h 17 min（4 容器並行） | 重新執行 B0–B2；Nav2 不是逐位元可重現（見 §D） |
@@ -25,7 +25,8 @@ uv run python -m activeperception.seal verify      # 封存的結果、episode s
 它用凍結的 v1 在 core val 上重跑並與 `results/tuning/stage3_val.json` 逐項比對，需要 render 影像 `renders/core`（不在 git 裡）。
 依 §C 只 render val 的 220 集就能解除跳過（見 §C「只 render v1 regression 需要的部分」）。
 
-場景產生器是 seeded 的，所有 spec 都能重新產生，並與 repo 內的版本逐位元相同：
+場景產生器是 seeded 的，所有 spec 都能重新產生。repo 內的版本是在 macOS（Apple silicon）上產生的，在 macOS 上逐位元相同：
+（2026-10-17 在 Linux 上確認：glibc 的 libm 對少數 sin / cos 的捨入不同，約 3% 的浮點數差 2–3 ulp、最大 4.4×10⁻¹⁶ m，其他欄位完全相同，所以 `cmp` 會報告不同；`tests/test_episodes.py::test_committed_specs_regenerate` 在 macOS arm64 檢查逐位元相同、在其他平台檢查 4 ulp 以內。正式評估都使用已 commit 的 spec，不受影響。）
 
 ```bash
 uv run python -m activeperception make-specs --namespace core --groups 300 --out /tmp/specs-core.json

@@ -2,6 +2,7 @@ import math
 from collections import Counter
 
 import numpy as np
+import pytest
 
 from activeperception.episodes import (
     PILOT_NAMESPACE,
@@ -147,3 +148,47 @@ def test_holdout_namespace_is_its_own_split():
     assert {s.split for s in specs} == {Split.HOLDOUT}
     core = build_episode_set("core", 20)
     assert {s.seed for s in specs}.isdisjoint({s.seed for s in core})
+
+
+MAX_ULP = 4  # Linux (glibc) and macOS libm sin / cos differ by <= 3 ulp on these specs
+
+
+def _same_within_ulp(a, b, path="") -> None:
+    if isinstance(a, dict):
+        assert isinstance(b, dict) and a.keys() == b.keys(), path
+        for k in a:
+            _same_within_ulp(a[k], b[k], f"{path}.{k}")
+    elif isinstance(a, list):
+        assert isinstance(b, list) and len(a) == len(b), path
+        for i, (x, y) in enumerate(zip(a, b, strict=True)):
+            _same_within_ulp(x, y, f"{path}[{i}]")
+    elif isinstance(a, float) or isinstance(b, float):
+        assert abs(a - b) <= MAX_ULP * math.ulp(max(abs(a), abs(b), 1e-300)), (path, a, b)
+    else:
+        assert a == b, (path, a, b)
+
+
+@pytest.mark.parametrize("namespace,groups", [("core", 300), ("holdout", 150), ("nav-b2", 40)])
+def test_committed_specs_regenerate(tmp_path, namespace, groups):
+    """The seeded generators reproduce the committed (sealed) spec files. They were generated on
+    macOS arm64, where the bytes are identical; elsewhere the platform's libm may round sin / cos
+    differently in the last bits, so floats must agree within a few ulp, everything else exactly."""
+    import json
+    import platform
+    import sys
+    from pathlib import Path
+
+    from activeperception import cli
+    from activeperception.nav import scene
+
+    out = tmp_path / "specs.json"
+    args = ["--namespace", namespace, "--groups", str(groups), "--out", str(out)]
+    if namespace.startswith("nav-"):
+        scene.main(args)
+    else:
+        cli.main(["make-specs", *args])
+    committed = Path(__file__).resolve().parents[1] / "data/episodes" / f"specs-{namespace}.json"
+    if sys.platform == "darwin" and platform.machine() == "arm64":
+        assert out.read_bytes() == committed.read_bytes()
+    else:
+        _same_within_ulp(json.loads(committed.read_text()), json.loads(out.read_text()))

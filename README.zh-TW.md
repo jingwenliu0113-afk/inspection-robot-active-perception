@@ -552,7 +552,7 @@ v4 以較大的餘裕換安全，absent 較難判（decision 032）。v5 原本�
 - **停止條件事先寫定**：H-P 的開發評估在結果出來前就寫好停止條件；結果 absent 大幅改善，但安全代理不為 0，就依協定停止，沒有事後放寬判準或調整門檻。
 - **GT 不進判定**：候選視角與物件無關（leakage tests）；Advanced B 的判定只用 AMCL 估計位姿、機載影像與不含目標物的設施地圖。
 - **可驗證的重現**：
-  - 所有 spec 都能逐位元重新產生。
+  - 所有 spec 都能重新產生：在產生它們的 macOS（Apple silicon）上逐位元相同；Linux 的 libm 對 sin / cos 的捨入不同，浮點數最多差 3 ulp（約 4×10⁻¹⁶ m），其他欄位完全相同（`tests/test_episodes.py`）。
   - 封存的 test / holdout 結果用 `--reproduce` 逐位元相同（2026-10-14 重新確認）。
   - Demo 工具會比對重建的判定輸入與執行紀錄。
 
