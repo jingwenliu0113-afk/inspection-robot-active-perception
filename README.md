@@ -650,6 +650,8 @@ docs/depth-noise-check.md  B：真實 D435 / D455 vs 誤差模型
 docs/reproduce.md          重現指南（四個層級 ＋ 各研究階段）
 docs/roadmap-real-inspection.md   往真實巡檢的後續建議（未啟動）
 SEALED.sha256              封存檔案的 sha256（tests/test_seal.py 檢查）
+THIRD_PARTY_NOTICES.md     第三方內容的來源與授權
 ```
 
 研究定義：[SPEC.md](SPEC.md)。實驗規範：[docs/EXPERIMENT_RULES.md](docs/EXPERIMENT_RULES.md)。進度紀錄：[NEXT.md](NEXT.md)。
+第三方內容（消防栓模型、Open Images / COCO 標註子集、RealSense depth 衍生統計）的來源與授權：[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
