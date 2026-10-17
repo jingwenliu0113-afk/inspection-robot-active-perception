@@ -1,0 +1,51 @@
+# Lightweight CI: no Docker, no GPU, no detector weights.
+# Gazebo / Nav2 runs and detector inference are reproduced locally (docs/reproduce.md);
+# CI checks lint, the sealed results, bit-identical spec regeneration and the test suite.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+
+      - name: Install (Python 3.12, numpy, pytest, ruff, matplotlib; no detectors extra)
+        run: uv sync --locked
+
+      - name: Lint
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+      - name: Sealed results and frozen configs unchanged
+        run: uv run python -m activeperception.seal verify
+
+      - name: Episode specs regenerate bit for bit
+        run: |
+          uv run python -m activeperception make-specs --namespace core --groups 300 --out "$RUNNER_TEMP/specs-core.json"
+          cmp "$RUNNER_TEMP/specs-core.json" data/episodes/specs-core.json
+          uv run python -m activeperception make-specs --namespace holdout --groups 150 --out "$RUNNER_TEMP/specs-holdout.json"
+          cmp "$RUNNER_TEMP/specs-holdout.json" data/episodes/specs-holdout.json
+          uv run python -m activeperception.nav.scene --namespace nav-b2 --groups 40 --out "$RUNNER_TEMP/specs-nav-b2.json"
+          cmp "$RUNNER_TEMP/specs-nav-b2.json" data/episodes/specs-nav-b2.json
+
+      - name: Tests (1 test is skipped without local renders)
+        run: uv run pytest -q -rs

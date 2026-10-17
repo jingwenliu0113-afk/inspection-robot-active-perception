@@ -1,12 +1,15 @@
 """The README's headline numbers are the committed results, formatted - not hand-edited claims.
 
-If a result file and the README disagree, the README is wrong (results are sealed)."""
+If a result file and a README disagree, the README is wrong (results are sealed). ``README`` is the
+Traditional Chinese version (README.zh-TW.md, the full record); the English README.md is checked
+against the same files in ``test_english_readme_*``."""
 
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-README = (ROOT / "README.md").read_text()
+README = (ROOT / "README.zh-TW.md").read_text()
+README_EN = (ROOT / "README.md").read_text()
 
 
 def load(rel: str) -> dict:
@@ -92,7 +95,7 @@ def test_r0a_numbers():
     assert f"{100 * c['A3_absent_blocked']['rate']:.1f}%" in README
     miss = cam["positives"]["main"]["complete_miss"]
     assert miss["k"] == 0 and f"0 / {miss['n']}" in README
-    assert "R0a 為真實照片" in README  # never presented as simulation or as a robot result
+    assert "R0a、A 為真實照片" in README  # never presented as simulation or as a robot result
 
 
 def test_r0b_numbers():
@@ -221,3 +224,46 @@ def v3_safe(c: dict) -> bool:
         and not c["all_views_geometric_risk"]
         and c["occupied_false_clearance"]["views"] == 0
     )
+
+
+def test_english_readme_numbers():
+    """The English README quotes the same committed results."""
+    s = load("results/test-v1/report.json")["summary"]
+    for key in ("single@1", "random@3", "rule@3"):
+        assert f"**{num(s[key]['accuracy'])}**" in README_EN, key
+    assert f"{s['rule@3']['avg_viewpoints']:.2f} views" in README_EN
+    r = load("results/holdout/report.json")
+    assert f"0.683 → **{num(r['v2']['summary']['rule@2']['accuracy'])}**" in README_EN
+    abl = r["claims"]["ablation"]["2"]
+    assert ci(abl["decision_effect(abl_rule - v1_rule)"], "diff") in README_EN
+    assert ci(abl["policy_effect(v2_rule - abl_rule)"], "diff") in README_EN
+    c = load("results/nav-b2/b1_report.json")["claims"]["Q3_active_vs_baselines_nav"]
+    assert f"**{ci(c['rule-random@2'])}**" in README_EN
+    a = load("results/r0a/report.json")["criteria"]
+    from activeperception.r0a import _pct
+
+    assert _pct(a["A1_clear_localized_recall"]) in README_EN
+    assert _pct(a["A2_false_present"]) in README_EN
+    v5 = load("results/v5/report.json")["verdicts"]["X2"]["rule_b3_v5_minus_v4"]
+    for cond in ("D2xL2", "D3xL1"):
+        r5 = v5[cond]
+        assert f"{num(r5['mean'], True)} [{r5['ci95'][0]:.3f}, {r5['ci95'][1]:.3f}]" in README_EN
+    d = load("results/detv2/report.json")["real"]
+    v1, v2 = d["v1"]["neg:verified"]["present"], d["v2"]["neg:verified"]["present"]
+    assert f"{v1['k']} / {v1['n']} = {100 * v1['rate']:.1f}%" in README_EN
+    assert f"**{v2['k']} / {v2['n']} = {100 * v2['rate']:.1f}%**" in README_EN
+
+
+def test_english_readme_keeps_failures_and_validation_scope():
+    for phrase in (
+        "**fail** (0.028 / 0.032)",
+        "**fail at budget 2** (0.043 [0.020, 0.070])",
+        "**not** a better view-selection policy",
+        "V4 stress D2×L2",
+        "T1 false present on hard negatives ≤ 1%",
+        "failed the pre-registered per-view safety gate",
+    ):
+        assert phrase in README_EN, phrase
+    # real photos tested the detector only; the full system never ran on hardware
+    assert "the *detector alone* was tested on real internet photos" in README_EN
+    assert "the full system has **not** run on physical hardware" in README_EN
