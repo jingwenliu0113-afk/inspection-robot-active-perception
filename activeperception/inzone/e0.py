@@ -290,6 +290,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--skip-repro", action="store_true")
     args = ap.parse_args(argv)
+    from ..seal import refuse_pinned
+
+    refuse_pinned(Path(args.out) / "e0.json")
     bad = problems(snapshot())
     if bad:
         raise SystemExit("not starting: " + "; ".join(bad))

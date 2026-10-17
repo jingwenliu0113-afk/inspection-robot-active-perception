@@ -4,7 +4,7 @@
 本專案研究：在固定的觀測次數（viewpoint budget）內，主動選擇下一個視角，能不能比單一視角或隨機移動更可靠地判斷目標是
 `present`、`absent` 還是 `inconclusive`，而且不把漏看當成不存在。
 
-> **狀態（2026-10-16）**
+> **狀態（2026-10-17）**
 > - Core（v1、v2）已結案；Advanced B（Nav2 實際導航）已完成。Advanced C（RL）由使用者決定不做。
 > - R0 真實環境適應研究（不是實機驗證）已完成：
 >   - **R0a 真實照片**：清楚可見的消防栓 97.9% 認得出來，但外觀相近的物體有 9.2% 被誤判（判準未通過）。
@@ -28,6 +28,13 @@
 >   - 原本要做的「depth 比例自我校正」在開發中排除：只縮窄比例假設帶有得有失，看穿用校正 depth 沒有作用；
 >   - 找到 absent 判不出的真正原因：27 個位姿中**任何一個缺值就否決**。see-v5 讓兩側都有看穿證據的缺值位姿不否決；
 >   - 8 個條件全部安全；Rule budget 3 在 v4 付出代價的條件 D2×L2 +0.237、D3×L1 +0.138（CI 下界都 > 0）；absent@5 D3×L1 0.637 → 0.950。
+> - **zone 內相似物件：E0 方法與可行性檢查**（decision 036，只用既有開發資料，不是新研究結果）：
+>   - v1 / v2 detector 在同條件下比較；確認式 present 的上限、多視角一致性與位置一致性都算得出來；
+>   - 真實多視角資料（E1）**暫緩**；單張影像的旋轉或裁切不當作多視角證據。
+> - **D3×P0 診斷與 H-P**（decision 037，開發資料，已結案）：
+>   - D3×P0 的 absent 判不出不是「看不到」，而是精修與幾乎精確的定位器被判矛盾，浪費了 Rule 選中的視角；
+>   - 改善假設 H-P 讓 absent 大幅回升、決策安全全部為 0，但在定位器過度自信時有視角超出安全餘裕，**未通過事先寫定的安全 Gate**，不採用；
+>   - v5 維持正式版本；D3×P0 的定位不確定性列入 [Future Work](#後續與-future-work)。
 > - **所有結果都只在 ROS 2 Jazzy + Gazebo Harmonic 模擬中取得，尚未在實體機器人或真實影像上驗證**（見[驗證範圍](#驗證範圍模擬已驗證--實機未驗證)）。
 > - 未通過的 Gate 與失敗都照實保留：v1「接近 Oracle」在 holdout 沒有重現；v2 在 budget 2 未接近 Oracle；
 >   v2 的改善主要來自 absent 判定規則，**不是**選視角策略。
@@ -64,7 +71,7 @@ real hardware or real images. Experiments were pre-registered, and every formal 
 | **v5**（模擬誤差） | `v5` ＋ `v5-dx`，各 160 集；v4 與 v5 成對 | 8 個條件全部安全；Rule budget 3：D2×L2 0.719 → **0.956**、D3×L1 0.694 → **0.831**；無缺值的 D0×P0 與 v4 逐項相同 | 只改看穿判定：D3×P0 absent@5 仍只有 0.637；7 集 absent 因選視角路徑改變而變成 inconclusive（仍是安全方向） |
 | **B**（真實 depth） | RealSense D435 / D455 平面資料（公開資料集） | 隨機誤差在 D2 範圍內（接近 D1）；量化可忽略 | D435 低估距離最多 2.48%（模型只假設高估）；相關長度是模型的 2.6–3 倍 |
 
-詳細數字、CI 與 Gate 判定在下方[結果](#結果)。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–035）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
+詳細數字、CI 與 Gate 判定在下方[結果](#結果)。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–037）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
 
 ## 驗證範圍：模擬已驗證 / 實機未驗證
 
@@ -494,27 +501,44 @@ v4 以較大的餘裕換安全，absent 較難判（decision 032）。v5 原本�
 | 比例與平移互相補償、比例估計偏向縮小點雲（v4 開發） | v3 在 D3×L1 有 228 個視角誤差超出餘裕 | 比例假設 ＋ 尺度雅可比 ＋ 依離散度加大餘裕：降到 2，代價是 absent 較難判 |
 | v4 的寬比例假設帶有一部分保護是意外的多起點一致性檢查（v5 開發） | 只縮窄假設帶時，超出餘裕的視角變多 | 比例自我校正不採用 |
 | D3 的 absent 判不出，原因是 27 個位姿任一缺值就否決，不是 depth 偏短（v5 開發） | v4 的 D3×L1 absent@5 只有 0.637 | see-v5：0.950，全部安全（decision 035） |
+| D3×P0 的 absent 判不出：定位器幾乎精確，但 D3 讓精修自己偏移，兩者被判矛盾、Rule 選中的視角不提供看穿（decision 037 診斷） | v5 正式 D3×P0 absent@5 0.637 | H-P（depth 分辨不出時改信定位器）：開發中 absent 大幅回升，但定位器過度自信時 3 個視角超出餘裕，**未通過安全 Gate**，不採用；列入 Future Work |
 
 ## 研究紀律
 
 這個專案刻意用「不容易騙自己」的方式進行：
 
-- **先寫判準、再看結果**：35 份 decision log 記錄每個會影響結論的決定，標明是否在看過結果後才寫。調參只用 train，val 只檢查。
+- **先寫判準、再看結果**：37 份 decision log 記錄每個會影響結論的決定，標明是否在看過結果後才寫。調參只用 train，val 只檢查。
 - **正式評估只跑一次**：`core` test、`holdout`、`nav-b2`、R0a 正式集、`r0b`、`v3` / `v3-dx`、detector-v2 的 test 與 `detv2-sim`、`v4` / `v4-dx`、`v5` / `v5-dx` 都用過一次後封存。
   `SEALED.sha256` 釘住所有已 commit 的結果、凍結的 episode sets 與凍結設定，`tests/test_seal.py` 檢查；正式 runner 對封存資料只允許 `--reproduce`。
 - **v2 是看過 v1 test 後才提出的**：所以它的所有宣稱只來自新的 holdout，原 test 不用於 v2。
-- **未通過的 Gate 照實寫**：v1 的「接近 Oracle」沒有重現，v2 在 budget 2 未接近 Oracle，B0 兩次未通過，全部保留在 README 與 decision log。
+- **未通過的 Gate 照實寫**：v1 的「接近 Oracle」沒有重現，v2 在 budget 2 未接近 Oracle，B0 兩次未通過，H-P 未通過逐視角安全 Gate，全部保留在 README 與 decision log。
+- **停止條件事先寫定**：H-P 的開發評估在結果出來前就寫好停止條件；結果 absent 大幅改善，但安全代理不為 0，就依協定停止，沒有事後放寬判準或調整門檻。
 - **GT 不進判定**：候選視角與物件無關（leakage tests）；Advanced B 的判定只用 AMCL 估計位姿、機載影像與不含目標物的設施地圖。
 - **可驗證的重現**：
   - 所有 spec 都能逐位元重新產生。
   - 封存的 test / holdout 結果用 `--reproduce` 逐位元相同（2026-10-14 重新確認）。
   - Demo 工具會比對重建的判定輸入與執行紀錄。
 
+## 可展示的工程功能
+
+| 功能 | 內容 | 怎麼看 |
+|---|---|---|
+| Nav2 閉迴路 Demo | TurtleBot 4 ＋ Nav2 實際開到 Rule-NBV 選的視角，到點後用 depth 對設施地圖重定位，再判定；動畫工具用可部署的資料重建每一步的判定輸入，與執行紀錄不一致就失敗 | `./docker/demo.sh`（[docs/reproduce.md](docs/reproduce.md) §B） |
+| render-then-replay | 每個視角在 Gazebo 只 render 一次，四個方法 replay 同一份觀測；ROS 2 inspector node 的線上執行與 replay 完全一致 | [docs/architecture.md](docs/architecture.md) §2 |
+| 資訊邊界 | 判定只讀可部署的資料；GT 只用於評分、歸因與上界方法（Oracle）；候選視角與物件無關 | `tests/test_leakage.py` |
+| 預先登錄的正式 runner | 每個版本的正式 runner 只接受自己的新 namespace，結果已存在就拒絕重跑；開發 runner 拒絕正式資料 | `activeperception/v{3,4,5}/formal.py` |
+| 封存 | `SEALED.sha256` 釘住所有已 commit 的結果、凍結的 episode sets 與凍結設定；封存的 test / holdout 只能 `--reproduce` 逐位元比對 | `uv run python -m activeperception.seal verify` |
+| 可重現的誤差模型 | depth / 位姿誤差以（episode、視角、等級）固定 seed 抽樣；同一管線重跑逐項相同（例如 H-P 開發評估中 B0 與既有 v5 開發結果 9 組條件逐項相同） | `activeperception/r0b_noise.py`、`depthnoise/d3.py` |
+| 統計 | scene group cluster bootstrap 的 95% CI、成對比較（只有 A 對 / 只有 B 對的集數） | `activeperception/metrics.py`、`nav/b1_analysis.py` |
+| 共用機器的資源管理 | 重工作前的預檢（Mac heavy lock、CPU、RAM、Apple GPU），長時間工作每個 job 開始前等鎖；GPU 工作用 `flock` 取得共享 GPU lock | `uv run python -m activeperception.preflight`（[MACHINE_POLICY.md](MACHINE_POLICY.md)） |
+| 測試 | correctness tests（synthetic world、解析 ray-cast）、leakage、封存、README 主要數字對照已 commit 的結果檔 | `uv run pytest`、`tests/test_readme_claims.py` |
+
 ## 重現
 
 ```bash
 uv sync --extra detectors && uv run pytest              # 不需 Docker
 uv run python -m activeperception.seal verify           # 封存的結果與凍結設定未被改動
+uv run python -m activeperception.preflight             # 重工作前：Mac heavy lock、CPU、RAM（未通過就不啟動）
 ./docker/build.sh && ./docker/build_nav.sh && ./docker/build_navdet.sh
 ./docker/demo.sh                                        # 一集 Nav2 閉迴路 + 動畫（約 1–1.5 分鐘）
 ```
@@ -570,13 +594,21 @@ GPU 工作（detector 選型與 Core 偵測）在共享的 RTX 5070 Ti 上執行
   - 真實 depth 只有公開的平面資料（B）。
 - 見[驗證範圍](#驗證範圍模擬已驗證--實機未驗證)。
 
-## 後續
+## 後續與 Future Work
 
-- Advanced C（RL）：使用者決定不做。
+- Advanced C（RL）：使用者決定不做。實體機器人：使用者決定暫不採購。
 - 往真實巡檢的建議（不需採購的準備 → 實機 B0 → 實機正式評估）：[docs/roadmap-real-inspection.md](docs/roadmap-real-inspection.md)。
-  其中 R0a、R0b、v3、A（detector 微調，T1 未通過）、v4 與 D3 的正式驗證、v5（看穿判定修正）已完成。
-- 下一階段（**提案，未啟動**）：zone 內相似物件造成的 detector 誤報，見 [decision 036](docs/decisions/036-proposal-in-zone-similar-object-false-present.md)。
-- 任何新階段都需要使用者決定。
+  其中 R0a、R0b、v3、A（detector 微調，T1 未通過）、v4 與 D3 的正式驗證、v5（看穿判定修正）已完成；
+  zone 內相似物件的 E0（方法與可行性）與 D3×P0 的診斷 / H-P 開發評估（未通過安全 Gate）也已完成。
+- **目前沒有進行中的研究；以下 Future Work 都未啟動**，任何一項都需要使用者決定，並先寫新的協定：
+
+| 項目 | 現況 | 需要什麼 |
+|---|---|---|
+| zone 內相似物件（E1） | E0 完成（[docs/e0-report.md](docs/e0-report.md)）；真實多視角資料暫緩 | 實拍同一物件的多個視角（規格見 e0-report §6）；單張影像的變換不能代替 |
+| D3×P0 的定位不確定性 | 診斷完成；H-P 未通過安全 Gate（[docs/hp-development.md](docs/hp-development.md)） | depth 分辨不出時，需要能判斷定位器回報的不確定度是否可信的資訊（例如實機上 AMCL 共變異數的校準）；不是調整門檻 |
+| 立體遮蔽帶測試 | 未做 | 刻意製造物件整個落在貼著近處表面的立體遮蔽帶的場景，檢驗 see-v5 的「包住」是否必要 |
+| rule-nbv-v2 的增益預測 | 未做 | 清除狀態改變時會選到不增加清除的視角（v5 正式 7 集、H-P 開發 4 集都是這個機制） |
+| 實機量測 | 未採購 | 機器人上的真實 depth 與定位誤差是否落在 D3 / L1–L2 的範圍內 |
 
 ## 目錄
 
@@ -588,24 +620,33 @@ ros_ws/src/inspection_ap_ros/   ROS 2 package（inspector node、launch）
 docker/                    映像（sim / ros / nav / navdet）、render、smoke、ROS 線上執行、Nav2 批次、demo.sh
 tools/                     make_figures.py（README 圖表）、make_demo.py（Demo 動畫與分鏡）
 gazebo/models/             vendored Fuel 模型（fire_hydrant，CC0）
-data/episodes/             凍結的 spec / episode sets（含 GT）：core、pilot、detsel、holdout、nav-b1、nav-b2、r0b、v3-dev、v3、v3-dx、detv2-sim、v4、v4-dx、v5、v5-dx
-results/                   detector 選型、pilot、調參、v1 test、holdout、failure analysis、nav-b0* / nav-b1 / nav-b2、nav failure analysis、r0a、r0b、v3-dev（開發）、v3（正式）、detv2-dev / detv2（A）、depthnoise（B）、v4（正式）、v5（正式）
-docs/decisions/            decision logs 001–035（020–023 R0、024–026 v3、027 / 030 A、028 B、029 / 031 / 032 v4 與 D3、033–035 v5）
+data/episodes/             凍結的 spec / episode sets（含 GT）：core、pilot、detsel、holdout、nav-b1、nav-b2、r0b、v3-dev、v3-dev-dx、v3、v3-dx、detv2-sim、v4、v4-dx、v5、v5-dx
+results/                   detector 選型、pilot、調參、v1 test、holdout、failure analysis、nav-b0* / nav-b1 / nav-b2、nav failure analysis、r0a、r0b、v3-dev（開發）、v3（正式）、detv2-dev / detv2（A）、depthnoise（B）、v4（正式）、v5（正式）、
+                           inzone-e0（E0）、d3p0-diag 與 hp-dev（D3×P0 診斷與 H-P 開發評估）
+docs/decisions/            decision logs 001–037（020–023 R0、024–026 v3、027 / 030 A、028 B、029 / 031 / 032 v4 與 D3、033–035 v5、036 E0、037 D3×P0 / H-P）
 activeperception/r0a.py    R0a：真實照片的選樣、下載、偵測、報告
 activeperception/r0b*.py   R0b：depth / 位姿誤差模型與雜訊條件下的 replay
 activeperception/v3/       v3：看穿 / 位姿精修 / 餘裕、zone 過濾、干擾物場景、開發評估、凍結設定、正式 runner
 activeperception/v4/       v4：4σ 搜尋、比例假設 + 尺度雅可比、依離散度加大的餘裕、depth 區間 zone 過濾、凍結設定、正式 runner
 activeperception/v5/       v5：see-v5（缺值不否決的看穿判定）、比例自我校正（開發，未採用）、開發 / 正式 runner、Mac heavy lock 檢查
+activeperception/inzone/   E0：zone 內相似物件的指標、可行性檢查、E1 資料規格與檢查工具、確認式 present（預設關閉）
+activeperception/d3p0/     D3×P0 診斷：逐視角 / 逐位置的歸因
+activeperception/v6/       H-P（未通過安全 Gate，預設關閉）：成本比、開發設定、開發 runner 與報告
+activeperception/preflight.py   重工作前的資源預檢（Mac heavy lock、CPU、RAM、Apple GPU）
 activeperception/detv2/    A：detector-v2 的資料、訓練（RTX）、評測、正式 runner
 activeperception/depthnoise/   B：真實 depth 的誤差統計、OSF 下載、D3 修正模型
 docs/architecture.md       系統架構與資訊邊界
-docs/failure-analysis.md   失敗分析（Part A Core、B Nav2、C R0、D v3 / B、E A / v4、F v5）
+docs/failure-analysis.md   失敗分析（Part A Core、B Nav2、C R0、D v3 / B、E A / v4、F v5、G D3×P0 / H-P）
 docs/v3-development.md     v3 開發紀錄：消融、失敗案例、遮擋分析、真實照片誤報分析
 docs/v4-development.md     v4 開發紀錄：V4 機制、比例與平移補償、消融、D3 下 zone 過濾的失效
 docs/v5-development.md     v5 開發紀錄：比例自我校正、假設帶消融、absent 瓶頸分析、see-v5
+docs/e0-report.md          E0：zone 內相似物件的方法、指標與可行性（E1 暫緩）
+docs/d3p0-diagnosis.md     D3×P0 診斷：定位誤差、可觀測性與 inconclusive
+docs/hp-development.md     H-P 開發評估：未通過安全 Gate 的研究假設（結案）
+docs/incidents/            資源事件紀錄（2026-10-16 與其他專案的 benchmark 重疊）
 docs/detv2-development.md  A：資料與困難負樣本分析、RTX 之後的步驟
 docs/depth-noise-check.md  B：真實 D435 / D455 vs 誤差模型
-docs/reproduce.md          重現指南（四個層級）
+docs/reproduce.md          重現指南（四個層級 ＋ 各研究階段）
 docs/roadmap-real-inspection.md   往真實巡檢的後續建議（未啟動）
 SEALED.sha256              封存檔案的 sha256（tests/test_seal.py 檢查）
 ```

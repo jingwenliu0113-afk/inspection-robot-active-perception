@@ -181,8 +181,37 @@ uv run python -m activeperception.nav.failure_analysis --out /tmp/nav-failure-an
   3. `python -m activeperception.v5.formal --out results/v5 --raw runs/v5-formal`。`results/v5` 已存在時會拒絕重跑；Mac heavy lock 被持有時不啟動，執行中被取得時下一個 job 等鎖釋放。
 - 24 個 job（v4、v5、v5 不包住各 8 個條件）。
 
+## I. zone 內相似物件：E0（decision 036 附錄 A，開發資料）
+
+```bash
+uv run python -m activeperception.preflight || exit 1
+uv run --extra detectors python -m activeperception.inzone.e0 --out /tmp/inzone-e0   # CPU；與 results/inzone-e0/e0.json 比對
+```
+
+- 需要 `data/detv2/dev.csv` 的影像（本機）、`v3-dev` / `v3-dev-dx` 的 render 與 `detector-v2` 權重（`runs/detv2/base/weights.pth`，RTX 上訓練，見 §F）。
+- 結果與說明：[docs/e0-report.md](e0-report.md)。E1（真實多視角資料）暫緩；`activeperception.inzone.e1spec` 只提供資料規格與檢查工具。
+- `results/inzone-e0/` 已釘進 `SEALED.sha256`：runner 拒絕覆寫已封存的檔案，重跑請把 `--out` 指到其他位置。
+
+## J. D3×P0 診斷與 H-P 開發評估（decision 037，開發資料，已結案）
+
+```bash
+uv run python -m activeperception.preflight || exit 1
+# 診斷：凍結 v5 的逐視角 / 逐位置歸因（4 個條件，約 20 分鐘）
+uv run python -m activeperception.d3p0.diagnose --out runs/d3p0-diag --workers 6
+uv run python -m activeperception.d3p0.summarize runs/d3p0-diag --out /tmp/d3p0-diag
+# H-P 開發評估：B0 = 凍結 v5、HP-1.2、HP-1.3、B-floor、Oracle-pose（44 個 job；共用的 Mac 上 5 個 worker 約 4 小時）
+uv run python -m activeperception.v6.dev --out runs/hp-dev --workers 5
+uv run python -m activeperception.v6.devreport runs/hp-dev --out /tmp/hp-dev   # 含失敗案例重播，約 4 分鐘
+```
+
+- 只接受開發 namespace；兩個 runner 開始前都跑資源預檢，每個 job 開始前若 Mac heavy lock 被持有就等待；已存在的輸出會跳過，可以中斷後續跑。
+- `v6.devreport` 先檢查 B0 與既有 v5 開發結果（`runs/v5-dev/seek`、`seek-dx`）逐項相同，不同就停止。
+- H-P 未通過安全 Gate（[docs/hp-development.md](hp-development.md)）；`hp_c` 預設 0，任何正式管線都不使用它。
+- `results/d3p0-diag/`、`results/hp-dev/` 已釘進 `SEALED.sha256`，runner 拒絕覆寫；`compute_cost` 的時間數字不是逐位元可重現。
+
 ## 資源與隔離
 
 - 所有容器都叫 `inspection-ap-*`，各自有獨立的 network namespace，ROS 2 discovery 限制在 localhost。不碰其他專案的容器、網路與 volume，也不做全域的 Docker prune。
 - 大型批次執行前會檢查 `/tmp/ai-portfolio-mac-heavy.lock`；其他專案持有這個鎖時就不執行（[MACHINE_POLICY.md](../MACHINE_POLICY.md)）。
+- Mac 上可能有不取鎖的工作，所以重工作前先跑 `uv run python -m activeperception.preflight`（鎖、CPU 負載、RAM；用到 Apple GPU 時加 `--gpu`），未通過就不啟動。
 - 版本與 image digest：[docs/platform/versions.md](platform/versions.md)、[versions-nav.md](platform/versions-nav.md)。

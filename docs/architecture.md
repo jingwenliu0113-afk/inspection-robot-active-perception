@@ -109,6 +109,10 @@ flowchart TD
 | `activeperception/v3/` | v3：`decision-v3`（zone 過濾）、`see-through-v3`、`nav-pose-v3`（先驗閘門、矛盾時不可信）、開發評估、凍結設定、正式 runner |
 | `activeperception/v4/` | v4：`nav-pose-v4`（4σ 搜尋、比例假設 ＋ 尺度雅可比、依離散度加大的餘裕）、`decision-v4`（depth 區間 zone 過濾）、凍結設定、正式 runner |
 | `activeperception/v5/` | v5：`see-v5`（缺值位姿被看穿位姿包住時不否決）、比例自我校正（開發，未採用）、開發 / 正式 runner、Mac heavy lock 檢查 |
+| `activeperception/inzone/` | E0（decision 036）：zone 內相似物件的指標、可行性檢查、E1 資料規格與檢查工具、確認式 present（預設關閉） |
+| `activeperception/d3p0/` | D3×P0 診斷（decision 037）：凍結 v5 的逐視角 / 逐位置歸因（真實位姿只用於歸因） |
+| `activeperception/v6/` | H-P（decision 037，**未通過安全 Gate**，`hp_c` 預設 0 = 關閉）：成本比、開發設定、開發 runner 與報告 |
+| `activeperception/preflight.py` | 重工作前的資源預檢：Mac heavy lock、CPU 負載、RAM、Apple GPU |
 | `activeperception/detv2/` | A：detector-v2 的資料、訓練（RTX）、評測、正式 runner |
 | `activeperception/depthnoise/` | B：真實 depth 誤差統計、公開資料下載、D3 修正模型 |
 | `ros_ws/src/inspection_ap_ros/` | ROS 2 inspector node（Core 線上版） |

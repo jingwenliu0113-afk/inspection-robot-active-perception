@@ -4,7 +4,7 @@
 
 ## 狀態
 
-**Core 結案（decision 014，2026-10-13）：v1（decision 010）＋ v2（decision 011–013）。Advanced B 完成（decision 019）。作品集整理完成（2026-10-14）。v5 完成（decision 035，2026-10-16）。**
+**Core 結案（decision 014，2026-10-13）：v1（decision 010）＋ v2（decision 011–013）。Advanced B 完成（decision 019）。作品集整理完成（2026-10-14）。v5 完成（decision 035，2026-10-16）。E0（decision 036）與 D3×P0 / H-P（decision 037）結案、研究成果與工程功能整理（2026-10-17）。**
 
 - v1：正式 test 一次；Rule 穩定勝過 Single / Random。holdout 上「接近 Oracle」未重現（decision 013）。
 - v2：看過 v1 test 後提出；只用 core train / val 開發，在新的 `holdout` split 一次性與 v1 分開比較；
@@ -34,7 +34,8 @@
   - 正式（`v5` / `v5-dx`，只跑一次）：X1–X4 全部通過；Rule budget 3 D2×L2 +0.237、D3×L1 +0.138；absent@5 D3×L1 0.637 → 0.950。`v5` / `v5-dx` 已用過、封存。
   - 比例自我校正（decision 033 原主題）在開發中排除；不包住的版本只報告（也安全）。
 - **zone 內相似物件**（decision 036）：E0 完成並封存，**E1 暫緩**；不得把單張影像的變換當作多視角證據；v1 / v2 比較必須同條件。
-- **D3×P0**（decision 037）：診斷完成（`docs/d3p0-diagnosis.md`）——失敗來自矛盾規則浪費選中的視角，不是不可觀測。H-P 開發評估（附錄 A / B，`docs/hp-development.md`）：決策安全全 0、absent 大幅改善，但**逐視角安全代理 S2 不成立**（過度自信定位器下 3 個被接受的視角超出餘裕）→ **依協定停止，不放大 c、不加補丁**；凍結 v5 不變。是否結束這條研究線等使用者決定。不得以提高 absent 判定率為由增加 false absent。立體遮蔽帶測試仍在 Backlog。
+- **Future Work（都未啟動，使用者 2026-10-17：不得自行開啟新的正式研究方向）**：E1、D3×P0 的定位不確定性、立體遮蔽帶測試、rule-nbv-v2 的增益預測、實機量測（見 `NEXT.md`、README「後續與 Future Work」）。
+- **D3×P0**（decision 037，**結案** 2026-10-17）：診斷完成（`docs/d3p0-diagnosis.md`）——失敗來自矛盾規則浪費選中的視角，不是不可觀測。H-P 開發評估（`docs/hp-development.md`）決策安全全 0、absent 大幅改善，但逐視角安全代理 S2 不成立 → 使用者決定結束研究線：**H-P 記為未通過安全 Gate 的研究假設**，不凍結、不做正式實驗、不調整門檻；`activeperception/v6/` 的 `hp_c` 預設 0，任何正式管線都不使用。v5 維持正式版本。D3×P0 的定位不確定性列入 Future Work（未啟動）。不得以提高 absent 判定率為由增加 false absent。
 - **資源**：任何重工作前先跑 `uv run python -m activeperception.preflight`（鎖、CPU、RAM；Apple GPU 加 `--gpu`）；鎖存在或負載過高就不啟動。Mac 上可能有不取鎖的工作。text-6 事件紀錄：`docs/incidents/`，交由 Rust HNSW 專案處理，本專案不跨專案操作。
 
 目前沒有進行中的實驗；需要使用者決定的下一步見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。

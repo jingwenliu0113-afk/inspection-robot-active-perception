@@ -340,6 +340,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", required=True)
     ap.add_argument("--no-replay", action="store_true")
     args = ap.parse_args(argv)
+    from ..seal import refuse_pinned
+
+    refuse_pinned(Path(args.out) / "summary.json", Path(args.out) / "tables.md")
     res = load(Path(args.runs))
     missing = [k for k in expected_keys() if k not in res]
     if missing:

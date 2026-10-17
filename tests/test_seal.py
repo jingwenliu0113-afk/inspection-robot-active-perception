@@ -77,3 +77,20 @@ def test_manifest_refuses_to_repin_a_changed_file(tmp_path, monkeypatch):
     with pytest.raises(SystemExit, match="never rewrite"):
         seal.write_manifest(tmp_path)
     assert seal.verify(tmp_path) == ["results/a.json"]
+
+
+def test_dev_runners_refuse_to_overwrite_pinned_results(tmp_path):
+    seal.refuse_pinned(tmp_path / "summary.json")  # anywhere else is fine
+    for path in (
+        "results/inzone-e0/e0.json",
+        "results/d3p0-diag/summary.json",
+        "results/hp-dev/summary.json",
+    ):
+        with pytest.raises(SystemExit):
+            seal.refuse_pinned(seal.ROOT / path)
+    from activeperception.d3p0 import summarize
+    from activeperception.v6 import devreport
+
+    for main, out in ((summarize.main, "d3p0-diag"), (devreport.main, "hp-dev")):
+        with pytest.raises(SystemExit, match="pinned"):
+            main(["runs/none", "--out", str(seal.ROOT / "results" / out)])

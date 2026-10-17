@@ -114,6 +114,15 @@ def sealed_run(episodes: str | Path, split: Split, root: Path = ROOT) -> SealedR
     return None
 
 
+def refuse_pinned(*paths: str | Path, root: Path = ROOT) -> None:
+    """Development runners that write a committed (pinned) result: never overwrite it."""
+    pinned = read_manifest(root)
+    for path in paths:
+        f = Path(path).resolve()
+        if f.is_relative_to(root.resolve()) and str(f.relative_to(root.resolve())) in pinned:
+            raise SystemExit(f"{path} is pinned in {MANIFEST}: write the re-run elsewhere")
+
+
 def guard_formal_run(
     episodes: str | Path, split: Split, out: str | Path, reproduce: bool, root: Path = ROOT
 ) -> SealedRun | None:

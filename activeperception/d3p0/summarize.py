@@ -193,6 +193,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--ns", default="v3-dev")
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
+    from ..seal import refuse_pinned
+
+    refuse_pinned(Path(args.out) / "summary.json")
     rows = {}
     for c in COND_ORDER:
         p = Path(args.runs) / f"{args.ns}-{c}.jsonl"
