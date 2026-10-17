@@ -1095,7 +1095,10 @@ def v5_formal(report: dict) -> None:
 
 
 if __name__ == "__main__":
+    import time
+
     OUT.mkdir(parents=True, exist_ok=True)
+    started = time.time()
     rep = json.loads((ROOT / "results/test-v1/report.json").read_text())
     accuracy_vs_budget(rep)
     # these two read camera frames: renders/ is not in git (rebuild: docs/reproduce.md level C)
@@ -1146,4 +1149,4 @@ if __name__ == "__main__":
     v3_dev = ROOT / "results/v3-dev/ablation.json"
     if v3_dev.exists():
         v3_dev_ablation(json.loads(v3_dev.read_text())["rows"])
-    print("wrote", sorted(p.name for p in OUT.glob("*.png")))
+    print("wrote", sorted(p.name for p in OUT.glob("*.png") if p.stat().st_mtime >= started - 1))

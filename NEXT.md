@@ -16,7 +16,9 @@
 | README | 狀態、E0、D3×P0 / H-P、失敗分析摘要、「可展示的工程功能」、「後續與 Future Work」、目錄（decision 001–037）已更新 |
 | 重現指南 | 新增 §I（E0）、§J（D3×P0 診斷與 H-P 開發評估）；資源預檢 |
 | 工程 | E0 / D3×P0 / H-P 的 runner 拒絕覆寫已封存的結果（`seal.refuse_pinned`） |
-| Demo / 測試 | （見下方「整理時的檢查」） |
+| Demo | `./docker/demo.sh` 重跑（2026-10-17，64 秒，exit 0）：判定序列與 README 相同（inconclusive → #0 inconclusive → #2 present），動畫工具的判定輸入比對通過，無殘留容器 |
+| 測試 | 工作目錄 301 個全部通過；**乾淨 clone**（無 `runs/`、`renders/`）：300 通過、1 跳過（v1 regression 需要本機 frame store），`seal verify` 通過、ruff 通過 |
+| 重現 | 乾淨 clone 上 core / nav-b2 spec 逐位元重新產生；`tools/make_figures.py` 重畫後所有圖逐位元相同（並修正它把跳過的圖也列為 wrote 的訊息） |
 
 ### D3×P0 / H-P（decision 037，結案）
 
