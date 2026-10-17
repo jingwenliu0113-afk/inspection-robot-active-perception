@@ -1,7 +1,7 @@
 """Run one detector candidate over every frame of a frame store (decision 005 / 007).
 
-    python -m activeperception.detector.run --frames renders/detsel --detector yolo11m \\
-        --device cuda --out runs/detsel/yolo11m.jsonl
+    python -m activeperception.detector.run --frames renders/detsel --detector frcnn-mnv3 \\
+        --device cuda --out runs/detsel/frcnn-mnv3.jsonl
 
 Writes a ``DetectionCache`` (target class, low threshold) whose header records the model,
 weights hash, package versions, device, and a batch-1 latency / memory benchmark
@@ -86,10 +86,6 @@ def main(argv: list[str] | None = None) -> int:
         "torch": torch.__version__,
         "torchvision": torchvision.__version__,
     }
-    if cand.family == "ultralytics":
-        import ultralytics
-
-        versions["ultralytics"] = ultralytics.__version__
     meta = {
         "candidate": cand.name,
         "family": cand.family,

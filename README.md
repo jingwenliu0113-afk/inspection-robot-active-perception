@@ -193,6 +193,7 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 **Detector（`detector-v1`）**：
 - 選型：在獨立的 `detsel` 資料比較 YOLOv8m、YOLO11m、torchvision Faster R-CNN MobileNetV3。
   三者 presence AUROC 都是 1.000、AP50 0.995–0.996，預先登錄的規則因此由授權（BSD vs AGPL）決定，選 **FRCNN-MobileNetV3**（[decision 005](docs/decisions/005-detector-selection-protocol.md)）。
+  YOLO 的偵測結果保留在 [`results/detector-selection/`](results/detector-selection/table.md)，但 YOLO 的部分無法從本 repo 直接重跑（見[授權](#授權)）。
 - test frame 上，可見消防栓像素 ≥ 10k 時偵測率 99.8%；< 5k 時幾乎偵測不到。在這個模擬場景中，**瓶頸是視角，不是 detector**。
 
 ### Core v2：未觀察區域不再被當成 absent（`holdout`：150 scene groups、600 episodes；decision 011–013）
@@ -661,4 +662,7 @@ THIRD_PARTY_NOTICES.md     第三方內容的來源與授權（不在 BSD-3-Clau
 - 本專案作者有權授權的**原創程式碼**以 **BSD-3-Clause** 授權（[LICENSE](LICENSE)；ROS 2 package `inspection_ap_ros` 的 `package.xml` 與 `pyproject.toml` 宣告相同）。
 - 第三方內容**不在**此授權範圍內，保留其原有授權：消防栓模型（CC0 1.0）、Open Images / COCO 標註子集（CC BY 4.0）、RealSense depth 衍生統計（CC BY 4.0）；
   照片不在 repo 內，只以網址引用，各自適用原授權。來源與標示：[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
-- 選用的 `detectors` extra 會安裝 `ultralytics`（AGPL-3.0），只用於 detector 選型時比較的 YOLO 候選；正式管線使用 torchvision（BSD-3-Clause）的 FRCNN。
+- **YOLO 比較實驗的重現限制**：detector 選型（decision 005）比較過的 YOLOv8m / YOLO11m 屬於 Ultralytics（AGPL-3.0）。為了讓本 repo 維持 BSD-3-Clause，公開前（2026-10-17）已移除 YOLO 的轉接程式與 `ultralytics` 依賴；本 repo 從未包含 Ultralytics 的程式碼或權重。
+  - 正式管線不受影響：`detector-v1` 是 torchvision（BSD-3-Clause）的 Faster R-CNN MobileNetV3，所有正式結果都只用它。
+  - 當時的 YOLO 偵測結果、延遲量測與選型表保留在 [`results/detector-selection/`](results/detector-selection/table.md)（封存，未修改），可以檢查選型的計算；
+    但 YOLO 的偵測本身無法從本 repo 重跑。若要重跑，需要自行安裝 `ultralytics` 並遵守 AGPL-3.0（或其商業授權），轉接方式見 decision 005 附錄 A 的設定。

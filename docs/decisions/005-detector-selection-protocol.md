@@ -49,6 +49,7 @@ Core 不做 fine-tuning（那是 Advanced A）。
 4. 選定後凍結為 `detector-v1`：模型名稱、權重檔 sha256、套件版本、推論參數。之後 decision rule 的門檻在 train / val 上依此 detector 調整（decision 004 的程序）。
 
 若勝出者為 AGPL-3.0（Ultralytics），其授權義務另記錄於選型結果附錄，並在 README 註明。
+（2026-10-17 註：本 repo 以 BSD-3-Clause 公開前，已移除 YOLO 的轉接程式與 `ultralytics` 依賴；選型結果 `results/detector-selection/` 保留未改，但 YOLO 的偵測無法再從本 repo 重跑。本段保留當時的紀錄。）
 
 ## 執行地點
 

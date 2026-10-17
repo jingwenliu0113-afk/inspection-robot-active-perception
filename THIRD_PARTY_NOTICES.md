@@ -24,7 +24,7 @@ The original code in this repository that its authors have the right to license 
 | 內容 | 取得方式 | 授權（以原始來源為準） |
 |---|---|---|
 | detector 權重 `fasterrcnn_mobilenet_v3_large_fpn`（COCO 預訓練） | `download.pytorch.org`，載入時驗證 sha256（docs/reproduce.md §B） | torchvision：BSD-3-Clause |
-| detector 選型時比較過的 YOLOv8 / YOLO11（decision 005，未採用）：權重與 `ultralytics` 套件 | Ultralytics；只有安裝選用的 `detectors` extra 並使用 YOLO 候選時才會載入（`activeperception/detector/models.py` 的 lazy import），正式管線使用 torchvision 的 FRCNN | AGPL-3.0 |
+| detector 選型時比較過的 YOLOv8m / YOLO11m（decision 005，未採用） | **不在本 repo 的程式或依賴中**：轉接程式與 `ultralytics` 依賴已在公開前（2026-10-17）移除，repo 從未包含其程式碼或權重；只保留當時的偵測輸出（`results/detector-selection/`） | Ultralytics：AGPL-3.0（或商業授權） |
 | ROS 2 Jazzy、Gazebo Harmonic、Nav2、TurtleBot 4 模擬等 | `docker/Dockerfile*` 從公開套件來源建置映像；repo 只含 Dockerfile | 各套件的授權（多為 Apache-2.0） |
 | Python 套件 | `pyproject.toml` / `uv.lock`，由 `uv` 安裝 | 各套件的授權 |
 | Open Images 照片、OSF 原始 depth 影像 | 見 docs/reproduce.md §E、§F | 各自的授權（見上） |

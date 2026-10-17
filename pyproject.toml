@@ -14,11 +14,11 @@ dependencies = [
 detectors = [
     "torch>=2.11",
     "torchvision>=0.26",
-    "ultralytics>=8.3",
 ]
 
 [dependency-groups]
 dev = [
+    "matplotlib>=3.11",  # tools/make_figures.py, tools/make_demo.py
     "pytest>=8",
     "ruff>=0.5",
 ]
