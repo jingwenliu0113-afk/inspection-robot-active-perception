@@ -9,6 +9,16 @@
 
 **本專案暫時正式結案（使用者 2026-10-17）**：不再自行擴張研究，沒有進行中的實驗；Future Work 保留，等使用者決定是否重新啟動。
 
+**正式公開（2026-10-17）**：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（Public，BSD-3-Clause）。
+
+| 公開檢查 | 結果 |
+|---|---|
+| Git 全歷史 | 773 個 blob、125 個 commit：沒有 token、金鑰、密碼、私鑰、帶帳密的 URL、可疑檔名；沒有權重、render、照片。commit 作者 email 公開（使用者同意，不改寫歷史；之後改用 noreply） |
+| 授權 | 原創程式碼 BSD-3-Clause（`LICENSE`、`pyproject.toml`、ROS `package.xml` 一致）；第三方：消防栓模型 CC0、Open Images / COCO 標註子集 CC BY 4.0、RealSense 衍生統計 CC BY 4.0（`THIRD_PARTY_NOTICES.md`） |
+| AGPL | YOLO 轉接程式與 `ultralytics` 依賴已移除（使用者決定）；歷史中從未包含 Ultralytics 程式碼或權重；YOLO 選型結果保留，但無法從本 repo 重跑（README「授權」） |
+| 測試 / 重現 | 工作目錄全部通過；乾淨 clone 1 個跳過（需要 render，重現指南 §C 可產生）；圖表逐位元相同；Demo 重跑判定與 README 相同 |
+| 未登入存取 | README、程式碼、重現指南、架構文件、LICENSE、Demo 動畫都回傳 200；匿名 `git clone` 成功 |
+
 **目前：研究成果與可展示的工程功能整理完成（2026-10-17）**。使用者指示：結束 H-P 研究線、整理成果、確認 Demo / README / 重現指南 / 測試完整。
 
 | 項目 | 狀態 |

@@ -40,7 +40,9 @@
 - **D3×P0**（decision 037，**結案** 2026-10-17）：診斷完成（`docs/d3p0-diagnosis.md`）——失敗來自矛盾規則浪費選中的視角，不是不可觀測。H-P 開發評估（`docs/hp-development.md`）決策安全全 0、absent 大幅改善，但逐視角安全代理 S2 不成立 → 使用者決定結束研究線：**H-P 記為未通過安全 Gate 的研究假設**，不凍結、不做正式實驗、不調整門檻；`activeperception/v6/` 的 `hp_c` 預設 0，任何正式管線都不使用。v5 維持正式版本。D3×P0 的定位不確定性列入 Future Work（未啟動）。不得以提高 absent 判定率為由增加 false absent。
 - **資源**：任何重工作前先跑 `uv run python -m activeperception.preflight`（鎖、CPU、RAM；Apple GPU 加 `--gpu`）；鎖存在或負載過高就不啟動。Mac 上可能有不取鎖的工作。text-6 事件紀錄：`docs/incidents/`，交由 Rust HNSW 專案處理，本專案不跨專案操作。
 
-目前沒有進行中的實驗；需要使用者決定的下一步見 `NEXT.md`。GitHub remote：`origin`（private，不加 LICENSE）。每個 milestone commit 後 push。
+目前沒有進行中的實驗；需要使用者決定的下一步見 `NEXT.md`。GitHub remote：`origin`，**Public**（使用者 2026-10-17 核准），https://github.com/jingwenliu0113-afk/inspection-robot-active-perception。
+**授權：BSD-3-Clause**（原創程式碼，`LICENSE`）；第三方內容保留原授權（`THIRD_PARTY_NOTICES.md`）。不得加入 AGPL / GPL 依賴（`tests/test_detector.py` 檢查 ultralytics）。
+本 repo 的 commit email 已設為 GitHub noreply（repo-local git config）；不得改寫 Git 歷史。每個 milestone commit 後 push。
 
 ## 每個 session 的第一步
 
