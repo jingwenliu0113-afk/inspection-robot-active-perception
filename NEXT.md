@@ -26,7 +26,8 @@
 | 英文 README | `README.md` 改為完整英文版：60 秒摘要（問題、方法、主要成果、驗證範圍）→ Demo → 重點結果 → 架構 → 工程亮點 → 快速開始 → 詳細結果、失敗分析、研究紀律、限制、Future Work、授權 |
 | 繁體中文 README | 原內容移到 `README.zh-TW.md`，開頭加上同樣的 60 秒摘要；原狀態清單移到「專案歷程」；內容不刪 |
 | 驗證範圍的修正 | 原英文摘要寫「沒有在真實影像上驗證」不正確：真實照片只用於 detector（R0a、A），真實 depth 只用於誤差模型（B），完整系統沒有實機 |
-| CI | GitHub Actions：ruff、封存檢查、spec 逐位元重新產生、pytest；不需 Docker / GPU / detector 權重 |
+| CI | GitHub Actions（ubuntu-24.04，約 5 分鐘）：ruff、封存檢查、pytest；不需 Docker / GPU / detector 權重。2026-10-17 通過（1 個測試因沒有 render 跳過） |
+| CI 找到的事 | 第一次執行發現 spec 在 Linux 上不是逐位元相同：glibc 的 sin / cos 捨入不同，約 3% 的浮點數差 2–3 ulp（最大 4.4×10⁻¹⁶ m），其他欄位完全相同（本機 Linux 容器也確認）。改為平台感知的測試（macOS arm64 逐位元、其他平台 4 ulp 以內），文件加註；封存的 spec 與所有結果都沒有改 |
 | 檢查 | 中英文 README 的數字由 `tests/test_readme_claims.py` 對照結果檔；84 個 Markdown、249 個連結（含錨點）全部有效 |
 
 **目前：研究成果與可展示的工程功能整理完成（2026-10-17）**。使用者指示：結束 H-P 研究線、整理成果、確認 Demo / README / 重現指南 / 測試完整。
