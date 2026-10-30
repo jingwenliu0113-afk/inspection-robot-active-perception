@@ -1,6 +1,6 @@
 # 重現指南
 
-分四個層級，越往下越完整、越花時間。下表的時間是在 Apple M4 Pro（48 GB）、Docker Desktop 上量到的。
+分四個層級，越往下越完整、越花時間。本機的 render、照片、訓練權重等不在 git 裡的資料，2026-10-30 起放在私人備份，還原方式見 [restore-from-backup.md](restore-from-backup.md)。下表的時間是在 Apple M4 Pro（48 GB）、Docker Desktop 上量到的。
 
 | 層級 | 需要 | 時間 | 能檢查什麼 |
 |---|---|---|---|

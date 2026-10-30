@@ -9,6 +9,15 @@
 
 **本專案暫時正式結案（使用者 2026-10-17）**：不再自行擴張研究，沒有進行中的實驗；Future Work 保留，等使用者決定是否重新啟動。
 
+**本機資料移到雲端（2026-10-30，使用者指示：Mac 空間不足，之後可能延伸研究）**：
+
+| 項目 | 內容 |
+|---|---|
+| GitHub | 新增 `results/detections/`（30 個偵測快取，約 5 MB，已釘進封存清單）：v3–v5、R0b、Advanced B、detector-v2 的評估輸入都在 repo 裡 |
+| 私人備份 | `inspection-ap-backup-2026-10-30`（Google Drive）：`runs.tar` 762 MB、`data-raw.tar` 1.92 GB、`renders.tar` 3.13 GB、`models-frcnn.tar` 78 MB；SHA256 / MD5 與 30,134 個檔案逐一比對 |
+| 還原 | [docs/restore-from-backup.md](docs/restore-from-backup.md)：clone → 下載 → 驗證 → 解壓 → `uv sync` → 重建 Docker |
+| 本機 | 雲端確認後刪除整個專案資料夾與本專案 4 個 Docker 映像（其他專案的映像不動） |
+
 **正式公開（2026-10-17）**：https://github.com/jingwenliu0113-afk/inspection-robot-active-perception（Public，BSD-3-Clause）。
 
 | 公開檢查 | 結果 |
