@@ -120,6 +120,8 @@ def test_nav_b2_numbers():
     assert f"{nav['navigations']} 次導航碰撞 **{nav['collisions']}**" in README
     assert f"（共 {runs} 次方法執行，包括從不移動的 Single）" in README
     assert "960 次閉迴路" not in README and "真正用 Nav2" not in README
+    # every Nav2 result is from Gazebo: no wording that reads as a physical robot
+    assert not any(w in README for w in ("真正導航", "實際導航", "實際開到"))
 
 
 def test_failed_gates_stay_reported():
@@ -313,6 +315,7 @@ def test_english_readme_numbers():
     assert f"**{nav['navigations']}** navigations, **{nav['collisions']}**" in README_EN
     assert f"({runs} method runs in total, including Single, which never moves)" in README_EN
     assert "closed-loop runs" not in README_EN and "real Nav2" not in README_EN
+    assert "real navigation" not in README_EN
     assert f"Single View's **{num(s['single@1']['accuracy'])}** is a structural floor" in README_EN
     assert "at budget 1, where every method has only the initial view, all four score" in README_EN
     assert "it stays in the pre-registered comparisons" in README_EN
@@ -423,6 +426,20 @@ def test_sealing_claims_match_the_manifest():
     assert "其他正式 runner（R0a、R0b、detector-v2、v3–v5）只拒絕覆寫自己已有的輸出" in README
     assert "the Nav2 batches (`nav-b0*`, `nav-b2`) only skip jobs" in README_EN
     assert "Nav2 批次（`nav-b0*`、`nav-b2`）只跳過輸出目錄裡已有結果的工作" in README
+
+
+def test_see_through_guarantee_is_scoped():
+    """The guarantee that the object's own place is never seen through needs an exact pose and
+    exact depth: pose error alone (B0, R0b) and depth error alone (R0b) broke it in the results."""
+    b0 = load("results/nav-b0/b0_report.json")["decisions"]
+    assert b0["all_views_geometric_risk_episodes"] > 0  # AMCL poses alone
+    by = {tuple(r["condition"].values()): r for r in load("results/r0b/report.json")["results"]}
+    for d, q in (("D0", "L1"), ("D0", "L2"), ("D1", "P0"), ("D2", "P0")):  # pose only, depth only
+        assert by[(d, q, "a")]["all_views_geometric_risk"], (d, q)
+    # pipeline (b): pose refinement + see-through margin (decision 016)
+    assert not any(r["all_views_geometric_risk"] for (_, _, p), r in by.items() if p == "b")
+    assert "With an exact camera pose and exact depth, the place where the object" in README_EN
+    assert "在相機位姿與 depth 都精確時，物件真正站的位置不可能被看穿" in README
 
 
 def test_mechanism_notes_match_the_frozen_rules():

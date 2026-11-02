@@ -95,7 +95,7 @@
   - `absent`：≥ 2 個方位扇區（共 8 個）有「zone 至少 30% 未被擋」的視角，且所有 confidence < 0.05。
 - **`decision-v2`**：
   - `absent`：zone 內 64 個「物件可能站立的位置」都被某個視角的 depth **看穿**，且所有 confidence < 0.02。
-  - 物件真正站的位置不可能被看穿，所以即使 detector 漏看，也不會 false absent。
+  - 在相機位姿與 depth 都精確時，物件真正站的位置不可能被看穿，所以即使 detector 漏看，也不會 false absent。位姿或 depth 誤差會破壞這一點（見下方 B0、R0b），位姿精修與看穿餘裕（decision 016、v3–v5）就是為了防止這種情況。
 - 其餘一律 `inconclusive`。
 
 ## 系統架構
@@ -126,7 +126,7 @@ flowchart LR
 
 | 功能 | 內容 | 怎麼看 |
 |---|---|---|
-| Nav2 閉迴路 Demo | TurtleBot 4 ＋ Nav2 實際開到 Rule-NBV 選的視角，到點後用 depth 對設施地圖重定位，再判定；動畫工具用可部署的資料重建每一步的判定輸入，與執行紀錄不一致就失敗 | `./docker/demo.sh`（[docs/reproduce.md](docs/reproduce.md) §B） |
+| Nav2 閉迴路 Demo | TurtleBot 4 ＋ Nav2 在 Gazebo 中開到 Rule-NBV 選的視角，到點後用 depth 對設施地圖重定位，再判定；動畫工具用可部署的資料重建每一步的判定輸入，與執行紀錄不一致就失敗 | `./docker/demo.sh`（[docs/reproduce.md](docs/reproduce.md) §B） |
 | render-then-replay | 每個視角在 Gazebo 只 render 一次，四個方法 replay 同一份觀測；ROS 2 inspector node 的線上執行與 replay 完全一致 | [docs/architecture.md](docs/architecture.md) §2 |
 | 資訊邊界 | 判定只讀可部署的資料；GT 只用於評分、歸因與上界方法（Oracle）；候選視角與物件無關 | `tests/test_leakage.py` |
 | 預先登錄的正式 runner | 每個版本的正式 runner 只接受自己的新 namespace；v3–v5 只檢查 `--out` 目錄裡是否已有 `report.json`，換一個輸出目錄就能重跑；開發 runner 拒絕正式資料 | `activeperception/v{3,4,5}/formal.py` |
@@ -256,9 +256,9 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 - **原因**（開發資料上確認）：初始視角被擋時，rule-nbv-v2 有 75–81% 的第二視角決策是分數平手，由候選編號決定。
   這是凍結 v2 的已知限制，不在 Core 修正；修正屬於 v3，需要新的資料。
 
-### Advanced B：真正導航下的 active perception（decision 015–019）
+### Advanced B：在 Gazebo 中以 Nav2 導航的 active perception（decision 015–019）
 
-- **設定**：把 teleport 換成 **Nav2 實際導航**。TurtleBot 4 加 1.1 m 桅桿相機（內參同 Core），用 AMCL 定位、Nav2 規劃與控制。
+- **設定**：把 teleport 換成在 Gazebo 中的 **Nav2 導航**。TurtleBot 4 加 1.1 m 桅桿相機（內參同 Core），用 AMCL 定位、Nav2 規劃與控制。
   判定規則、視角策略、detector 都用 Core 凍結的 v2；真實位姿與標籤只用於評分。
 - **到點後的處理**：以機載 depth 對設施地圖精修位姿、回饋 AMCL 重定位；判定時對剩餘位姿誤差取保守值。
 - **正式評估**：新的 `nav-b2`（160 集：absent 80、unobservable 38、visible 42），在 decision 018 預先登錄後只跑一次，同一批 episodes 另做 teleport 對照。
@@ -494,7 +494,7 @@ v4 以較大的餘裕換安全，absent 較難判（decision 032）。v5 原本�
 
 本專案暫時正式結案（2026-10-17）：不再擴張研究；Future Work 保留，等之後決定是否重新啟動。各階段：
 
-- Core（v1、v2）已結案；Advanced B（Nav2 實際導航）已完成。Advanced C（RL）由使用者決定不做。
+- Core（v1、v2）已結案；Advanced B（Gazebo 中的 Nav2 導航）已完成。Advanced C（RL）由使用者決定不做。
 - R0 真實環境適應研究（不是實機驗證）已完成：
   - **R0a 真實照片**：清楚可見的消防栓 97.9% 認得出來，但外觀相近的物體有 9.2% 被誤判（判準未通過）。
   - **R0b 模擬的 depth / 定位誤差**：v2 + decision 016 沒有 false absent（判準通過），但 depth 一有雜訊就幾乎判不出 absent。

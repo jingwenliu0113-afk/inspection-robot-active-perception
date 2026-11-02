@@ -98,8 +98,9 @@ flowchart LR
 - **One decision rule for every method.**
   - `present`: detector confidence ≥ 0.7 (from v3 on, only for boxes located inside the zone).
   - `absent`: all 64 places where the object could stand have been seen through by some view's depth, and every
-    confidence < 0.02. The place where the object really stands can never be seen through, so a missed detection
-    cannot turn into a false absent.
+    confidence < 0.02. With an exact camera pose and exact depth, the place where the object really stands can never
+    be seen through, so a missed detection cannot turn into a false absent. Pose or depth error can break this (B0
+    and R0b below); pose refinement and the see-through margin (decision 016, v3–v5) are there to prevent it.
   - Everything else: `inconclusive`. The four methods differ only in which views they choose.
 - **Render-then-replay (Core).** Each viewpoint is rendered once in Gazebo, and all methods replay the same
   observations, so the differences between methods come only from view choice. The ROS 2 inspector node gives the
@@ -282,7 +283,7 @@ The failed gates stay reported:
 - **Root cause, confirmed on development data.** When the first view is blocked, 75–81% of rule-nbv-v2's second
   choices are score ties, broken by candidate id.
 
-### Advanced B: active perception with real navigation (decisions 015–019)
+### Advanced B: active perception with Nav2 navigation in Gazebo (decisions 015–019)
 
 - **Setup.**
   - Teleporting is replaced by **Nav2 navigation**: a TurtleBot 4 with a 1.1 m mast camera (same intrinsics as

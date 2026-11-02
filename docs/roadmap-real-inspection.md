@@ -70,7 +70,7 @@ R0 把「往實機前的最大風險」具體化成三個問題。建議在考�
 
 | 優先 | 問題 | 狀態 |
 |---|---|---|
-| 1 | zone 外的相似物件（R0a） | **v3 已處理**：模擬正式測試中，false present 1,014 / 1,263 → 0（decision 026）。v4 再加上 depth 區間，D3 下也成立（decision 032） |
+| 1 | zone 外的相似物件（R0a） | **v3 已處理**：模擬正式測試中，zone 外相似消防栓造成的 false present → 0（v2 在 D0×P0 / D1×L1 各 1,014 / 1,263 次，是 4 個方法 × budget 1–5 的加總次數，Random 含 3 個 seeds；decision 026）。v4 再加上 depth 區間，D3 下也成立（decision 032） |
 | 1 | zone 內的相似物件（R0a） | **A 完成，未達標**：偏難負樣本誤報 8.4% → 4.7%，判準 ≤ 1% 未通過；正樣本完全漏看 4 → 10 / 134（decision 030） |
 | 2 | 位姿精修偏移（R0b） | **v4 已處理**：V4 型失敗在新資料上再次出現於 v3，v4 擋下；壓力條件與 D3 下都安全（decision 032） |
 | 3 | absent 判不出（R0b） | **v3 已處理**：D1×L1 absent@5 0.013 → 1.000。v4 以較大餘裕換安全，D3×L1 下 absent@5 0.637。**v5 已處理**：缺值不再否決看穿（see-v5），D3×L1 absent@5 0.950，全部安全（decision 035）；D3×P0 仍 0.637（H-P 未通過安全 Gate，列入 Future Work，decision 037） |
