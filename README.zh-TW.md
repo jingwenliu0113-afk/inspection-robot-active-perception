@@ -130,7 +130,7 @@ flowchart LR
 | render-then-replay | 每個視角在 Gazebo 只 render 一次，四個方法 replay 同一份觀測；ROS 2 inspector node 的線上執行與 replay 完全一致 | [docs/architecture.md](docs/architecture.md) §2 |
 | 資訊邊界 | 判定只讀可部署的資料；GT 只用於評分、歸因與上界方法（Oracle）；候選視角與物件無關 | `tests/test_leakage.py` |
 | 預先登錄的正式 runner | 每個版本的正式 runner 只接受自己的新 namespace；v3–v5 只檢查 `--out` 目錄裡是否已有 `report.json`，換一個輸出目錄就能重跑；開發 runner 拒絕正式資料 | `activeperception/v{3,4,5}/formal.py` |
-| 封存 | `SEALED.sha256` 釘住所有已 commit 的結果檔與凍結的 episode sets；凍結設定只釘了 v1 / v2 的 `frozen.py`、`frozen_v2.py`（`frozen_v3.py`–`frozen_v5.py` 沒有釘住）。只有 v1 / v2 的正式 runner 會拒絕重跑封存的 test / holdout，只能 `--reproduce` 逐位元比對；其他正式 runner（R0a、R0b、detector-v2、v3–v5）只拒絕覆寫自己已有的輸出，Nav2 批次（`nav-b0*`、`nav-b2`）只跳過輸出目錄裡已有結果的工作，換一個輸出目錄都能重跑 | `uv run python -m activeperception.seal verify` |
+| 封存 | `SEALED.sha256` 釘住所有已 commit 的結果檔與凍結的 episode sets；凍結設定只釘了 v1 / v2 的 `frozen.py`、`frozen_v2.py`（`frozen_v3.py`–`frozen_v5.py` 沒有釘住）。只有 v1 / v2 的正式 runner 會拒絕重跑封存的 test / holdout，只能 `--reproduce` 逐位元比對；其他正式 runner（R0a、R0b、detector-v2、v3–v5）只拒絕覆寫自己已有的輸出，Nav2 批次（`nav-b0*`、`nav-b2`）只跳過輸出目錄裡已有結果的工作，換一個輸出目錄都能重跑。B 的 depth 模型腳本（decision 028）完全沒有檢查，會直接覆寫輸出檔 | `uv run python -m activeperception.seal verify` |
 | 可重現的誤差模型 | depth / 位姿誤差以（episode、視角、等級）固定 seed 抽樣；同一管線重跑逐項相同（例如 H-P 開發評估中 B0 與既有 v5 開發結果 9 組條件逐項相同） | `activeperception/r0b_noise.py`、`depthnoise/d3.py` |
 | 統計 | scene group cluster bootstrap 的 95% CI、成對比較（只有 A 對 / 只有 B 對的集數） | `activeperception/metrics.py`、`nav/b1_analysis.py` |
 | 共用機器的資源管理 | 重工作前的預檢（Mac heavy lock、CPU、RAM、Apple GPU），長時間工作每個 job 開始前等鎖；GPU 工作用 `flock` 取得共享 GPU lock | `uv run python -m activeperception.preflight`（[MACHINE_POLICY.md](MACHINE_POLICY.md)） |
@@ -222,7 +222,7 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 
 - **安全**：v2 所有方法、所有 budget 的 false-absent 都是 0（v1 Random 0.07%）；「物件沒被看到卻滿足 absent 幾何條件」的情況為 0。
   有目標的 300 集上，95% 上界為 3/300 = 1.0%；每個 scene group 只算一次時為 3/150 = 2.0%。
-- **校準**：definitive decision 的 ECE 從 0.21–0.38 降到 ≤ 0.0083。下降主要來自 absent confidence 的定義改變：
+- **校準**：definitive decision 的 ECE 從 0.21–0.38 降到 ≤ 0.0083（0.21–0.38 是 v1 多視角方法、budget ≥ 2 的範圍；≤ 0.0083 涵蓋 v2 的每一格）。下降主要來自 absent confidence 的定義改變：
   v1 是 coverage × (1 − c_max)，覆蓋 8 個扇區中的 2 個時，正確的 absent 最多也只有 0.25（decision 010）；
   v2 改為看穿比例 × (1 − c_max)，而 v2 判 absent 時看穿比例一定是 1。
 - **改善來自哪裡（消融）**：判定規則 +0.253 [0.215, 0.293]（budget 2）；新策略相對 v1 策略只多 +0.020 [−0.020, 0.058]，**不顯著**。
@@ -561,7 +561,7 @@ v4 以較大的餘裕換安全，absent 較難判（decision 032）。v5 原本�
 - **先寫判準、再看結果**：37 份 decision log 記錄每個會影響結論的決定，標明是否在看過結果後才寫。調參只用 train，val 只檢查。
 - **正式評估只跑一次**：`core` test、`holdout`、`nav-b2`、R0a 正式集、`r0b`、`v3` / `v3-dx`、detector-v2 的 test 與 `detv2-sim`、`v4` / `v4-dx`、`v5` / `v5-dx` 都用過一次後封存。
   `SEALED.sha256` 釘住所有已 commit 的結果檔、凍結的 episode sets，以及 v1 / v2 的凍結設定（`frozen.py`、`frozen_v2.py`），`tests/test_seal.py` 檢查；`frozen_v3.py`–`frozen_v5.py` 沒有釘住。
-  只有 v1 / v2 的正式 runner 對封存的 test / holdout 只允許 `--reproduce`；其他正式 runner（R0a、R0b、detector-v2、v3–v5）只拒絕覆寫自己已有的輸出，Nav2 批次（`nav-b0*`、`nav-b2`）只跳過輸出目錄裡已有結果的工作，換一個輸出目錄都能重跑。
+  只有 v1 / v2 的正式 runner 對封存的 test / holdout 只允許 `--reproduce`；其他正式 runner（R0a、R0b、detector-v2、v3–v5）只拒絕覆寫自己已有的輸出，Nav2 批次（`nav-b0*`、`nav-b2`）只跳過輸出目錄裡已有結果的工作，換一個輸出目錄都能重跑；B 的 depth 模型腳本（decision 028）完全沒有檢查，會直接覆寫輸出檔。
 - **v2 是看過 v1 test 後才提出的**：所以它的所有宣稱只來自新的 holdout，原 test 不用於 v2。
 - **未通過的 Gate 照實寫**：v1 的「接近 Oracle」沒有重現，v2 在 budget 2 未接近 Oracle，B0 兩次未通過，H-P 未通過逐視角安全 Gate，全部保留在 README 與 decision log。
 - **停止條件事先寫定**：H-P 的開發評估在結果出來前就寫好停止條件；結果 absent 大幅改善，但安全代理不為 0，就依協定停止，沒有事後放寬判準或調整門檻。

@@ -91,6 +91,12 @@ def test_holdout_v1_v2_numbers():
     assert f"ECE ≤ {bound}，但這主要是定義的改變" in README
     assert "下降主要來自 absent confidence 的定義改變" in README
     assert f"drops from {drop} to ≤ {bound}" in README_EN
+    # ... and says which cells each end of the range covers
+    multi_view = (
+        "0.21–0.38 is v1's multi-view methods at\n  budgets ≥ 2; ≤ 0.0083 covers every v2 cell"
+    )
+    assert multi_view in README_EN
+    assert "0.21–0.38 是 v1 多視角方法、budget ≥ 2 的範圍；≤ 0.0083 涵蓋 v2 的每一格" in README
     assert "This drop mainly comes from a changed" in README_EN
     for text in (README, README_EN):
         assert not re.search(r"≤ 0\.008(?!\d)", text)  # rounded down, below the v2 maximum
@@ -426,6 +432,12 @@ def test_sealing_claims_match_the_manifest():
     assert "其他正式 runner（R0a、R0b、detector-v2、v3–v5）只拒絕覆寫自己已有的輸出" in README
     assert "the Nav2 batches (`nav-b0*`, `nav-b2`) only skip jobs" in README_EN
     assert "Nav2 批次（`nav-b0*`、`nav-b2`）只跳過輸出目錄裡已有結果的工作" in README
+    # ... and the B depth-model scripts (decision 028) check nothing before writing
+    for rel in ("depthnoise/planes.py", "depthnoise/compare.py"):
+        src = (ROOT / "activeperception" / rel).read_text()
+        assert "guard_formal_run" not in src and ".exists()" not in src, rel
+    assert "The B depth-model scripts (decision 028) have no such check" in README_EN
+    assert README.count("B 的 depth 模型腳本（decision 028）完全沒有檢查") == 2
 
 
 def test_see_through_guarantee_is_scoped():

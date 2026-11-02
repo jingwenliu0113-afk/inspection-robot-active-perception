@@ -120,7 +120,7 @@ flowchart LR
 | What | Details | Where to look |
 |---|---|---|
 | Pre-registered evaluation | Criteria, statistics and stop conditions are written in a decision log before any formal run; every formal test set is used once and then sealed | [docs/decisions/](docs/decisions/), [docs/EXPERIMENT_RULES.md](docs/EXPERIMENT_RULES.md) |
-| Sealed results | `SEALED.sha256` pins every committed result file and frozen episode set, but of the frozen configs only `frozen.py` and `frozen_v2.py` (v1 / v2; `frozen_v3.py`–`frozen_v5.py` are not pinned). Only the v1 / v2 formal runners refuse a sealed set (`core` test, `holdout`) and accept it only in `--reproduce` mode. The other formal runners (R0a, R0b, detector-v2, v3–v5) only refuse to overwrite their own existing output, and the Nav2 batches (`nav-b0*`, `nav-b2`) only skip jobs that already have a result in their output directory, so all of them can be re-run into another directory | `uv run python -m activeperception.seal verify` |
+| Sealed results | `SEALED.sha256` pins every committed result file and frozen episode set, but of the frozen configs only `frozen.py` and `frozen_v2.py` (v1 / v2; `frozen_v3.py`–`frozen_v5.py` are not pinned). Only the v1 / v2 formal runners refuse a sealed set (`core` test, `holdout`) and accept it only in `--reproduce` mode. The other formal runners (R0a, R0b, detector-v2, v3–v5) only refuse to overwrite their own existing output, and the Nav2 batches (`nav-b0*`, `nav-b2`) only skip jobs that already have a result in their output directory, so all of them can be re-run into another directory. The B depth-model scripts (decision 028) have no such check and overwrite their output files | `uv run python -m activeperception.seal verify` |
 | Information boundary | Decisions read only deployable data; ground truth is used only for scoring, attribution and the Oracle upper bound; candidate views do not depend on the object | [`tests/test_leakage.py`](tests/test_leakage.py) |
 | Reproducibility | Seeded scene generator (specs regenerate bit for bit on macOS arm64, where they were generated; on Linux, libm rounds sin / cos differently and floats agree within 3 ulp, everything else exactly), seeded error draws per (episode, view, level), bit-identical figures, sealed outcomes reproduced with `--reproduce` | [docs/reproduce.md](docs/reproduce.md) |
 | Statistics | Scene-group cluster bootstrap 95% CIs; paired comparisons that report "only A correct / only B correct" | `activeperception/metrics.py` |
@@ -244,7 +244,8 @@ decision-v2 on; under decision-v1 the Random baseline made a few (rate 0.0015 on
 
 - **Safety.** False absent is 0 for every method at every budget (v1 Random: 0.07%). Over 300 object-present
   episodes the 95% upper bound is 3/300 = 1.0%, or 3/150 = 2.0% counting each scene group once.
-- **Calibration.** ECE of definite decisions drops from 0.21–0.38 to ≤ 0.0083. This drop mainly comes from a changed
+- **Calibration.** ECE of definite decisions drops from 0.21–0.38 to ≤ 0.0083 (0.21–0.38 is v1's multi-view methods at
+  budgets ≥ 2; ≤ 0.0083 covers every v2 cell). This drop mainly comes from a changed
   definition of `absent` confidence: v1 scores it as coverage × (1 − c_max), so a correct `absent` with 2 of 8
   sectors covered gets at most 0.25 (decision 010); v2 scores it as the seen-through fraction × (1 − c_max), and
   that fraction is always 1 when v2 answers `absent`.
