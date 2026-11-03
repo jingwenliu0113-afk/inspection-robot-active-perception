@@ -10,8 +10,9 @@
 
 **When an inspection robot does not see its target, is the target absent, or just hidden?**
 This project studies whether actively choosing the next viewpoint, under a fixed budget of views, answers
-`present` / `absent` / `inconclusive` more reliably than a single view or random moves, **without ever calling a
-hidden object absent**.
+`present` / `absent` / `inconclusive` more reliably than a single view or random moves. Under the shared decision
+rule, the rule-based method (Rule-NBV) made **0** false `absent` calls in every formal pipeline evaluation (an
+observed count, not a guarantee; upper bounds under [Detailed results](#detailed-results)).
 
 ## At a glance
 
@@ -22,10 +23,14 @@ hidden object absent**.
   the most unexplained places. The same pipeline runs with teleported cameras (Core) and with a TurtleBot 4 that
   drives there with Nav2 (Advanced B).
 - **Headline results** (pre-registered, each formal test set run once):
-  - At budget 3, Rule-NBV reaches **0.996** accuracy, against **0.907** for Random and **0.202** for Single View.
-    Rule's false-absent rate is **0**.
-  - With real Nav2 driving, Rule beats Random by **+0.079 [0.044, 0.119]** at budget 2. There are **0** false
-    absents and **0** collisions in **960** closed-loop runs.
+  - On the `core` test at budget 3, Rule-NBV v1 reaches **0.996** accuracy, against **0.907** for Random; on the
+    later `holdout`, the same v1 scored 0.968 [0.945, 0.988]. Single View's **0.202** is a structural floor rather
+    than an informative baseline (it stays in the pre-registered comparisons): decision-v1 cannot answer `absent`
+    from one view, and at budget 1, where every method has only the initial view, all four score 0.202.
+    Rule's false-absent rate is **0** (95% upper bound ≈ 1.1%, or ≈ 2.3% with scene groups as the unit).
+  - With Nav2 in Gazebo, Rule beats Random by **+0.079 [0.044, 0.119]** at budget 2. **440** navigations, **0**
+    collisions (960 method runs in total, including Single, which never moves); **0** false absents (95% upper
+    bound 3.75%, or 7.5% with scene groups as the unit).
   - Under simulated stereo-camera depth error and localisation error, the latest version (v5) stays safe in all
     8 conditions and still answers `absent` (absent@5 **0.950** under the realistic D3 depth error with typical
     localisation error).
@@ -38,7 +43,7 @@ hidden object absent**.
 
 ![Nav2 demo](docs/figures/demo_nav2_unobservable.gif)
 
-*Demo: one real Nav2 closed-loop episode on development data (`nav-b1`), the actual output of `./docker/demo.sh`.*
+*Demo: one Nav2 closed-loop episode in Gazebo on development data (`nav-b1`), the actual output of `./docker/demo.sh`.*
 1. At the start the hydrant is hidden behind a pillar, so the answer is `inconclusive`.
 2. Rule-NBV v2 picks the next view. The TurtleBot 4 drives there with Nav2, re-localises against the facility map
    with its depth camera, and captures.
@@ -55,22 +60,23 @@ R0a and A use real photos. B uses real depth recordings. Everything else runs in
 
 | Stage | Formal evaluation data (each run once) | Main result | Read together with |
 |---|---|---|---|
-| **Core v1** | `core` test, 524 episodes | Rule-NBV accuracy at budget 3: 0.996 (Random 0.907, Single 0.202); Rule false absent 0 | "Close to Oracle" did **not** replicate on the new holdout |
-| **Core v2** | `holdout`, 600 episodes | False absent 0 for all four methods; Rule at budget 2: 0.683 → **0.957** | The gain comes mainly from the **absent decision rule**; the new policy adds +0.020 (not significant) |
-| **Advanced B** (Nav2) | `nav-b2`, 160 episodes, 960 Nav2 closed-loop runs | Nav2 vs teleport accuracy within 0.006; Rule − Random +0.079 [0.044, 0.119]; false absent and collisions 0 | Needs pose refinement, a see-through margin and re-localisation at stops; with AMCL poses alone the safety guarantee breaks |
+| **Core v1** | `core` test, 524 episodes | Rule-NBV accuracy at budget 3: 0.996 (Random 0.907; Single 0.202 is the one-view floor, since decision-v1 cannot answer `absent` from one view); Rule false absent 0 (95% upper bound ≈ 1.1%) | On the new holdout the same v1 scored 0.968 [0.945, 0.988] at budget 3, and "close to Oracle" did **not** replicate |
+| **Core v2** | `holdout`, 600 episodes | False absent 0 for all four methods (95% upper bound 1.0%); Rule at budget 2: 0.683 → **0.957** | The gain comes mainly from the **absent decision rule**; the new policy adds +0.020 (not significant) |
+| **Advanced B** (Nav2) | `nav-b2`, 160 episodes; 960 method runs (Single never moves), 440 Nav2 navigations | Nav2 vs teleport accuracy within 0.006; Rule − Random +0.079 [0.044, 0.119]; false absent 0 (95% upper bound 3.75%); 0 collisions in 440 navigations | Needs pose refinement, a see-through margin and re-localisation at stops; with AMCL poses alone the safety guarantee breaks |
 | **R0a** (real photos) | Open Images: 383 photos with hydrants + 600 hard negatives | Clear hydrants detected at ≥ 0.7: 97.9%; complete misses under natural occlusion / truncation: 0 / 379 | False present on hard negatives 9.2% (criterion ≤ 1% **not met**); internet photos, not a robot camera |
 | **R0b** (simulated error) | `r0b`, 160 episodes × 18 depth / pose error settings | Pipeline with pose refinement: false absent 0 and geometric risk 0 in all 9 error settings | With noisy depth `absent` is almost never decidable (0–1 / 80 at budget 5) |
-| **v3** (simulated error) | `v3` + `v3-dx` (look-alike hydrant outside the zone), 160 episodes each | Typical error D1×L1: all safety counts 0; absent@5 0.013 → **1.000**; false present from the outside look-alike 1,014 / 1,263 → **0** | Stress setting D2×L2: 1 / 1,040 views crossed the safety margin (criterion V4 **failed**; false absent still 0) |
+| **v3** (simulated error) | `v3` + `v3-dx` (look-alike hydrant outside the zone), 160 episodes each | Typical error D1×L1: all safety counts 0; absent@5 0.013 → **1.000**; false present from the outside look-alike (Rule, budget 3, D1×L1): 48 of 80 absent episodes → **0** (0 for every method and budget) | Stress setting D2×L2: 1 / 1,040 views crossed the safety margin (criterion V4 **failed**; false absent still 0) |
 | **A** (real photos) | 737 hard negatives + 134 hydrant photos never seen by any detector | Hard-negative fine-tuning: false present 8.4% → **4.7%** (fixed 43 / broke 16, p = 0.0006); recall not worse | ≤ 1% criterion T1 **not met**; complete misses on positives 4 → 10 / 134 |
 | **v4 + D3** (simulated error) | `v4` + `v4-dx`, 160 episodes each; v3 and v4 paired | v4 safe under D1, D2×L2 and D3 error; views beyond their margin D2×L2 101 → **13**, D3×L1 228 → **2** | v4 decides `absent` less often (D3×L1 absent@5 0.713 → 0.637) |
 | **v5** (simulated error) | `v5` + `v5-dx`, 160 episodes each; v4 and v5 paired | All 8 conditions safe; Rule at budget 3: D2×L2 0.719 → **0.956**, D3×L1 0.694 → **0.831** | D3×P0 absent@5 still 0.637; 7 absent episodes became `inconclusive` through a different view path (safe direction) |
 | **B** (real depth) | Public RealSense D435 / D455 plane recordings | Random error within the D2 range (close to D1) | D435 underestimates range by up to 2.48% (the model only assumed overestimation); correlation length 2.6–3× the model |
 
-Every number and gate verdict is listed under [Detailed results](#detailed-results). The decision logs in
-[docs/decisions/](docs/decisions/) (001–037) record every design choice, criterion and statistical method. Logs
-that record results (010, 013, 019, …) say that they were written after the result. A test,
-[`tests/test_readme_claims.py`](tests/test_readme_claims.py), checks the README numbers against the committed result
-files.
+Every number and gate verdict is listed under [Detailed results](#detailed-results). A 0 in this table is an
+observed count, not a guarantee; the rule-of-three bound (about 3/n) and the false-absent bounds are given there.
+The decision logs in [docs/decisions/](docs/decisions/) (001–037) record every design choice, criterion and
+statistical method. Logs that record results (010, 013, 019, …) say that they were written after the result. A
+test, [`tests/test_readme_claims.py`](tests/test_readme_claims.py), checks the README numbers against the committed
+result files.
 
 ## How it works
 
@@ -92,8 +98,9 @@ flowchart LR
 - **One decision rule for every method.**
   - `present`: detector confidence ≥ 0.7 (from v3 on, only for boxes located inside the zone).
   - `absent`: all 64 places where the object could stand have been seen through by some view's depth, and every
-    confidence < 0.02. The place where the object really stands can never be seen through, so a missed detection
-    cannot turn into a false absent.
+    confidence < 0.02. With an exact camera pose and exact depth, the place where the object really stands can never
+    be seen through, so a missed detection cannot turn into a false absent. Pose or depth error can break this (B0
+    and R0b below); pose refinement and the see-through margin (decision 016, v3–v5) are there to prevent it.
   - Everything else: `inconclusive`. The four methods differ only in which views they choose.
 - **Render-then-replay (Core).** Each viewpoint is rendered once in Gazebo, and all methods replay the same
   observations, so the differences between methods come only from view choice. The ROS 2 inspector node gives the
@@ -113,7 +120,7 @@ flowchart LR
 | What | Details | Where to look |
 |---|---|---|
 | Pre-registered evaluation | Criteria, statistics and stop conditions are written in a decision log before any formal run; every formal test set is used once and then sealed | [docs/decisions/](docs/decisions/), [docs/EXPERIMENT_RULES.md](docs/EXPERIMENT_RULES.md) |
-| Sealed results | `SEALED.sha256` pins every committed result, frozen episode set and frozen config; formal runners refuse to re-run and accept sealed data only in `--reproduce` mode | `uv run python -m activeperception.seal verify` |
+| Sealed results | `SEALED.sha256` pins every committed result file and frozen episode set, but of the frozen configs only `frozen.py` and `frozen_v2.py` (v1 / v2; `frozen_v3.py`–`frozen_v5.py` are not pinned). Only the v1 / v2 formal runners refuse a sealed set (`core` test, `holdout`) and accept it only in `--reproduce` mode. The other formal runners (R0a, R0b, detector-v2, v3–v5) only refuse to overwrite their own existing output, and the Nav2 batches (`nav-b0*`, `nav-b2`) only skip jobs that already have a result in their output directory, so all of them can be re-run into another directory. The B depth-model scripts (decision 028) have no such check and overwrite their output files | `uv run python -m activeperception.seal verify` |
 | Information boundary | Decisions read only deployable data; ground truth is used only for scoring, attribution and the Oracle upper bound; candidate views do not depend on the object | [`tests/test_leakage.py`](tests/test_leakage.py) |
 | Reproducibility | Seeded scene generator (specs regenerate bit for bit on macOS arm64, where they were generated; on Linux, libm rounds sin / cos differently and floats agree within 3 ulp, everything else exactly), seeded error draws per (episode, view, level), bit-identical figures, sealed outcomes reproduced with `--reproduce` | [docs/reproduce.md](docs/reproduce.md) |
 | Statistics | Scene-group cluster bootstrap 95% CIs; paired comparisons that report "only A correct / only B correct" | `activeperception/metrics.py` |
@@ -128,7 +135,7 @@ No Docker or GPU is needed for the tests, the sealed-result check or the figures
 ```bash
 uv sync                                             # Python 3.12, numpy, pytest, ruff, matplotlib
 uv run pytest                                       # 1 test is skipped without local renders (see below)
-uv run python -m activeperception.seal verify       # sealed results and frozen configs are unchanged
+uv run python -m activeperception.seal verify       # sealed results, episode sets and v1 / v2 frozen configs unchanged
 uv run python tools/make_figures.py                 # redraws the figures from committed results
 ```
 
@@ -154,6 +161,16 @@ All formal evaluations follow the same order: write the decision log (protocol, 
 once on data that took no part in development. `holdout` and `nav-b2` were generated after their protocols were
 written. 95% CIs are scene-group cluster bootstraps (1000 resamples); Random is averaged over several run seeds.
 
+**Reading a 0.** A count of 0 (false absent, collisions, safety counts) is what was observed, not a guarantee. With 0
+events in n independent trials, the one-sided 95% upper bound on the rate is about 3/n (rule of three). For false
+absents, n is the number of object-present episodes: 3/262 ≈ 1.1% on the `core` test, 3/300 = 1.0% on `holdout`, and
+3/80 = 3.75% on `nav-b2` and on each simulated-error condition (`r0b`, `v3`–`v5`: 160 episodes, 80 with the
+object). The two object-present episodes of a scene group share viewpoints and the base obstacle layout (decision
+002), so they are correlated; counting each scene group once, the bounds are 3/131 ≈ 2.3%, 3/150 = 2.0% and
+3/40 = 7.5%. Rule-NBV had 0 false absents in every formal pipeline evaluation, and so did every method from
+decision-v2 on; under decision-v1 the Random baseline made a few (rate 0.0015 on the `core` test, 0.00067 on
+`holdout`).
+
 ### Core v1 (`core` test: 131 scene groups, 524 episodes; decision 010)
 
 | Budget | Single View | Random NBV | **Rule-based NBV v1** | Oracle NBV (upper bound) |
@@ -173,8 +190,11 @@ written. 95% CIs are scene-group cluster bootstraps (1000 resamples); Random is 
 ![accuracy vs viewpoint budget](docs/figures/accuracy_vs_budget.png)
 
 - **Single View never gives a wrong definite answer, but says "don't know" 80% of the time.** The shared rule never
-  treats "not seen" as `absent`, so one view answers `inconclusive` on every unobservable and absent episode
-  (false absent 0).
+  treats "not seen" as `absent`: decision-v1 needs valid views in ≥ 2 of 8 sectors, and one view covers at most one,
+  so one view can never answer `absent`. Single View answers `inconclusive` on all 262 absent episodes and on 156 of
+  the 157 unobservable ones (false absent 0). At budget 1 every method has only the initial view, so all four score
+  0.202 there. This is a structural floor rather than an informative baseline; it stays in the pre-registered
+  Rule − Single comparison above.
 - **Moving the camera turns `inconclusive` into correct answers.** Rule-NBV builds an obstacle height map from the
   depth of visited views and predicts how much of the zone each candidate would see. At budget 3 it reaches 0.996
   (Random 0.907) with 2.09 views on average.
@@ -182,7 +202,8 @@ written. 95% CIs are scene-group cluster bootstraps (1000 resamples); Random is 
   higher. This did **not** replicate on the new holdout, where the gap is 0.028–0.032 (see v2 and decision 013;
   the original record is unchanged).
 - False absent rate at budget 2 / 3 / 5: Rule 0 / 0 / 0, Random 0.0015 (one scene where two random views saw the
-  zone but missed the hydrant behind a pillar). False present: 0 for every method.
+  zone but missed the hydrant behind a pillar). False present: 0 for every method. Rule's 0 is over 262
+  object-present episodes: 95% upper bound 3/262 ≈ 1.1%, or 3/131 ≈ 2.3% counting each scene group once.
 - Of Rule's 156 misses at budgets 2 / 3, 152 are a structural limit of the v1 absent rule at budget 2 (the Oracle
   fails there too). The 4 true policy failures share one scene: a second pillar hidden behind the first, which the
   height map treated as empty space.
@@ -221,8 +242,13 @@ written. 95% CIs are scene-group cluster bootstraps (1000 resamples); Random is 
 | v2 Random / Single | 0.868 / 0.392 | 0.975 / 0.392 | 0.998 / 0.392 |
 | v2 Oracle | 1.000 | 1.000 | 1.000 |
 
-- **Safety.** False absent is 0 for every method at every budget (v1 Random: 0.07%).
-- **Calibration.** ECE of definite decisions drops from 0.21–0.38 to ≤ 0.008.
+- **Safety.** False absent is 0 for every method at every budget (v1 Random: 0.07%). Over 300 object-present
+  episodes the 95% upper bound is 3/300 = 1.0%, or 3/150 = 2.0% counting each scene group once.
+- **Calibration.** ECE of definite decisions drops from 0.21–0.38 to ≤ 0.0083 (0.21–0.38 is v1's multi-view methods at
+  budgets ≥ 2; ≤ 0.0083 covers every v2 cell). This drop mainly comes from a changed
+  definition of `absent` confidence: v1 scores it as coverage × (1 − c_max), so a correct `absent` with 2 of 8
+  sectors covered gets at most 0.25 (decision 010); v2 scores it as the seen-through fraction × (1 − c_max), and
+  that fraction is always 1 when v2 answers `absent`.
 - **Where the gain comes from (ablation, budget 2).**
   - The decision rule adds +0.253 [0.215, 0.293].
   - The new policy over the v1 policy adds only +0.020 [−0.020, 0.058], which is **not significant**. The gain is
@@ -258,7 +284,7 @@ The failed gates stay reported:
 - **Root cause, confirmed on development data.** When the first view is blocked, 75–81% of rule-nbv-v2's second
   choices are score ties, broken by candidate id.
 
-### Advanced B: active perception with real navigation (decisions 015–019)
+### Advanced B: active perception with Nav2 navigation in Gazebo (decisions 015–019)
 
 - **Setup.**
   - Teleporting is replaced by **Nav2 navigation**: a TurtleBot 4 with a 1.1 m mast camera (same intrinsics as
@@ -272,7 +298,7 @@ The failed gates stay reported:
 
 ![teleport vs Nav2](docs/figures/nav_teleport_vs_nav2.png)
 
-| `nav-b2` (160 episodes, 960 closed-loop runs) | Budget 2 | Budget 3 |
+| `nav-b2` (160 episodes; 960 method runs, 440 navigations) | Budget 2 | Budget 3 |
 |---|---|---|
 | Rule-NBV v2: teleport / Nav2 | 0.988 / **0.981** | 1.000 / **1.000** |
 | Random (3 seeds): teleport / Nav2 | 0.908 / 0.902 | 0.981 / 0.983 |
@@ -282,7 +308,8 @@ The failed gates stay reported:
 | Rule − Single (Nav2) | +0.456 [0.306, 0.613] | +0.475 [0.325, 0.650] |
 
 - **Q1 safety.** Under Nav2, false absent, false present and "object present but everything counted as seen
-  through" are 0 for every method and budget.
+  through" are 0 for every method and budget. With 80 object-present episodes, the 95% upper bound on the
+  false-absent rate is 3/80 = 3.75%, or 3/40 = 7.5% counting each scene group once.
 - **Q2 navigation.** All four methods are non-inferior to teleport (lowest CI bound −0.019; pre-registered margin
   −0.05).
 - **Q3 active perception.** Rule still beats Single and Random significantly under Nav2.
@@ -355,7 +382,7 @@ RealSense D435 datasheets and from the AMCL error measured in `nav-b0`.
 |---|---|---|
 | V1 safety under typical error D1×L1 | All 0 | **pass** |
 | V2 `absent` decidable under D1×L1: Rule budget 5 ≥ 0.90 | 80 / 80 = 1.000 (v2: 0.013) | **pass** |
-| V3 look-alike hydrant outside the zone: as V1 | All 0 (v2 false present 1,014 / 1,263) | **pass** |
+| V3 look-alike hydrant outside the zone: as V1 | All 0 (v2 false present, counts summed over 4 methods × budgets 1–5 with Random over 3 seeds: 1,014 in D0×P0, 1,263 in D1×L1; Rule at budget 3 under D1×L1: 48) | **pass** |
 | V4 stress D2×L2: as V1 | Places under the object seen through: 1 / 1,040 (false absent still 0) | **fail** |
 | V5 localiser over-confident by 2×: as V1 | All 0 | pass |
 

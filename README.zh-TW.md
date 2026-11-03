@@ -10,17 +10,20 @@
 
 **巡檢機器人「沒看到」目標，是目標不存在，還是只是被擋住了？**
 本專案研究：在固定的觀測次數（viewpoint budget）內，主動選擇下一個視角，能不能比單一視角或隨機移動更可靠地判斷目標是
-`present`、`absent` 還是 `inconclusive`，而且**不把漏看當成不存在**。
+`present`、`absent` 還是 `inconclusive`。在共用的判定規則下，規則式方法（Rule-NBV）在所有完整管線的正式評測中，把有目標判成 `absent` 的次數都是 **0**（這是觀察到的次數，不是保證；上界見[結果](#結果)）。
 
 ## 60 秒看懂
 
 - **問題**：消防栓可能站在 inspection zone 裡，也可能被柱子擋住。只看一個視角時，「被擋住」和「不存在」看起來一樣；
   把被擋住的消防栓回報成 absent，就是錯誤的「一切正常」。
 - **方法**：所有方法共用一條保守的判定規則——只有 depth 把物件可能站立的每一個位置都**看穿**時才回答 `absent`。
-  Rule-based NBV 選下一個能看穿最多未確認位置的視角。同一套管線分別用 teleport 相機（Core）與 TurtleBot 4 + Nav2 實際導航（Advanced B）執行。
+  Rule-based NBV 選下一個能看穿最多未確認位置的視角。同一套管線分別用 teleport 相機（Core）與在 Gazebo 中以 Nav2 導航的 TurtleBot 4（Advanced B）執行。
 - **主要成果**（事先登錄判準，每個正式測試集只跑一次）：
-  - budget 3 時 Rule-NBV accuracy **0.996**，Random **0.907**、Single View **0.202**；Rule 的 false absent 為 **0**。
-  - 真正用 Nav2 導航時，budget 2 的 Rule − Random 仍有 **+0.079 [0.044, 0.119]**；960 次閉迴路 false absent 與碰撞都是 **0**。
+  - `core` test、budget 3 時 Rule-NBV v1 accuracy **0.996**，Random **0.907**；同一個 v1 在之後的 holdout 上是 0.968 [0.945, 0.988]。
+    Single View 的 **0.202** 是單一視角的結構性下限，不是有參考價值的對照（仍保留在事先登錄的比較中）：decision-v1 一個視角判不出 absent，而 budget 1 時每個方法都只有初始視角，所以四個方法都是 0.202。
+    Rule 的 false absent 為 **0**（95% 上界約 1.1%；以 scene group 為單位約 2.3%）。
+  - 在 Gazebo 中用 Nav2 導航時，budget 2 的 Rule − Random 仍有 **+0.079 [0.044, 0.119]**；440 次導航碰撞 **0**（共 960 次方法執行，包括從不移動的 Single）；
+    false absent **0**（95% 上界 3.75%；以 scene group 為單位 7.5%）。
   - 在模擬的立體相機 depth 誤差與定位誤差下，最新的 v5 在 8 個條件全部安全，仍判得出 absent（D3 depth 誤差 ＋ 典型定位誤差下 absent@5 **0.950**）。
 - **驗證範圍**：
   - **模擬**：完整管線的所有結果都來自 ROS 2 Jazzy + Gazebo Harmonic。
@@ -43,18 +46,18 @@
 
 | 階段 | 正式評估資料（各只跑一次） | 主要結果 | 需要一起讀的限制 |
 |---|---|---|---|
-| **Core v1** | `core` test，524 集 | Rule-NBV 在 budget 3 的 accuracy 0.996，Random 0.907、Single 0.202；Rule 的 false absent 為 0 | 「接近 Oracle」在新的 holdout **沒有重現** |
-| **Core v2** | `holdout`，600 集 | 四個方法的 false absent 全部是 0；Rule 在 budget 2 從 0.683 → **0.957** | 改善主要來自 **absent 判定規則**；新策略相對 v1 策略 +0.020，不顯著 |
-| **Advanced B** | `nav-b2`，160 集、960 次 Nav2 閉迴路 | Nav2 與 teleport 的 accuracy 差 ≤ 0.006；Rule − Random +0.079 [0.044, 0.119]；false absent / 碰撞皆 0 | 需要「位姿精修 + 看穿餘裕 + 停點重定位」；只用 AMCL 位姿時安全邊界會失效 |
+| **Core v1** | `core` test，524 集 | Rule-NBV 在 budget 3 的 accuracy 0.996，Random 0.907（Single 0.202 是單一視角的下限：decision-v1 只有一個視角時判不出 absent）；Rule 的 false absent 為 0（95% 上界約 1.1%） | 同一個 v1 在新的 holdout、budget 3 為 0.968 [0.945, 0.988]，「接近 Oracle」也**沒有重現** |
+| **Core v2** | `holdout`，600 集 | 四個方法的 false absent 全部是 0（95% 上界 1.0%）；Rule 在 budget 2 從 0.683 → **0.957** | 改善主要來自 **absent 判定規則**；新策略相對 v1 策略 +0.020，不顯著 |
+| **Advanced B** | `nav-b2`，160 集；共 960 次方法執行（Single 從不移動）、440 次 Nav2 導航 | Nav2 與 teleport 的 accuracy 差 ≤ 0.006；Rule − Random +0.079 [0.044, 0.119]；false absent 0（95% 上界 3.75%）；440 次導航碰撞 0 | 需要「位姿精修 + 看穿餘裕 + 停點重定位」；只用 AMCL 位姿時安全邊界會失效 |
 | **R0a**（真實照片） | Open Images，383 張含消防栓 ＋ 600 張偏難負樣本 | clear 消防栓 localized recall@0.7 97.9%；自然遮擋 / 截斷下完全漏看 0 / 379 | 偏難負樣本 false present 9.2%（判準 ≤ 1% **未通過**）；網路照片不是機器人相機 |
 | **R0b**（模擬誤差） | `r0b`，160 集 × 18 種 depth / 位姿誤差組合 | v2 + decision 016 在全部 9 種誤差組合 false absent 0、geometric risk 0 | depth 有雜訊時 absent 幾乎判不出（budget 5 下 0–1 / 80）；精修後位姿誤差 p95 9–14 cm，安全主要來自「不判 absent」 |
-| **v3**（模擬誤差） | `v3` ＋ `v3-dx`（zone 外有相似消防栓），各 160 集 | 典型誤差 D1×L1：FA / FP / GR / 佔用看穿全部 0；Rule absent@5 0.013 → **1.000**；zone 外消防栓的 false present 1,014 / 1,263 → **0** | 壓力條件 D2×L2 有 1 / 1,040 個視角越過安全餘量（V4 **未通過**，FA 仍為 0）；乾淨條件 budget 2 少 0.019（不顯著） |
+| **v3**（模擬誤差） | `v3` ＋ `v3-dx`（zone 外有相似消防栓），各 160 集 | 典型誤差 D1×L1：FA / FP / GR / 佔用看穿全部 0；Rule absent@5 0.013 → **1.000**；zone 外消防栓造成的 false present（Rule、budget 3、D1×L1）：80 集 absent 中 48 集 → **0**（所有方法、所有 budget 都是 0） | 壓力條件 D2×L2 有 1 / 1,040 個視角越過安全餘量（V4 **未通過**，FA 仍為 0）；乾淨條件 budget 2 少 0.019（不顯著） |
 | **A**（真實照片） | 737 張偏難負樣本 ＋ 134 張含消防栓（v3 保留、從未跑過 detector） | 困難負樣本微調：偏難負樣本 false present 8.4% → **4.7%**（修好 43 / 弄壞 16，p = 0.0006）；召回不退步；模擬中 v3 管線安全 | ≤ 1% 的判準 T1 **未通過**；正樣本完全漏看 4 → 10 / 134 |
 | **v4 ＋ D3**（模擬誤差） | `v4` ＋ `v4-dx`，各 160 集；v3 與 v4 成對 | v4 在 D1 / D2×L2 / D3 誤差下全部安全；超出餘裕的視角 D2×L2 101 → **13**、D3×L1 228 → **2**；v3 在 D3 下也安全 | v3 在 D2×L2 再次有 1 / 1,040 個視角被看穿；v4 的 absent 較難判（D3×L1 absent@5 0.713 → 0.637） |
 | **v5**（模擬誤差） | `v5` ＋ `v5-dx`，各 160 集；v4 與 v5 成對 | 8 個條件全部安全；Rule budget 3：D2×L2 0.719 → **0.956**、D3×L1 0.694 → **0.831**；無缺值的 D0×P0 與 v4 逐項相同 | 只改看穿判定：D3×P0 absent@5 仍只有 0.637；7 集 absent 因選視角路徑改變而變成 inconclusive（仍是安全方向） |
 | **B**（真實 depth） | RealSense D435 / D455 平面資料（公開資料集） | 隨機誤差在 D2 範圍內（接近 D1）；量化可忽略 | D435 低估距離最多 2.48%（模型只假設高估）；相關長度是模型的 2.6–3 倍 |
 
-詳細數字、CI 與 Gate 判定在下方[結果](#結果)。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–037）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
+詳細數字、CI 與 Gate 判定在下方[結果](#結果)；表中的 0 是觀察到的次數，不是保證，上界的算法（約 3/n）與 false absent 的上界列在那裡。所有決策與判準見 [docs/decisions/](docs/decisions/)（001–037）：會影響結論的設計、判準與統計方法都在看結果前寫成；記錄結果的 decision（010、013、019 等）都標明是看過結果後寫的。
 
 ## 驗證範圍：模擬已驗證 / 實機未驗證
 
@@ -92,7 +95,7 @@
   - `absent`：≥ 2 個方位扇區（共 8 個）有「zone 至少 30% 未被擋」的視角，且所有 confidence < 0.05。
 - **`decision-v2`**：
   - `absent`：zone 內 64 個「物件可能站立的位置」都被某個視角的 depth **看穿**，且所有 confidence < 0.02。
-  - 物件真正站的位置不可能被看穿，所以即使 detector 漏看，也不會 false absent。
+  - 在相機位姿與 depth 都精確時，物件真正站的位置不可能被看穿，所以即使 detector 漏看，也不會 false absent。位姿或 depth 誤差會破壞這一點（見下方 B0、R0b），位姿精修與看穿餘裕（decision 016、v3–v5）就是為了防止這種情況。
 - 其餘一律 `inconclusive`。
 
 ## 系統架構
@@ -123,11 +126,11 @@ flowchart LR
 
 | 功能 | 內容 | 怎麼看 |
 |---|---|---|
-| Nav2 閉迴路 Demo | TurtleBot 4 ＋ Nav2 實際開到 Rule-NBV 選的視角，到點後用 depth 對設施地圖重定位，再判定；動畫工具用可部署的資料重建每一步的判定輸入，與執行紀錄不一致就失敗 | `./docker/demo.sh`（[docs/reproduce.md](docs/reproduce.md) §B） |
+| Nav2 閉迴路 Demo | TurtleBot 4 ＋ Nav2 在 Gazebo 中開到 Rule-NBV 選的視角，到點後用 depth 對設施地圖重定位，再判定；動畫工具用可部署的資料重建每一步的判定輸入，與執行紀錄不一致就失敗 | `./docker/demo.sh`（[docs/reproduce.md](docs/reproduce.md) §B） |
 | render-then-replay | 每個視角在 Gazebo 只 render 一次，四個方法 replay 同一份觀測；ROS 2 inspector node 的線上執行與 replay 完全一致 | [docs/architecture.md](docs/architecture.md) §2 |
 | 資訊邊界 | 判定只讀可部署的資料；GT 只用於評分、歸因與上界方法（Oracle）；候選視角與物件無關 | `tests/test_leakage.py` |
-| 預先登錄的正式 runner | 每個版本的正式 runner 只接受自己的新 namespace，結果已存在就拒絕重跑；開發 runner 拒絕正式資料 | `activeperception/v{3,4,5}/formal.py` |
-| 封存 | `SEALED.sha256` 釘住所有已 commit 的結果、凍結的 episode sets 與凍結設定；封存的 test / holdout 只能 `--reproduce` 逐位元比對 | `uv run python -m activeperception.seal verify` |
+| 預先登錄的正式 runner | 每個版本的正式 runner 只接受自己的新 namespace；v3–v5 只檢查 `--out` 目錄裡是否已有 `report.json`，換一個輸出目錄就能重跑；開發 runner 拒絕正式資料 | `activeperception/v{3,4,5}/formal.py` |
+| 封存 | `SEALED.sha256` 釘住所有已 commit 的結果檔與凍結的 episode sets；凍結設定只釘了 v1 / v2 的 `frozen.py`、`frozen_v2.py`（`frozen_v3.py`–`frozen_v5.py` 沒有釘住）。只有 v1 / v2 的正式 runner 會拒絕重跑封存的 test / holdout，只能 `--reproduce` 逐位元比對；其他正式 runner（R0a、R0b、detector-v2、v3–v5）只拒絕覆寫自己已有的輸出，Nav2 批次（`nav-b0*`、`nav-b2`）只跳過輸出目錄裡已有結果的工作，換一個輸出目錄都能重跑。B 的 depth 模型腳本（decision 028）完全沒有檢查，會直接覆寫輸出檔 | `uv run python -m activeperception.seal verify` |
 | 可重現的誤差模型 | depth / 位姿誤差以（episode、視角、等級）固定 seed 抽樣；同一管線重跑逐項相同（例如 H-P 開發評估中 B0 與既有 v5 開發結果 9 組條件逐項相同） | `activeperception/r0b_noise.py`、`depthnoise/d3.py` |
 | 統計 | scene group cluster bootstrap 的 95% CI、成對比較（只有 A 對 / 只有 B 對的集數） | `activeperception/metrics.py`、`nav/b1_analysis.py` |
 | 共用機器的資源管理 | 重工作前的預檢（Mac heavy lock、CPU、RAM、Apple GPU），長時間工作每個 job 開始前等鎖；GPU 工作用 `flock` 取得共享 GPU lock | `uv run python -m activeperception.preflight`（[MACHINE_POLICY.md](MACHINE_POLICY.md)） |
@@ -137,6 +140,11 @@ flowchart LR
 
 所有正式評估都是：先寫好 decision log（協定、判準、統計方法），再在未參與開發的資料上只跑一次。`holdout` 與 `nav-b2` 是在協定寫好之後才產生的。
 95% CI 為以 scene group 為 cluster 的 bootstrap（1000 次）；Random 為多個 run seeds 的平均。
+
+**怎麼讀 0**：表中的 0（false absent、碰撞、安全計數）是觀察到的次數，不是保證。n 次獨立試驗中事件為 0 時，比例的單尾 95% 上界約為 3/n（rule of three）。false absent 的 n 是有目標的集數：
+`core` test 3/262 ≈ 1.1%、`holdout` 3/300 = 1.0%、`nav-b2` 與每個模擬誤差條件（`r0b`、`v3`–`v5`：160 集中有目標的 80 集）3/80 = 3.75%。
+同一個 scene group 裡有目標的兩集共用視角與遮擋物基礎佈局（decision 002），彼此相關；每個 scene group 只算一次時，上界為 3/131 ≈ 2.3%、3/150 = 2.0%、3/40 = 7.5%。
+Rule-NBV 在所有完整管線的正式評測中 false absent 都是 0，decision-v2 之後的所有方法也都是 0；decision-v1 下的 Random baseline 則有少數幾次（`core` test 比例 0.0015、`holdout` 0.00067）。
 
 ### Core v1（`core` test：131 scene groups、524 episodes；decision 010）
 
@@ -157,8 +165,9 @@ flowchart LR
 ![accuracy vs viewpoint budget](docs/figures/accuracy_vs_budget.png)
 
 - **Single View 從不給出錯誤的肯定答案，但 80% 的時候只能說「不知道」**：
-  - 共用的判定規則不會把「沒看到」當成 `absent`。
-  - 所以單一視角在 unobservable 與 absent episodes 一律 `inconclusive`（false-absent = 0）。
+  - 共用的判定規則不會把「沒看到」當成 `absent`：decision-v1 要 ≥ 2 個有效扇區（共 8 個），一個視角最多只占 1 個，所以單一視角永遠判不出 `absent`。
+  - 所以單一視角在 262 集 absent 全部、157 集 unobservable 中的 156 集都是 `inconclusive`（false-absent = 0）。
+  - budget 1 時每個方法都只有初始視角，所以四個方法都是 0.202。這是結構性下限，不是有參考價值的對照；它仍保留在上方事先登錄的 Rule − Single 比較中。
 - **主動換視角把 inconclusive 變成正確答案**：
   - Rule-based NBV 用已走訪視角的 depth 建出 zone 外障礙物高度圖，預測每個候選視角能看到多少 inspection zone。
   - budget 3 時 accuracy 0.996（Random 0.907），平均只用 2.09 個視角。
@@ -171,6 +180,7 @@ flowchart LR
 | false-present rate | 0 | 0 | 0 | 0 |
 
 Random 的 false absent 只發生在 `core-g0103-v0`（seeds 3、4）：隨機挑到兩個「zone 大致看得到、但消防栓剛好被柱子擋住」的視角。
+Rule 的 0 是在有目標的 262 集上觀察到的：95% 上界 3/262 ≈ 1.1%；每個 scene group 只算一次時為 3/131 ≈ 2.3%。
 
 | GT 狀態（n），budget 2 / 3 | Single | Random | Rule | Oracle |
 |---|---|---|---|---|
@@ -211,7 +221,10 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 | v2 Oracle | 1.000 | 1.000 | 1.000 |
 
 - **安全**：v2 所有方法、所有 budget 的 false-absent 都是 0（v1 Random 0.07%）；「物件沒被看到卻滿足 absent 幾何條件」的情況為 0。
-- **校準**：definitive decision 的 ECE 從 0.21–0.38 降到 ≤ 0.008（absent 的 confidence 改為看穿比例）。
+  有目標的 300 集上，95% 上界為 3/300 = 1.0%；每個 scene group 只算一次時為 3/150 = 2.0%。
+- **校準**：definitive decision 的 ECE 從 0.21–0.38 降到 ≤ 0.0083（0.21–0.38 是 v1 多視角方法、budget ≥ 2 的範圍；≤ 0.0083 涵蓋 v2 的每一格）。下降主要來自 absent confidence 的定義改變：
+  v1 是 coverage × (1 − c_max)，覆蓋 8 個扇區中的 2 個時，正確的 absent 最多也只有 0.25（decision 010）；
+  v2 改為看穿比例 × (1 − c_max)，而 v2 判 absent 時看穿比例一定是 1。
 - **改善來自哪裡（消融）**：判定規則 +0.253 [0.215, 0.293]（budget 2）；新策略相對 v1 策略只多 +0.020 [−0.020, 0.058]，**不顯著**。
 - **v1 結論的重現**：holdout 上 v1 Rule 仍穩定勝過 Random（+0.075 / +0.070），但 Oracle − Rule = 0.028 / 0.032，**原 test 的「接近 Oracle」沒有重現**。
 - **v2 與上限的差距**：budget 2 時 Oracle 高 0.043 [0.020, 0.070]，可歸因於視角選擇；budget 3 只差 0.002。
@@ -243,16 +256,16 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 - **原因**（開發資料上確認）：初始視角被擋時，rule-nbv-v2 有 75–81% 的第二視角決策是分數平手，由候選編號決定。
   這是凍結 v2 的已知限制，不在 Core 修正；修正屬於 v3，需要新的資料。
 
-### Advanced B：真正導航下的 active perception（decision 015–019）
+### Advanced B：在 Gazebo 中以 Nav2 導航的 active perception（decision 015–019）
 
-- **設定**：把 teleport 換成 **Nav2 實際導航**。TurtleBot 4 加 1.1 m 桅桿相機（內參同 Core），用 AMCL 定位、Nav2 規劃與控制。
+- **設定**：把 teleport 換成在 Gazebo 中的 **Nav2 導航**。TurtleBot 4 加 1.1 m 桅桿相機（內參同 Core），用 AMCL 定位、Nav2 規劃與控制。
   判定規則、視角策略、detector 都用 Core 凍結的 v2；真實位姿與標籤只用於評分。
 - **到點後的處理**：以機載 depth 對設施地圖精修位姿、回饋 AMCL 重定位；判定時對剩餘位姿誤差取保守值。
 - **正式評估**：新的 `nav-b2`（160 集：absent 80、unobservable 38、visible 42），在 decision 018 預先登錄後只跑一次，同一批 episodes 另做 teleport 對照。
 
 ![teleport vs Nav2](docs/figures/nav_teleport_vs_nav2.png)
 
-| `nav-b2`（160 集、960 次閉迴路） | budget 2 | budget 3 |
+| `nav-b2`（160 集；960 次方法執行、440 次導航） | budget 2 | budget 3 |
 |---|---|---|
 | Rule-NBV v2：teleport / Nav2 | 0.988 / **0.981** | 1.000 / **1.000** |
 | Random（3 seeds）：teleport / Nav2 | 0.908 / 0.902 | 0.981 / 0.983 |
@@ -262,6 +275,7 @@ budget 2 的 absent 上限是 0.420：若初始視角的 zone 被擋，兩個視
 | Rule − Single（Nav2） | +0.456 [0.306, 0.613] | +0.475 [0.325, 0.650] |
 
 - **Q1 安全**：Nav2 下所有方法、所有 budget 的 false absent、false present、「物件存在卻算成全部看穿」都是 0。
+  有目標的只有 80 集：false absent 比例的 95% 上界為 3/80 = 3.75%；每個 scene group 只算一次時為 3/40 = 7.5%。
 - **Q2 導航的影響**：四個方法都不劣於 teleport（最低 CI 下界 −0.019，預先登錄的邊界 −0.05）。
 - **Q3 主動視角**：在 Nav2 下仍顯著勝過 Single 與 Random。
 - **Q4 成本**：Rule 每集比 Random 少走 0.46 m [0.14, 0.80]、少 2.6 s（模擬時間）。
@@ -364,7 +378,7 @@ R0 找到的三個弱點，以獨立的新版本處理。開發只用新的開�
 |---|---|---|
 | V1 典型誤差 D1×L1 的安全：FA、FP、GR、全視角、佔用看穿都是 0 | 全部 0 | **通過** |
 | V2 D1×L1 的 absent 判得出：Rule budget 5 ≥ 0.90 | 80 / 80 = 1.000（v2：0.013） | **通過** |
-| V3 zone 外有相似消防栓（D0×P0、D1×L1）：同 V1 | 全部 0（v2 false present 1,014 / 1,263） | **通過** |
+| V3 zone 外有相似消防栓（D0×P0、D1×L1）：同 V1 | 全部 0（v2 的 false present 是 4 個方法 × budget 1–5 的加總次數，Random 含 3 個 seeds：D0×P0 1,014 次、D1×L1 1,263 次；只看 D1×L1 的 Rule budget 3 是 48 次） | **通過** |
 | V4 壓力條件 D2×L2：同 V1 | 佔用看穿 1 / 1,040（FA、GR、全視角仍 0） | **未通過** |
 | V5 定位器過度自信 2 倍：同 V1 | 全部 0 | 通過 |
 
@@ -480,13 +494,13 @@ v4 以較大的餘裕換安全，absent 較難判（decision 032）。v5 原本�
 
 本專案暫時正式結案（2026-10-17）：不再擴張研究；Future Work 保留，等之後決定是否重新啟動。各階段：
 
-- Core（v1、v2）已結案；Advanced B（Nav2 實際導航）已完成。Advanced C（RL）由使用者決定不做。
+- Core（v1、v2）已結案；Advanced B（Gazebo 中的 Nav2 導航）已完成。Advanced C（RL）由使用者決定不做。
 - R0 真實環境適應研究（不是實機驗證）已完成：
   - **R0a 真實照片**：清楚可見的消防栓 97.9% 認得出來，但外觀相近的物體有 9.2% 被誤判（判準未通過）。
   - **R0b 模擬的 depth / 定位誤差**：v2 + decision 016 沒有 false absent（判準通過），但 depth 一有雜訊就幾乎判不出 absent。
 - **v3 可靠性改善**（decision 024–026，模擬誤差）：
   - 典型誤差下保持安全，absent 重新判得出（budget 5：0.013 → 1.000）；
-  - zone 外的相似消防栓不再造成誤報（v2 有 1,014 / 1,263 次）；
+  - zone 外的相似消防栓不再造成誤報（v2 在 D0×P0 / D1×L1 各有 1,014 / 1,263 次，是 4 個方法 × budget 1–5 的加總次數）；
   - 壓力條件（D2×L2）有 1 個視角越過安全餘量（判準 V4 **未通過**）。
 - **B depth 誤差模型檢查**（decision 028，真實 RealSense 平面資料）：
   - 隨機誤差在模型範圍內；
@@ -546,7 +560,8 @@ v4 以較大的餘裕換安全，absent 較難判（decision 032）。v5 原本�
 
 - **先寫判準、再看結果**：37 份 decision log 記錄每個會影響結論的決定，標明是否在看過結果後才寫。調參只用 train，val 只檢查。
 - **正式評估只跑一次**：`core` test、`holdout`、`nav-b2`、R0a 正式集、`r0b`、`v3` / `v3-dx`、detector-v2 的 test 與 `detv2-sim`、`v4` / `v4-dx`、`v5` / `v5-dx` 都用過一次後封存。
-  `SEALED.sha256` 釘住所有已 commit 的結果、凍結的 episode sets 與凍結設定，`tests/test_seal.py` 檢查；正式 runner 對封存資料只允許 `--reproduce`。
+  `SEALED.sha256` 釘住所有已 commit 的結果檔、凍結的 episode sets，以及 v1 / v2 的凍結設定（`frozen.py`、`frozen_v2.py`），`tests/test_seal.py` 檢查；`frozen_v3.py`–`frozen_v5.py` 沒有釘住。
+  只有 v1 / v2 的正式 runner 對封存的 test / holdout 只允許 `--reproduce`；其他正式 runner（R0a、R0b、detector-v2、v3–v5）只拒絕覆寫自己已有的輸出，Nav2 批次（`nav-b0*`、`nav-b2`）只跳過輸出目錄裡已有結果的工作，換一個輸出目錄都能重跑；B 的 depth 模型腳本（decision 028）完全沒有檢查，會直接覆寫輸出檔。
 - **v2 是看過 v1 test 後才提出的**：所以它的所有宣稱只來自新的 holdout，原 test 不用於 v2。
 - **未通過的 Gate 照實寫**：v1 的「接近 Oracle」沒有重現，v2 在 budget 2 未接近 Oracle，B0 兩次未通過，H-P 未通過逐視角安全 Gate，全部保留在 README 與 decision log。
 - **停止條件事先寫定**：H-P 的開發評估在結果出來前就寫好停止條件；結果 absent 大幅改善，但安全代理不為 0，就依協定停止，沒有事後放寬判準或調整門檻。
@@ -560,7 +575,7 @@ v4 以較大的餘裕換安全，absent 較難判（decision 032）。v5 原本�
 
 ```bash
 uv sync && uv run pytest                                # 不需 Docker / GPU；沒有本機 render 時跳過 1 個測試（重現指南 §C）
-uv run python -m activeperception.seal verify           # 封存的結果與凍結設定未被改動
+uv run python -m activeperception.seal verify           # 封存的結果、episode sets 與 v1 / v2 凍結設定未被改動
 uv run python -m activeperception.preflight             # 重工作前：Mac heavy lock、CPU、RAM（未通過就不啟動）
 ./docker/build.sh && ./docker/build_nav.sh && ./docker/build_navdet.sh
 ./docker/demo.sh                                        # 一集 Nav2 閉迴路 + 動畫（約 1–1.5 分鐘）
@@ -577,7 +592,7 @@ GPU 工作（detector 選型與 Core 偵測）在共享的 RTX 5070 Ti 上執行
 
 **判定規則與策略**
 - `decision-v1` 的 absent 規則較寬：test 上 Random 出現一例 false absent，Rule / Oracle 沒有。
-- 多視角方法的 definitive decision confidence 校準不佳（v1 ECE 0.21–0.38；Single 0.016）：absent 的 confidence = coverage × (1 − c_max)，公式在 v1 凍結未改。v2 已改善。
+- 多視角方法的 definitive decision confidence 校準不佳（v1 ECE 0.21–0.38；Single 0.016）：absent 的 confidence = coverage × (1 − c_max)，公式在 v1 凍結未改。v2 把 absent 的 confidence 改為看穿比例後 ECE ≤ 0.0083，但這主要是定義的改變。
 - rule-nbv-v2 在初始視角被擋時常常分數平手、按候選編號選（failure analysis §4）。v2 的改善不應被理解為選視角策略的進步。
 
 **資料使用**
