@@ -349,7 +349,7 @@ def nav_teleport_vs_nav2(report: dict) -> None:
     axes[0].set_ylabel("3-class accuracy (nav-b2)", color=MUTED)
     axes[1].legend(loc="lower right", frameon=False, fontsize=7.5, labelcolor=INK2)
     fig.suptitle(
-        f"Same {report['episodes']} nav-b2 episodes: teleport vs real navigation (Nav2)",
+        f"Same {report['episodes']} nav-b2 episodes: teleport vs Nav2 in Gazebo (simulation)",
         x=0.01,
         ha="left",
         fontsize=10,
@@ -610,7 +610,7 @@ def nav_cost(fa: dict, states: dict[str, str]) -> None:
     ax.set_title("time per goal vs stop relocalisation", fontsize=8.5, color=INK, loc="left")
     ax.set_ylim(0, 27)
     fig.suptitle(
-        f"Cost of real navigation on nav-b2 ({r['navigations']} navigations, simulation)",
+        f"Cost of Nav2 navigation on nav-b2 ({r['navigations']} navigations, Gazebo simulation)",
         x=0.01,
         ha="left",
         fontsize=9.5,
